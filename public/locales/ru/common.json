@@ -1,0 +1,20 @@
+{
+  "appName": "NewWebinars",
+  "loading": "Загрузка...",
+  "error": "Что-то пошло не так",
+  "retry": "Повторить",
+  "cancel": "Отмена",
+  "save": "Сохранить",
+  "submit": "Отправить",
+  "close": "Закрыть",
+  "open": "Открыть",
+  "language": {
+    "en": "English",
+    "lt": "Lietuvių",
+    "ru": "Русский"
+  },
+  "theme": {
+    "light": "Светлая",
+    "dark": "Тёмная"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "hero": {
+    "headline": "Vebinarai, kurie parduoda",
+    "subheadline": "NewWebinars padeda vesti tiesioginius ir automatizuotus internetinius seminarus, rinkti registracijas, įtraukti dalyvius ir pateikti pasiūlymus — viskas vienoje vietoje.",
+    "ctaPrimary": "Pradėti nemokamai",
+    "ctaSecondary": "Kaip tai veikia"
+  },
+  "features": {
+    "title": "Viskas, ko reikia profesionaliems webinarams",
+    "subtitle": "Nuo pirmojo paspaudimo iki galutinio aptarnavimo.",
+    "items": [
+      {
+        "title": "Tiesioginiai ir automatizuoti webinarai",
+        "description": "Veskite realaus laiko užsiėmimus arba nuolat veikiančius automatizuotus renginius."
+      },
+      {
+        "title": "Prekiniai registracijos puslapiai",
+        "description": "Kiekvienam webinarui pritaikomi, konversijai palankūs registracijos puslapiai."
+      },
+      {
+        "title": "Laukimo ir transliacijos kambariai",
+        "description": "Išbaigtas priešrenginis lankytojo patirtis ir skirta viena pristatymui."
+      },
+      {
+        "title": "Integruotas pokalbis ir pasiūlymai",
+        "description": "Bendraukite su auditorija ir pateikite pasiūlymus neišeidami iš kambario."
+      },
+      {
+        "title": "Priminimai ir laiškai",
+        "description": "Automatizuoti el. laiškų scenarijai, kad dalyviai niekada nepavėluotų."
+      },
+      {
+        "title": "Dalyvių stebėjimo statistika",
+        "description": "Matykite, kas registravosi, prisijungė, žiūrėjo ir paspaudė."
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "Kaip tai veikia",
+    "steps": [
+      {
+        "title": "Sukurkite webinarą",
+        "description": "Nustatykite temą, grafiką ir prekės ženklą per kelias minutes."
+      },
+      {
+        "title": "Pasidalinkite puslapiu",
+        "description": "Išsiųskite viešą registracijos nuorodą savo auditorijai."
+      },
+      {
+        "title": "Įtraukite ir parduokite",
+        "description": "Veskite webinarą, atsakykite į klausimus ir pateikite savo pasiūlymą."
+      }
+    ]
+  },
+  "cta": {
+    "title": "Pasiruošę vesti pirmąjį webinarą?",
+    "subtitle": "Pradėkite nemokamai šiandien ir atnaujinkite, kai prireiks daugiau galimybių.",
+    "button": "Pradėti"
+  }
+}

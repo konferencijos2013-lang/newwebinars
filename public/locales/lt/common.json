@@ -1,0 +1,20 @@
+{
+  "appName": "NewWebinars",
+  "loading": "Kraunama...",
+  "error": "Įvyko klaida",
+  "retry": "Bandyti dar kartą",
+  "cancel": "Atšaukti",
+  "save": "Išsaugoti",
+  "submit": "Pateikti",
+  "close": "Uždaryti",
+  "open": "Atidaryti",
+  "language": {
+    "en": "English",
+    "lt": "Lietuvių",
+    "ru": "Русский"
+  },
+  "theme": {
+    "light": "Šviesi",
+    "dark": "Tamsi"
+  }
+}

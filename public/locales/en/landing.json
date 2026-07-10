@@ -1,0 +1,60 @@
+{
+  "hero": {
+    "headline": "Webinars that convert",
+    "subheadline": "NewWebinars helps you host live and automated webinars, capture registrations, engage attendees, and drive offers — all in one place.",
+    "ctaPrimary": "Get started free",
+    "ctaSecondary": "See how it works"
+  },
+  "features": {
+    "title": "Everything you need to run professional webinars",
+    "subtitle": "From first click to final follow-up.",
+    "items": [
+      {
+        "title": "Live & automated webinars",
+        "description": "Run real-time sessions or evergreen automated events that work around the clock."
+      },
+      {
+        "title": "Branded registration pages",
+        "description": "Customisable, conversion-friendly sign-up pages for every webinar."
+      },
+      {
+        "title": "Waiting room & live room",
+        "description": "A polished pre-event experience and a dedicated space for delivery."
+      },
+      {
+        "title": "Built-in chat & offers",
+        "description": "Engage your audience and present offers without leaving the room."
+      },
+      {
+        "title": "Reminders & follow-ups",
+        "description": "Automated email sequences so attendees never miss the moment."
+      },
+      {
+        "title": "Insightful attendance tracking",
+        "description": "See who registered, joined, watched, and clicked."
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "steps": [
+      {
+        "title": "Create your webinar",
+        "description": "Set the topic, schedule, and brand in minutes."
+      },
+      {
+        "title": "Share your page",
+        "description": "Send your public registration link to your audience."
+      },
+      {
+        "title": "Engage & convert",
+        "description": "Deliver the webinar, answer questions, and present your offer."
+      }
+    ]
+  },
+  "cta": {
+    "title": "Ready to run your first webinar?",
+    "subtitle": "Start free today and upgrade when you need more power.",
+    "button": "Get started"
+  }
+}
