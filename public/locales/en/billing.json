@@ -1,0 +1,14 @@
+{
+  "title": "Billing",
+  "subtitle": "Credits, usage and invoices",
+  "credits": "Credits",
+  "plan": "Plan",
+  "invoices": "Invoices",
+  "plans": "Plans",
+  "subscribe": "Subscribe",
+  "currentPlan": "Current plan",
+  "recentUsage": "Recent usage",
+  "emptyTitle": "No invoices yet",
+  "emptyDescription": "Subscribe to a plan or make a payment to see invoices here.",
+  "errorLoading": "Failed to load billing data"
+}

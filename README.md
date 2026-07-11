@@ -7,10 +7,11 @@ A webinar SaaS platform built with React, TypeScript, Vite, and Supabase.
 - React 19 + TypeScript
 - Vite
 - Tailwind CSS
-- Supabase
+- Supabase (auth, DB, Edge Functions, storage)
 - React Router
 - i18next (English, Lithuanian, Russian)
-- Zustand (state management — added later)
+- Stripe (billing)
+- OpenAI (assistant)
 
 ## Getting started
 
@@ -22,123 +23,148 @@ npm run dev
 
 ### Environment variables
 
-Copy `.env.example` to `.env.local` and fill in your Supabase credentials.
+Copy `.env.example` to `.env.local` and fill in at least the frontend Supabase credentials.
 
 ```bash
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-## Phase 1 status
+**Edge Function secrets** are configured in Supabase Studio, not in the frontend env file. See [Edge Function secrets](#edge-function-secrets).
 
-- [x] Clean project foundation
-- [x] Tailwind CSS with light/dark tokens
-- [x] Path aliases (`@/*`)
-- [x] i18n foundation (`en`, `lt`, `ru`)
-- [x] Theme system (light / dark / system)
-- [x] Supabase client placeholder
-- [x] React Router setup
-- [x] Shared UI primitives
-- [x] Auth skeleton (`useUser`, `ProtectedRoute`, sign-in placeholder)
+## Authentication
 
-## Phase 2: Database schema
+Auth is powered by Supabase Auth. The frontend uses only the public anon key and the browser client in `src/lib/supabase.ts`.
 
-See the final migration:
+### Routes
 
-```text
-supabase/migrations/20260708145624_init_schema.sql
-```
+| Route                   | Purpose                                                       |
+| ----------------------- | ------------------------------------------------------------- |
+| `/login`                | Sign-in page with Google and email magic link                 |
+| `/auth/callback`        | OAuth / magic-link callback; exchanges the code for a session |
+| `/dashboard`            | Protected app dashboard                                       |
+| `/webinars`             | Webinar list                                                  |
+| `/webinars/new`         | Create webinar                                                |
+| `/webinars/:id`         | Webinar detail / settings                                     |
+| `/webinars/:id/edit`    | Edit webinar                                                  |
+| `/funnels`              | Funnel list                                                   |
+| `/funnels/new`          | Create funnel                                                 |
+| `/funnels/:id`          | Funnel editor                                                 |
+| `/recordings`           | Recording library with storage quota                          |
+| `/billing`              | Plans, credits, usage, invoices                               |
+| `/w/:slug`              | Public webinar registration page                              |
+| `/w/:slug/waiting-room` | Waiting room with countdown                                   |
+| `/w/:slug/room`         | Webinar room with chat and AI assistant                       |
 
-### Final tables
+### Supabase Auth setup
 
-| Table             | Purpose                                                                 |
-| ----------------- | ----------------------------------------------------------------------- |
-| `accounts`        | SaaS tenant/workspace with billing plan (`free`/`paid`/`vip`)           |
-| `account_members` | Many-to-many user membership inside an account                          |
-| `profiles`        | Supabase Auth extension; global platform role only                      |
-| `partners`        | Platform partners; `type` distinguishes affiliate/referral partners     |
-| `webinars`        | Core webinar record, owned by `account_id`, presented by `presenter_id` |
-| `webinar_offers`  | Sales CTA/offers per webinar                                            |
-| `registrations`   | Attendee lifecycle, progress tracking, and affiliate attribution        |
-| `chat_messages`   | Persisted chat history                                                  |
-| `reminder_rules`  | Pre-webinar reminder configuration                                      |
+1. In Supabase Studio, go to **Authentication** → **Providers**.
+2. Enable the **Email** provider.
+3. Copy your `Site URL` and add the allowed redirect origins:
+   - `http://localhost:5173`
+   - `https://newwebinars.com`
+   - `https://www.newwebinars.com`
+4. Add the same origins under **Authentication** → **URL Configuration** → **Additional Redirect URLs**.
 
-### Final enums
+### Google OAuth setup
 
-- `profiles.role`: `guest` | `admin`
-- `account_members.role`: `owner` | `admin` | `host` | `viewer`
-- `accounts.plan`: `free` | `paid` | `vip`
-- `webinars.type`: `live` | `automated`
-- `webinars.status`: `draft` | `published` | `live` | `ended` | `cancelled`
-- `registrations.status`: `registered` | `attended` | `cancelled` | `no_show`
-- `chat_messages.message_type`: `chat` | `system` | `offer`
-- `reminder_rules.channel`: `email` | `telegram`
-- `partners.type`: `affiliate` | `business`
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials**.
+2. Create **OAuth 2.0 Client ID** (Web application).
+3. Add the authorized redirect URI:
+   ```text
+   https://your-project-ref.supabase.co/auth/v1/callback
+   ```
+4. Copy the **Client ID** and **Client Secret**.
+5. In Supabase Studio, enable the **Google** provider and paste the credentials.
 
-### Authorization vs billing
+### Magic link / email login setup
 
-- `profiles.role` is the **global platform role** — `admin` means system-wide authority.
-- `account_members.role` is a **workspace role** — permissions inside one account only.
-- `accounts.plan` is a **billing/limits tier** (`free` | `paid` | `vip`), not an authorization role. RLS and workspace permissions do not depend on it. Stripe-specific billing state will move to dedicated tables later.
+The login page uses `supabase.auth.signInWithOtp()`. For emails to be delivered, enable a custom SMTP provider:
 
-### RLS intent
+1. Supabase Studio → **Authentication** → **Emails** → **SMTP Settings**.
+2. Toggle **Enable Custom SMTP** and enter your provider details.
+3. Supabase Studio → **Authentication** → **Providers** → **Email** must be enabled.
 
-- `published_webinars` view exposes only public-safe fields to `anon` and `authenticated`.
-  - It is intentionally `SECURITY DEFINER` because `SECURITY INVOKER` would block anon users through base-table RLS. The restricted column list and explicit status filter are the intentional security boundary.
-- Workspace membership checks are performed by security-definer helpers (`is_account_member`, `has_account_role`, `is_platform_admin`) to avoid recursive RLS subqueries against `account_members`.
-- Private delivery URLs (`meeting_url`, `automated_video_url`, `recording_url`) are only visible to account members.
-- Profile emails and platform roles are never exposed to other users.
-- Account members manage webinars, offers, registrations, chat, and reminder rules within their account.
-- Public users can register for published/live webinars and view active offers.
+Recommended providers: Resend, SendGrid, Brevo.
 
-### Referral / affiliate attribution
+### User profiles
 
-- `partners` stores affiliate (and future business) partners.
-- Each affiliate gets a unique `code`.
-- Codes auto-generate if the admin leaves the field empty, and can also be set manually.
-- Referral codes are immutable after creation (database trigger enforces this).
-- `registrations.referral_code` attributes a webinar registration to one affiliate.
-- Conversion validation uses a security-definer helper so the `partners` table stays private.
-- Only `type = 'affiliate'` partners are accepted as referral sources; `type = 'business'` is rejected.
-- No multi-level logic: one conversion maps to one flat affiliate code.
+When a user signs up, the `handle_new_user` trigger automatically inserts a row into `public.profiles`.
 
-### Roles and grants
+## Phase overview
 
-RLS policies alone are not enough — PostgreSQL table privileges are also required:
+- **Phase A: App shell & route structure** — public marketing site, authenticated app with sidebar, placeholder pages.
+- **Phase B: Webinar CRUD** — webinars, access modes, evergreen schedules.
+- **Phase C: Funnel editor** — funnels, funnel pages, funnel blocks, visual editor.
+- **Phase D: Registration / waiting room / webinar room** — public registration, waiting room, live/evergreen room, simulated chat.
+- **Phase E: Recordings library** — recordings, storage quota, archive/delete.
+- **Phase F: Billing & credits** — Stripe checkout, webhooks, subscriptions, usage events.
+- **Phase G: AI assistant** — OpenAI powered floating assistant in webinar room and funnel editor.
+- **Phase H: Final polish + README** — env docs, deployment instructions.
 
-- `authenticated` receives broad CRUD grants on all public tables; RLS is the actual gatekeeper.
-- `anon` receives only the minimum grants: `SELECT` on `published_webinars` and `webinar_offers`, plus `INSERT` on `registrations`.
-- Service-role/admin access is not used by the web client; it stays outside the frontend.
+## Database
 
-### Deferred entities
+Migrations live in `supabase/migrations/`. Key tables include:
 
-These are intentionally not in the MVP schema:
-
-- `webinar_recordings` table (single `recording_url` on webinar for now)
-- `webinar_sessions` / recurring occurrences
-- `ai_prompts`, `ai_outputs`, `ai_usage_logs`
-- `partner_commissions` / payout logic (partners and referral codes exist; commission calculation is not yet implemented)
-- `affiliate_links` (short tracking links; the public `partners.code` serves the same purpose for now)
-- `contact_channels` / Telegram preferences (`telegram` is a reserved reminder channel enum)
-- `reminder_logs`
+| Table                   | Purpose                                        |
+| ----------------------- | ---------------------------------------------- |
+| `accounts`              | SaaS tenant/workspace                          |
+| `account_members`       | Workspace membership and roles                 |
+| `profiles`              | Supabase Auth extension; global platform role  |
+| `webinars`              | Core webinar record                            |
+| `webinar_sessions`      | Scheduled occurrences                          |
+| `webinar_schedules`     | Evergreen scheduling rules                     |
+| `funnels`               | Webinar funnels                                |
+| `funnel_pages`          | Pages inside a funnel                          |
+| `funnel_blocks`         | Content blocks                                 |
+| `registrations`         | Attendee lifecycle and affiliate attribution   |
+| `chat_messages`         | Persisted chat history                         |
+| `webinar_chat_scripts`  | Simulated chat messages for automated webinars |
+| `recordings`            | Webinar recordings                             |
+| `account_storage_usage` | Aggregated storage quota per account           |
+| `credit_plans`          | Pricing plans with credit allocations          |
+| `account_credits`       | Remaining credits per account                  |
+| `subscriptions`         | Stripe subscriptions                           |
+| `payments`              | Payment records                                |
+| `ai_prompts`            | Stored AI prompt templates                     |
+| `ai_threads`            | AI assistant conversation threads              |
+| `ai_messages`           | AI assistant messages                          |
 
 ### Applying migrations
 
-Run locally with the Supabase CLI:
+Local:
 
 ```bash
 supabase start
 supabase migration up
 ```
 
-To apply to a remote project:
+Remote (requires `supabase link`):
 
 ```bash
-supabase link
 supabase db push
 ```
 
-**Do not commit your Supabase service-role key or `.env.local`.**
+## Edge Functions
+
+Edge Functions are in `supabase/functions/`:
+
+- `create-checkout-session` — creates a Stripe Checkout session.
+- `stripe-webhook` — handles Stripe webhooks.
+- `ai-chat` — sends messages to OpenAI and persists the response.
+
+### Edge Function secrets
+
+Set secrets in Supabase Studio (**Project Settings** → **Edge Functions** → **Secrets**) or via CLI:
+
+```bash
+supabase secrets set OPENAI_API_KEY=sk-...
+supabase secrets set STRIPE_SECRET_KEY=sk_...
+supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+**Never expose these keys to the frontend.** The frontend uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 
 ## Deployment
 
@@ -155,30 +181,38 @@ git push -u origin main
 
 ### Cloudflare Pages
 
-1. In the Cloudflare dashboard, go to **Pages** → **Create a project**.
-2. Choose **Connect to Git** and select the `newwebinars` repository.
-3. Use these build settings:
+1. Cloudflare dashboard → **Pages** → **Create a project**.
+2. Connect the GitHub repository.
+3. Build settings:
    - **Build command:** `npm run build`
    - **Build output directory:** `dist`
-4. Add the following environment variables:
+4. Add environment variables:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-5. Save and deploy. The included `public/_redirects` file makes client-side routing work as a single-page application.
+5. Deploy. The included `public/_redirects` file enables SPA routing.
 
 ### Custom domain
 
-1. In your Cloudflare Pages project, go to **Custom domains** → **Set up a custom domain**.
-2. Enter your domain (e.g. `newwebinars.com`) and follow the verification steps.
-3. Add the DNS records Cloudflare suggests. If your domain is already in the same Cloudflare account, Cloudflare can configure these automatically. Otherwise:
-   - Point the domain’s nameservers to Cloudflare, **or**
-   - Add the CNAME record Cloudflare provides (e.g. `newwebinars.com` → `your-project.pages.dev`).
-4. Wait for SSL/TLS provisioning to complete. Cloudflare will issue a certificate automatically.
+1. Cloudflare Pages project → **Custom domains** → **Set up a custom domain**.
+2. Enter your domain and follow the verification steps.
+3. Add the suggested DNS records (CNAME to `your-project.pages.dev`).
+4. Wait for SSL/TLS provisioning.
 
 ## Scripts
 
 - `npm run dev` — start dev server
-- `npm run build` — type-check and build for production
+- `npm run build` — type-check and build
 - `npm run lint` — run ESLint
 - `npm run format` — format with Prettier
-- `npm run format:check` — check Prettier formatting
+- `npm run format:check` — check formatting
 - `npm run preview` — preview production build
+
+## Security notes
+
+- Only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are exposed to the browser.
+- Service-role keys, Stripe secrets, and OpenAI keys are Edge Function secrets.
+- Row-level security is enabled on all user-facing tables.
+
+## License
+
+MIT

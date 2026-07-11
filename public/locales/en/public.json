@@ -1,0 +1,22 @@
+{
+  "scheduleOnDemand": "On demand",
+  "durationMinutes": "minutes",
+  "register": "Register",
+  "registering": "Registering...",
+  "registerDescription": "Reserve your spot now.",
+  "registeredTitle": "You're registered!",
+  "registeredDescription": "Check your inbox for the confirmation link.",
+  "enterWaitingRoom": "Enter waiting room",
+  "waitingRoomDescription": "The broadcast will begin shortly.",
+  "roomElapsed": "Elapsed",
+  "enterRoom": "Enter webinar room",
+  "roomNotOpen": "The room is not open yet",
+  "onDemandReady": "This webinar is on-demand. You can enter the room.",
+  "fullName": "Full name",
+  "anonymous": "Anonymous",
+  "host": "Host",
+  "attendee": "Attendee",
+  "videoPlaceholder": "Video stream will appear here",
+  "chatPlaceholder": "Type a message...",
+  "notFound": "Page not found"
+}

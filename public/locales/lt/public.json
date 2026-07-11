@@ -1,0 +1,22 @@
+{
+  "scheduleOnDemand": "Pagal pareikalavimą",
+  "durationMinutes": "minučių",
+  "register": "Registruotis",
+  "registering": "Registruojama...",
+  "registerDescription": "Rezervuokite savo vietą dabar.",
+  "registeredTitle": "Jūs užsiregistravote!",
+  "registeredDescription": "Patikrinkite savo paštą dėl patvirtinimo nuorodos.",
+  "enterWaitingRoom": "Įeiti į laukimo kambarį",
+  "waitingRoomDescription": "Transliacija netrukus prasidės.",
+  "roomElapsed": "Nepraėjo",
+  "enterRoom": "Įeiti į webinaro kambarį",
+  "roomNotOpen": "Kambarys dar neuždarytas",
+  "onDemandReady": "Šis webinaras pagal pareikalavimą. Galite įeiti.",
+  "fullName": "Vardas ir pavardė",
+  "anonymous": "Anonimas",
+  "host": "Pristatytojas",
+  "attendee": "Dalyvis",
+  "videoPlaceholder": "Vaizdo įrašas pasirodys čia",
+  "chatPlaceholder": "Rašykite žinutę...",
+  "notFound": "Puslapis nerastas"
+}

@@ -56,5 +56,27 @@
     "title": "Ready to run your first webinar?",
     "subtitle": "Start free today and upgrade when you need more power.",
     "button": "Get started"
+  },
+  "pricing": {
+    "title": "Simple pricing",
+    "subtitle": "Start free, scale with credits",
+    "free": {
+      "name": "Free",
+      "feature1": "1 webinar"
+    },
+    "paid": {
+      "name": "Pay-as-you-go",
+      "price": "From €10",
+      "feature1": "Credits for webinars",
+      "feature2": "Recordings storage"
+    },
+    "cta": "Get started"
+  },
+  "partners": {
+    "title": "Partner with NewWebinars",
+    "subtitle": "Earn 30% commission for the first 12 months by referring customers",
+    "commissionTitle": "30% recurring commission",
+    "commissionDescription": "For every customer you refer, earn commission on their payments for the first 12 months.",
+    "cta": "Become a partner"
   }
 }

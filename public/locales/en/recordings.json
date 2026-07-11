@@ -1,0 +1,18 @@
+{
+  "title": "Recordings",
+  "subtitle": "Manage your webinar recordings and storage",
+  "upload": "Upload recording",
+  "storage": "Storage used",
+  "of": "of",
+  "emptyTitle": "No recordings yet",
+  "emptyDescription": "Upload or record webinars to see them here.",
+  "noDescription": "No description",
+  "play": "Play",
+  "archive": "Archive",
+  "delete": "Delete",
+  "deleteConfirm": "Are you sure you want to delete this recording?",
+  "processing": "Processing",
+  "ready": "Ready",
+  "archived": "Archived",
+  "deleted": "Deleted"
+}

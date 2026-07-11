@@ -1,0 +1,18 @@
+{
+  "title": "Įrašai",
+  "subtitle": "Tvarkykite savo webinarų įrašus ir saugyklą",
+  "upload": "Įkelti įrašą",
+  "storage": "Išnaudota saugykla",
+  "of": "iš",
+  "emptyTitle": "Dar nėra įrašų",
+  "emptyDescription": "Įkelkite arba įrašykite webinarus, kad matytumėte čia.",
+  "noDescription": "Be aprašymo",
+  "play": "Groti",
+  "archive": "Archyvuoti",
+  "delete": "Ištrinti",
+  "deleteConfirm": "Ar tikrai norite ištrinti šį įrašą?",
+  "processing": "Apdorojamas",
+  "ready": "Paruoštas",
+  "archived": "Archyvuotas",
+  "deleted": "Ištrintas"
+}

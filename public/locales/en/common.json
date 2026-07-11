@@ -15,6 +15,29 @@
   },
   "theme": {
     "light": "Light",
-    "dark": "Dark"
+    "dark": "Dark",
+    "system": "System"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "webinars": "Webinars",
+    "funnels": "Funnels",
+    "recordings": "Recordings",
+    "analytics": "Analytics",
+    "affiliate": "Affiliate",
+    "billing": "Billing",
+    "settings": "Settings",
+    "user": "User"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "open": "Open",
+    "createTitle": "Create webinar",
+    "createDescription": "Start a new live or automated webinar",
+    "createButton": "Create",
+    "webinarsDescription": "Create and manage webinars",
+    "funnelsDescription": "Build registration and sales pages",
+    "recordingsDescription": "Manage recordings and storage",
+    "analyticsDescription": "View performance and usage"
   }
 }

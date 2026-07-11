@@ -1,0 +1,14 @@
+{
+  "title": "Atsiskaitymai",
+  "subtitle": "Kreditai, naudojimas ir sąskaitos",
+  "credits": "Kreditai",
+  "plan": "Planas",
+  "invoices": "Sąskaitos",
+  "plans": "Planai",
+  "subscribe": "Prenumeruoti",
+  "currentPlan": "Dabartinis planas",
+  "recentUsage": "Neseniai naudota",
+  "emptyTitle": "Dar nėra sąskaitų",
+  "emptyDescription": "Prenumeruokite planą arba atlikite mokėjimą, kad matytumėte sąskaitas.",
+  "errorLoading": "Nepavyko įkelti atsiskaitymų duomenų"
+}

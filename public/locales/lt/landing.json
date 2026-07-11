@@ -56,5 +56,27 @@
     "title": "Pasiruošę vesti pirmąjį webinarą?",
     "subtitle": "Pradėkite nemokamai šiandien ir atnaujinkite, kai prireiks daugiau galimybių.",
     "button": "Pradėti"
+  },
+  "pricing": {
+    "title": "Paprasta kainodara",
+    "subtitle": "Pradėkite nemokamai, auginkite su kreditais",
+    "free": {
+      "name": "Nemokamas",
+      "feature1": "1 webinaras"
+    },
+    "paid": {
+      "name": "Mokėkite pagal naudojimą",
+      "price": "Nuo 10 €",
+      "feature1": "Kreditai webinarams",
+      "feature2": "Įrašų saugykla"
+    },
+    "cta": "Pradėti"
+  },
+  "partners": {
+    "title": "Tapkite NewWebinars partneriu",
+    "subtitle": "Uždirbkite 30% komisinių pirmus 12 mėnesių kviesdami klientus",
+    "commissionTitle": "30% pasikartojanti komisija",
+    "commissionDescription": "Už kiekvieną pakviestą klientą uždirbsite komisinius iš jo mokėjimų pirmus 12 mėnesių.",
+    "cta": "Tapti partneriu"
   }
 }

@@ -4,7 +4,7 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import { LanguageSwitch } from '@/components/LanguageSwitch'
 
 export function Header() {
-  const { t } = useTranslation('common')
+  const { t } = useTranslation(['common', 'auth'])
 
   return (
     <header className="border-border bg-card border-b">
@@ -13,14 +13,26 @@ export function Header() {
           to="/"
           className="text-foreground hover:text-primary text-lg font-semibold"
         >
-          {t('appName', 'NewWebinars')}
+          {t('common:appName')}
         </Link>
         <nav className="flex items-center gap-4">
           <Link
-            to="/webinars"
+            to="/pricing"
             className="text-muted-foreground hover:text-foreground text-sm"
           >
-            {t('webinars:title', 'Webinars')}
+            {t('common:pricing', 'Pricing')}
+          </Link>
+          <Link
+            to="/partners"
+            className="text-muted-foreground hover:text-foreground text-sm"
+          >
+            {t('common:partners', 'Partners')}
+          </Link>
+          <Link
+            to="/login"
+            className="text-muted-foreground hover:text-foreground text-sm"
+          >
+            {t('auth:signIn')}
           </Link>
           <LanguageSwitch />
           <ThemeToggle />

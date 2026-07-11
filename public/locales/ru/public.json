@@ -1,0 +1,22 @@
+{
+  "scheduleOnDemand": "По требованию",
+  "durationMinutes": "минут",
+  "register": "Зарегистрироваться",
+  "registering": "Регистрация...",
+  "registerDescription": "Зарезервируйте своё место сейчас.",
+  "registeredTitle": "Вы зарегистрированы!",
+  "registeredDescription": "Проверьте почту для подтверждения.",
+  "enterWaitingRoom": "Войти в комнату ожидания",
+  "waitingRoomDescription": "Трансляция начнётся скоро.",
+  "roomElapsed": "Прошло",
+  "enterRoom": "Войти в комнату вебинара",
+  "roomNotOpen": "Комната ещё не открыта",
+  "onDemandReady": "Этот вебинар по требованию. Можно войти.",
+  "fullName": "Полное имя",
+  "anonymous": "Аноним",
+  "host": "Ведущий",
+  "attendee": "Участник",
+  "videoPlaceholder": "Видео появится здесь",
+  "chatPlaceholder": "Напишите сообщение...",
+  "notFound": "Страница не найдена"
+}

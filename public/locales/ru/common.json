@@ -1,8 +1,8 @@
 {
   "appName": "NewWebinars",
   "loading": "Загрузка...",
-  "error": "Что-то пошло не так",
-  "retry": "Повторить",
+  "error": "Произошла ошибка",
+  "retry": "Попробовать снова",
   "cancel": "Отмена",
   "save": "Сохранить",
   "submit": "Отправить",
@@ -15,6 +15,29 @@
   },
   "theme": {
     "light": "Светлая",
-    "dark": "Тёмная"
+    "dark": "Тёмная",
+    "system": "Системная"
+  },
+  "navigation": {
+    "dashboard": "Кабинет",
+    "webinars": "Вебинары",
+    "funnels": "Воронки",
+    "recordings": "Записи",
+    "analytics": "Аналитика",
+    "affiliate": "Партнёрка",
+    "billing": "Оплата",
+    "settings": "Настройки",
+    "user": "Пользователь"
+  },
+  "dashboard": {
+    "title": "Кабинет",
+    "open": "Открыть",
+    "createTitle": "Создать вебинар",
+    "createDescription": "Начните новый live или automated вебинар",
+    "createButton": "Создать",
+    "webinarsDescription": "Создавайте и управляйте вебинарами",
+    "funnelsDescription": "Создавайте страницы регистрации и продаж",
+    "recordingsDescription": "Управляйте записями и хранилищем",
+    "analyticsDescription": "Смотрите результаты и использование"
   }
 }

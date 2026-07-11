@@ -1,0 +1,199 @@
+import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useParams, useSearchParams } from 'react-router'
+import { Send } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Spinner } from '@/components/ui/Spinner'
+import { AiAssistant } from '@/features/ai/components/AiAssistant'
+import {
+  fetchWebinarBySlug,
+  fetchRegistrationByToken,
+  fetchChatMessages,
+  sendChatMessage,
+  fetchChatScripts,
+  markJoinedWebinar,
+} from '@/features/webinars/api/public'
+import type {
+  ChatMessage,
+  Registration,
+  Webinar,
+  WebinarChatScript,
+} from '@/shared/database.types'
+
+type ChatDisplayItem =
+  (ChatMessage & { kind: 'message' }) | (WebinarChatScript & { kind: 'script' })
+
+export function WebinarRoomPage() {
+  const { t } = useTranslation('public')
+  const { slug } = useParams<{ slug: string }>()
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('token') ?? ''
+
+  const [items, setItems] = useState<ChatDisplayItem[]>([])
+  const [webinar, setWebinar] = useState<Webinar | null>(null)
+  const [registration, setRegistration] = useState<Registration | null>(null)
+  const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
+  const [newMessage, setNewMessage] = useState('')
+  const [elapsed, setElapsed] = useState(0)
+  const scriptsRef = useRef<WebinarChatScript[]>([])
+  const itemsRef = useRef<ChatDisplayItem[]>([])
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!slug || !token) return
+    let isActive = true
+
+    fetchWebinarBySlug(slug)
+      .then(async (w) => {
+        if (!isActive) return
+        setWebinar(w)
+        const [r, history, s] = await Promise.all([
+          fetchRegistrationByToken(token).catch(() => null),
+          fetchChatMessages(w.id).catch(() => [] as ChatMessage[]),
+          fetchChatScripts(w.id).catch(() => [] as WebinarChatScript[]),
+        ])
+        if (!isActive) return
+        if (!r) {
+          setStatus('error')
+          return
+        }
+        setRegistration(r)
+        scriptsRef.current = s
+        const initialItems = history.map((m) => ({
+          ...m,
+          kind: 'message' as const,
+        }))
+        itemsRef.current = initialItems
+        setItems(initialItems)
+        await markJoinedWebinar(token)
+        setStatus('ready')
+      })
+      .catch(() => {
+        if (!isActive) return
+        setStatus('error')
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [slug, token])
+
+  useEffect(() => {
+    const id = setInterval(() => setElapsed((e) => e + 1), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [items])
+
+  useEffect(() => {
+    const newScripts = scriptsRef.current
+      .filter((s) => s.trigger_seconds <= elapsed)
+      .filter(
+        (s) =>
+          !itemsRef.current.some((i) => i.kind === 'script' && i.id === s.id),
+      )
+    if (newScripts.length === 0) return
+    const added = newScripts.map((s) => ({ ...s, kind: 'script' as const }))
+    itemsRef.current = [...itemsRef.current, ...added]
+    setItems(itemsRef.current)
+  }, [elapsed])
+
+  async function handleSend(e: React.FormEvent) {
+    e.preventDefault()
+    if (!webinar || !newMessage.trim() || !registration) return
+    const sent = await sendChatMessage({
+      webinar_id: webinar.id,
+      registration_id: registration.id,
+      sender_name: registration.full_name ?? t('anonymous'),
+      message: newMessage.trim(),
+    })
+    itemsRef.current = [
+      ...itemsRef.current,
+      { ...sent, kind: 'message' as const },
+    ]
+    setItems(itemsRef.current)
+    setNewMessage('')
+  }
+
+  if (status === 'loading') {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Spinner className="h-8 w-8" />
+      </div>
+    )
+  }
+
+  if (status === 'error' || !webinar || !registration) {
+    return (
+      <div className="mx-auto max-w-2xl py-16 text-center">
+        <h1 className="text-2xl font-bold">{t('errorNotFound')}</h1>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-screen flex-col">
+      <div className="border-b p-4">
+        <h1 className="text-lg font-semibold">{webinar.title}</h1>
+        <p className="text-muted-foreground text-sm">
+          {t('roomElapsed')}:{' '}
+          {String(Math.floor(elapsed / 60)).padStart(2, '0')}:
+          {String(elapsed % 60).padStart(2, '0')}
+        </p>
+      </div>
+
+      <div className="grid flex-1 gap-4 overflow-hidden p-4 lg:grid-cols-[1fr_320px]">
+        <div className="bg-muted flex items-center justify-center rounded-lg">
+          <p className="text-muted-foreground">{t('videoPlaceholder')}</p>
+        </div>
+
+        <div className="border-border flex flex-col rounded-lg border">
+          {webinar && (
+            <AiAssistant
+              scope="webinar"
+              scopeId={webinar.id}
+              contextPrompt={`Help me manage the webinar "${webinar.title}".`}
+            />
+          )}
+          <div className="flex-1 space-y-3 overflow-y-auto p-3">
+            {items.map((m, idx) => (
+              <div
+                key={idx}
+                className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                  m.kind === 'message'
+                    ? 'bg-primary text-primary-foreground ml-auto'
+                    : 'bg-muted'
+                }`}
+              >
+                <p className="text-xs font-semibold opacity-70">
+                  {m.kind === 'script'
+                    ? m.sender_role === 'host'
+                      ? t('host')
+                      : t('attendee')
+                    : m.sender_name}
+                </p>
+                <p>{m.message}</p>
+              </div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
+          <form onSubmit={handleSend} className="border-t p-3">
+            <div className="flex gap-2">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder={t('chatPlaceholder')}
+              />
+              <Button type="submit">
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}

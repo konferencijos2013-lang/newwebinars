@@ -140,6 +140,77 @@ export type Database = {
           },
         ]
       }
+      partner_clicks: {
+        Row: {
+          clicked_at: string
+          converted_registration_id: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          landing_path: string | null
+          partner_code: string
+          referrer_url: string | null
+          user_agent: string | null
+          utm_source: string | null
+          webinar_id: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          converted_registration_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          landing_path?: string | null
+          partner_code: string
+          referrer_url?: string | null
+          user_agent?: string | null
+          utm_source?: string | null
+          webinar_id?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          converted_registration_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          landing_path?: string | null
+          partner_code?: string
+          referrer_url?: string | null
+          user_agent?: string | null
+          utm_source?: string | null
+          webinar_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'partner_clicks_converted_registration_id_fkey'
+            columns: ['converted_registration_id']
+            isOneToOne: false
+            referencedRelation: 'registrations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'partner_clicks_partner_code_fkey'
+            columns: ['partner_code']
+            isOneToOne: false
+            referencedRelation: 'partners'
+            referencedColumns: ['code']
+          },
+          {
+            foreignKeyName: 'partner_clicks_webinar_id_fkey'
+            columns: ['webinar_id']
+            isOneToOne: false
+            referencedRelation: 'published_webinars'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'partner_clicks_webinar_id_fkey'
+            columns: ['webinar_id']
+            isOneToOne: false
+            referencedRelation: 'webinars'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       partners: {
         Row: {
           code: string
@@ -206,6 +277,8 @@ export type Database = {
       registrations: {
         Row: {
           access_token: string
+          cancelled_at: string | null
+          company: string | null
           confirmed_at: string | null
           created_at: string
           email: string
@@ -215,19 +288,25 @@ export type Database = {
           joined_webinar_at: string | null
           left_webinar_at: string | null
           offer_clicked_at: string | null
+          phone: string | null
           referral_code: string | null
           referrer_url: string | null
           registered_at: string
           saw_offer_at: string | null
           status: string
+          telegram_username: string | null
           updated_at: string
           user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
           utm_source: string | null
           watch_time_seconds: number
           webinar_id: string
         }
         Insert: {
           access_token?: string
+          cancelled_at?: string | null
+          company?: string | null
           confirmed_at?: string | null
           created_at?: string
           email: string
@@ -237,19 +316,25 @@ export type Database = {
           joined_webinar_at?: string | null
           left_webinar_at?: string | null
           offer_clicked_at?: string | null
+          phone?: string | null
           referral_code?: string | null
           referrer_url?: string | null
           registered_at?: string
           saw_offer_at?: string | null
           status?: string
+          telegram_username?: string | null
           updated_at?: string
           user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
           utm_source?: string | null
           watch_time_seconds?: number
           webinar_id: string
         }
         Update: {
           access_token?: string
+          cancelled_at?: string | null
+          company?: string | null
           confirmed_at?: string | null
           created_at?: string
           email?: string
@@ -259,13 +344,17 @@ export type Database = {
           joined_webinar_at?: string | null
           left_webinar_at?: string | null
           offer_clicked_at?: string | null
+          phone?: string | null
           referral_code?: string | null
           referrer_url?: string | null
           registered_at?: string
           saw_offer_at?: string | null
           status?: string
+          telegram_username?: string | null
           updated_at?: string
           user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
           utm_source?: string | null
           watch_time_seconds?: number
           webinar_id?: string
@@ -297,6 +386,115 @@ export type Database = {
             columns: ['webinar_id']
             isOneToOne: false
             referencedRelation: 'webinars'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      reminder_logs: {
+        Row: {
+          id: string
+          provider_response: string | null
+          queue_id: string
+          registration_id: string
+          rule_id: string | null
+          sent_at: string
+          status: Database['public']['Enums']['reminder_log_status']
+        }
+        Insert: {
+          id?: string
+          provider_response?: string | null
+          queue_id: string
+          registration_id: string
+          rule_id?: string | null
+          sent_at?: string
+          status: Database['public']['Enums']['reminder_log_status']
+        }
+        Update: {
+          id?: string
+          provider_response?: string | null
+          queue_id?: string
+          registration_id?: string
+          rule_id?: string | null
+          sent_at?: string
+          status?: Database['public']['Enums']['reminder_log_status']
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'reminder_logs_queue_id_fkey'
+            columns: ['queue_id']
+            isOneToOne: false
+            referencedRelation: 'reminder_queue'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'reminder_logs_registration_id_fkey'
+            columns: ['registration_id']
+            isOneToOne: false
+            referencedRelation: 'registrations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'reminder_logs_rule_id_fkey'
+            columns: ['rule_id']
+            isOneToOne: false
+            referencedRelation: 'reminder_rules'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      reminder_queue: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          failed_at: string | null
+          id: string
+          registration_id: string
+          retry_count: number
+          rule_id: string | null
+          scheduled_at: string
+          sent_at: string | null
+          status: Database['public']['Enums']['reminder_status']
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          registration_id: string
+          retry_count?: number
+          rule_id?: string | null
+          scheduled_at: string
+          sent_at?: string | null
+          status?: Database['public']['Enums']['reminder_status']
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          registration_id?: string
+          retry_count?: number
+          rule_id?: string | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: Database['public']['Enums']['reminder_status']
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'reminder_queue_registration_id_fkey'
+            columns: ['registration_id']
+            isOneToOne: false
+            referencedRelation: 'registrations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'reminder_queue_rule_id_fkey'
+            columns: ['rule_id']
+            isOneToOne: false
+            referencedRelation: 'reminder_rules'
             referencedColumns: ['id']
           },
         ]
@@ -406,6 +604,60 @@ export type Database = {
           },
         ]
       }
+      webinar_sessions: {
+        Row: {
+          capacity: number | null
+          created_at: string
+          ends_at: string | null
+          id: string
+          is_default: boolean
+          starts_at: string | null
+          status: Database['public']['Enums']['webinar_session_status']
+          title: string | null
+          updated_at: string
+          webinar_id: string
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_default?: boolean
+          starts_at?: string | null
+          status?: Database['public']['Enums']['webinar_session_status']
+          title?: string | null
+          updated_at?: string
+          webinar_id: string
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_default?: boolean
+          starts_at?: string | null
+          status?: Database['public']['Enums']['webinar_session_status']
+          title?: string | null
+          updated_at?: string
+          webinar_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'webinar_sessions_webinar_id_fkey'
+            columns: ['webinar_id']
+            isOneToOne: false
+            referencedRelation: 'published_webinars'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'webinar_sessions_webinar_id_fkey'
+            columns: ['webinar_id']
+            isOneToOne: false
+            referencedRelation: 'webinars'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       webinars: {
         Row: {
           account_id: string
@@ -492,6 +744,35 @@ export type Database = {
       }
     }
     Views: {
+      published_webinar_sessions: {
+        Row: {
+          ends_at: string | null
+          id: string | null
+          is_default: boolean | null
+          session_capacity: number | null
+          session_status:
+            Database['public']['Enums']['webinar_session_status'] | null
+          session_title: string | null
+          starts_at: string | null
+          webinar_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'webinar_sessions_webinar_id_fkey'
+            columns: ['webinar_id']
+            isOneToOne: false
+            referencedRelation: 'published_webinars'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'webinar_sessions_webinar_id_fkey'
+            columns: ['webinar_id']
+            isOneToOne: false
+            referencedRelation: 'webinars'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       published_webinars: {
         Row: {
           account_id: string | null
@@ -523,7 +804,15 @@ export type Database = {
       }
     }
     Functions: {
+      enqueue_reminders_for_registration: {
+        Args: { p_registration_id: string }
+        Returns: number
+      }
       generate_partner_code: { Args: never; Returns: string }
+      get_registration_account_id: {
+        Args: { p_registration_id: string }
+        Returns: string
+      }
       has_account_role: {
         Args: { p_account_id: string; p_roles: string[] }
         Returns: boolean
@@ -539,6 +828,9 @@ export type Database = {
     }
     Enums: {
       partner_type: 'affiliate' | 'business'
+      reminder_log_status: 'sent' | 'failed'
+      reminder_status: 'queued' | 'processing' | 'sent' | 'failed' | 'cancelled'
+      webinar_session_status: 'upcoming' | 'live' | 'ended' | 'cancelled'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -664,6 +956,9 @@ export const Constants = {
   public: {
     Enums: {
       partner_type: ['affiliate', 'business'],
+      reminder_log_status: ['sent', 'failed'],
+      reminder_status: ['queued', 'processing', 'sent', 'failed', 'cancelled'],
+      webinar_session_status: ['upcoming', 'live', 'ended', 'cancelled'],
     },
   },
 } as const

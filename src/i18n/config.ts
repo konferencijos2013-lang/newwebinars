@@ -11,7 +11,17 @@ void i18n
     fallbackLng: 'en',
     supportedLngs: ['en', 'lt', 'ru'],
     defaultNS: 'common',
-    ns: ['common', 'auth', 'webinars', 'landing'],
+    ns: [
+      'common',
+      'auth',
+      'webinars',
+      'landing',
+      'funnels',
+      'public',
+      'recordings',
+      'billing',
+      'ai',
+    ],
     interpolation: {
       escapeValue: false,
     },

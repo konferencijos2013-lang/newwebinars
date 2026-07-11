@@ -3,14 +3,20 @@ import { cn } from '@/shared/utils/cn'
 export function Card({
   className,
   children,
+  onClick,
 }: {
   className?: string
   children: React.ReactNode
+  onClick?: () => void
 }) {
   return (
     <div
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       className={cn(
         'border-border bg-card text-card-foreground rounded-lg border p-6 shadow-sm',
+        onClick && 'cursor-pointer',
         className,
       )}
     >
