@@ -14,16 +14,19 @@ export function AuthCallbackPage() {
 
   useEffect(() => {
     let isActive = true
+    let authListener: { subscription: { unsubscribe: () => void } } | null = null
 
     const finish = (target: string) => {
       if (resolvedRef.current) return
       resolvedRef.current = true
+      if (authListener) authListener.subscription.unsubscribe()
       if (isActive) navigate(target, { replace: true })
     }
 
     const fail = (reason: string, details?: unknown) => {
       if (resolvedRef.current) return
       resolvedRef.current = true
+      if (authListener) authListener.subscription.unsubscribe()
       // eslint-disable-next-line no-console
       console.error('[AuthCallback] failed:', reason, details)
       if (isActive) {
@@ -38,9 +41,19 @@ export function AuthCallbackPage() {
       hasCode: window.location.search.includes('code='),
     })
 
+    // Supabase auto-extracts the session from the URL hash asynchronously and
+    // emits SIGNED_IN. Listen for that first.
+    authListener = supabase.auth.onAuthStateChange((event, session) => {
+      // eslint-disable-next-line no-console
+      console.log('[AuthCallback] auth event', { event, hasSession: !!session })
+      if (event === 'SIGNED_IN' && session) {
+        finish('/dashboard')
+      }
+    }).data
+
     async function handleCallback() {
       try {
-        // If Supabase returned a PKCE code, exchange it immediately.
+        // PKCE path: Supabase returned ?code=...
         const code = new URLSearchParams(window.location.search).get('code')
         if (code) {
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
@@ -53,10 +66,9 @@ export function AuthCallbackPage() {
           return
         }
 
-        // Implicit OAuth flow: token is in the URL hash (#access_token=...).
-        // Supabase client extracts it automatically, but asynchronously.
-        // Retry getSession a few times with a short delay.
-        for (let attempt = 0; attempt < 20; attempt++) {
+        // Implicit path: token is in URL hash. Wait a moment for the library
+        // to finish auto-extraction, then poll getSession.
+        for (let attempt = 0; attempt < 30; attempt++) {
           const { data, error } = await supabase.auth.getSession()
           // eslint-disable-next-line no-console
           console.log('[AuthCallback] getSession attempt', attempt, {
@@ -68,6 +80,29 @@ export function AuthCallbackPage() {
             finish('/dashboard')
             return
           }
+
+          // After a few attempts, try forcing session extraction from the hash.
+          if (attempt === 5 && window.location.hash.includes('access_token')) {
+            const hashParams = new URLSearchParams(window.location.hash.slice(1))
+            const accessToken = hashParams.get('access_token')
+            const refreshToken = hashParams.get('refresh_token')
+            const expiresAt = hashParams.get('expires_at')
+            if (accessToken && expiresAt) {
+              // eslint-disable-next-line no-console
+              console.log('[AuthCallback] forcing setSession from hash')
+              const { error: setError } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken ?? '',
+              })
+              if (!setError) {
+                finish('/dashboard')
+                return
+              }
+              // eslint-disable-next-line no-console
+              console.log('[AuthCallback] setSession error', setError.message)
+            }
+          }
+
           await new Promise((resolve) => setTimeout(resolve, 100))
           if (!isActive || resolvedRef.current) return
         }
@@ -78,10 +113,13 @@ export function AuthCallbackPage() {
       }
     }
 
-    handleCallback()
+    // Start after a small delay so the SIGNED_IN listener is attached first.
+    const timeoutId = setTimeout(handleCallback, 50)
 
     return () => {
       isActive = false
+      clearTimeout(timeoutId)
+      if (authListener) authListener.subscription.unsubscribe()
     }
   }, [navigate])
 
