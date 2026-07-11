@@ -9,126 +9,79 @@ export function AuthCallbackPage() {
   const { t } = useTranslation('auth')
   const navigate = useNavigate()
   const [status, setStatus] = useState<'loading' | 'error'>('loading')
+  const [errorMessage, setErrorMessage] = useState<string>('')
   const resolvedRef = useRef(false)
-
-  // #region helper: send debug log
-  const log = (id: string, message: string, data: Record<string, unknown> = {}) => {
-    fetch('http://127.0.0.1:7510/ingest/98e51e74-2cb8-43d7-ae19-9d551565ede3', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '85756a' },
-      body: JSON.stringify({
-        sessionId: '85756a',
-        id,
-        runId: 'initial',
-        hypothesisId: 'B',
-        location: 'src/features/auth/pages/AuthCallbackPage.tsx',
-        message,
-        data,
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {})
-  }
-  // #endregion
 
   useEffect(() => {
     let isActive = true
-    let timeoutId: ReturnType<typeof setTimeout> | null = null
 
     const finish = (target: string) => {
       if (resolvedRef.current) return
       resolvedRef.current = true
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-        timeoutId = null
-      }
-      if (isActive) {
-        log('log_callback_finish', 'Finishing callback', { target })
-        navigate(target, { replace: true })
-      }
+      if (isActive) navigate(target, { replace: true })
     }
 
-    const fail = (reason: string) => {
+    const fail = (reason: string, details?: unknown) => {
       if (resolvedRef.current) return
       resolvedRef.current = true
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-        timeoutId = null
-      }
-      log('log_callback_fail', 'Callback failed', { reason })
+      // eslint-disable-next-line no-console
+      console.error('[AuthCallback] failed:', reason, details)
       if (isActive) {
+        setErrorMessage(reason)
         setStatus('error')
       }
     }
 
-    log('log_callback_mount', 'Callback page mounted', {
+    // eslint-disable-next-line no-console
+    console.log('[AuthCallback] mount', {
       hasAccessToken: window.location.hash.includes('access_token'),
       hasCode: window.location.search.includes('code='),
     })
 
-    // Listen for the automatic session recovery from the URL hash.
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        log('log_callback_auth_event', 'Auth state change', {
-          event,
-          hasSession: !!session,
-        })
-        if (event === 'SIGNED_IN' && session) {
-          finish('/dashboard')
-        }
-      }
-    )
-
-    // Fallback: if auth change already fired before listener was attached,
-    // try reading the current session directly.
-    const attemptRecovery = async () => {
+    async function handleCallback() {
       try {
-        const { data: sessionData, error: sessionError } =
-          await supabase.auth.getSession()
-        log('log_callback_get_session', 'getSession result', {
-          hasSession: !!sessionData.session,
-          error: sessionError ? sessionError.message : null,
-        })
-        if (!isActive || resolvedRef.current) return
-
-        if (sessionData.session && !sessionError) {
-          finish('/dashboard')
-          return
-        }
-
-        const params = new URLSearchParams(window.location.search)
-        const code = params.get('code')
+        // If Supabase returned a PKCE code, exchange it immediately.
+        const code = new URLSearchParams(window.location.search).get('code')
         if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code)
-          log('log_callback_exchange_result', 'exchangeCodeForSession result', {
-            error: error ? error.message : null,
-          })
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
           if (!isActive || resolvedRef.current) return
-          if (error) {
-            fail(error.message)
+          if (exchangeError) {
+            fail(exchangeError.message)
             return
           }
           finish('/dashboard')
           return
         }
 
-        // No token and no code -> show error.
+        // Implicit OAuth flow: token is in the URL hash (#access_token=...).
+        // Supabase client extracts it automatically, but asynchronously.
+        // Retry getSession a few times with a short delay.
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const { data, error } = await supabase.auth.getSession()
+          // eslint-disable-next-line no-console
+          console.log('[AuthCallback] getSession attempt', attempt, {
+            hasSession: !!data.session,
+            error: error?.message,
+          })
+          if (!isActive || resolvedRef.current) return
+          if (data.session && !error) {
+            finish('/dashboard')
+            return
+          }
+          await new Promise((resolve) => setTimeout(resolve, 100))
+          if (!isActive || resolvedRef.current) return
+        }
+
         fail('no_session_or_code')
       } catch (err) {
-        log('log_callback_exception', 'Recovery exception', {
-          error: String(err),
-        })
-        fail('exception')
+        fail('exception', err)
       }
     }
 
-    // Give the implicit hash recovery a short moment to fire the SIGNED_IN event
-    // before we fall back to manual recovery. 5s is generous for slow networks.
-    timeoutId = setTimeout(attemptRecovery, 300)
+    handleCallback()
 
     return () => {
       isActive = false
-      if (timeoutId) clearTimeout(timeoutId)
-      authListener.subscription.unsubscribe()
     }
   }, [navigate])
 
@@ -144,6 +97,11 @@ export function AuthCallbackPage() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
       <p className="text-destructive">{t('authError')}</p>
+      {errorMessage && (
+        <p className="text-muted-foreground max-w-md whitespace-pre-wrap break-words text-xs">
+          {errorMessage}
+        </p>
+      )}
       <Button onClick={() => navigate('/login', { replace: true })}>
         {t('backToLogin')}
       </Button>
