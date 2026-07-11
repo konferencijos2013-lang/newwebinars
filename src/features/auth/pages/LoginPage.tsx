@@ -78,6 +78,9 @@ export function LoginPage() {
     setError(null)
     setIsLoadingGoogle(true)
 
+    // eslint-disable-next-line no-console
+    console.log('[LoginPage] initiating Google OAuth', { redirectTo: getRedirectTo() })
+
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -88,6 +91,9 @@ export function LoginPage() {
         },
       },
     })
+
+    // eslint-disable-next-line no-console
+    console.log('[LoginPage] signInWithOAuth result', { error: oauthError?.message })
 
     setIsLoadingGoogle(false)
 

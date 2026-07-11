@@ -11,13 +11,28 @@ if (typeof supabaseAnonKey !== 'string' || supabaseAnonKey.length === 0) {
   throw new Error('Missing environment variable: VITE_SUPABASE_ANON_KEY')
 }
 
+// Cookie-backed storage helper. Cookies survive cross-site redirects better
+// than localStorage / sessionStorage in some browsers (Safari, Incognito).
+const cookieStorage = {
+  getItem(key: string): string | null {
+    const match = document.cookie.match(new RegExp('(^| )' + key + '=([^;]+)'))
+    return match ? decodeURIComponent(match[2]) : null
+  },
+  setItem(key: string, value: string): void {
+    // 5 minute expiry is enough for the OAuth round-trip.
+    const expires = new Date(Date.now() + 5 * 60 * 1000).toUTCString()
+    document.cookie = `${key}=${encodeURIComponent(value)}; path=/; expires=${expires}; SameSite=Lax; secure`
+  },
+  removeItem(key: string): void {
+    document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; secure`
+  },
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // Use PKCE for OAuth so /auth/callback receives ?code=... instead of
-    // #access_token. This makes session exchange synchronous and reliable.
-    flowType: 'pkce',
-    detectSessionInUrl: true,
     autoRefreshToken: true,
     persistSession: true,
+    detectSessionInUrl: true,
+    storage: cookieStorage,
   },
 })

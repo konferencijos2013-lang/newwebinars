@@ -41,8 +41,6 @@ export function AuthCallbackPage() {
       hasCode: window.location.search.includes('code='),
     })
 
-    // Supabase auto-extracts the session from the URL hash asynchronously and
-    // emits SIGNED_IN. Listen for that first.
     authListener = supabase.auth.onAuthStateChange((event, session) => {
       // eslint-disable-next-line no-console
       console.log('[AuthCallback] auth event', { event, hasSession: !!session })
@@ -53,7 +51,7 @@ export function AuthCallbackPage() {
 
     async function handleCallback() {
       try {
-        // PKCE path: Supabase returned ?code=...
+        // PKCE path (if Supabase is configured for it server-side).
         const code = new URLSearchParams(window.location.search).get('code')
         if (code) {
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
@@ -66,43 +64,36 @@ export function AuthCallbackPage() {
           return
         }
 
-        // Implicit path: token is in URL hash. Wait a moment for the library
-        // to finish auto-extraction, then poll getSession.
-        for (let attempt = 0; attempt < 30; attempt++) {
-          const { data, error } = await supabase.auth.getSession()
-          // eslint-disable-next-line no-console
-          console.log('[AuthCallback] getSession attempt', attempt, {
-            hasSession: !!data.session,
-            error: error?.message,
+        // Implicit OAuth path: token is in URL hash.
+        // Supabase auto-extracts it, but we also force-extract it if needed.
+        const hashParams = new URLSearchParams(window.location.hash.slice(1))
+        const accessToken = hashParams.get('access_token')
+        const refreshToken = hashParams.get('refresh_token')
+
+        if (accessToken) {
+          const { error: setError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken ?? '',
           })
+          // eslint-disable-next-line no-console
+          console.log('[AuthCallback] setSession result', { error: setError?.message })
+          if (!isActive || resolvedRef.current) return
+          if (setError) {
+            fail(setError.message)
+            return
+          }
+          finish('/dashboard')
+          return
+        }
+
+        // No code and no access_token: poll getSession briefly as a last resort.
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const { data, error } = await supabase.auth.getSession()
           if (!isActive || resolvedRef.current) return
           if (data.session && !error) {
             finish('/dashboard')
             return
           }
-
-          // After a few attempts, try forcing session extraction from the hash.
-          if (attempt === 5 && window.location.hash.includes('access_token')) {
-            const hashParams = new URLSearchParams(window.location.hash.slice(1))
-            const accessToken = hashParams.get('access_token')
-            const refreshToken = hashParams.get('refresh_token')
-            const expiresAt = hashParams.get('expires_at')
-            if (accessToken && expiresAt) {
-              // eslint-disable-next-line no-console
-              console.log('[AuthCallback] forcing setSession from hash')
-              const { error: setError } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken ?? '',
-              })
-              if (!setError) {
-                finish('/dashboard')
-                return
-              }
-              // eslint-disable-next-line no-console
-              console.log('[AuthCallback] setSession error', setError.message)
-            }
-          }
-
           await new Promise((resolve) => setTimeout(resolve, 100))
           if (!isActive || resolvedRef.current) return
         }
