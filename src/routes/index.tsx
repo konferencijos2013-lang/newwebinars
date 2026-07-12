@@ -41,6 +41,11 @@ import { BillingPage } from '@/features/billing/pages/BillingPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
 import { AffiliatePage } from '@/features/affiliate/pages/AffiliatePage'
 import { AnalyticsPage } from '@/features/analytics/pages/AnalyticsPage'
+import { AiDashboardPage } from '@/features/ai/pages/AiDashboardPage'
+import { AiChatPage } from '@/features/ai/pages/AiChatPage'
+import { AiPromptsPage } from '@/features/ai/pages/AiPromptsPage'
+import { AiPromptFormPage } from '@/features/ai/pages/AiPromptFormPage'
+import { AdminRoute } from '@/features/auth/components/AdminRoute'
 
 export function AppRoutes() {
   return (
@@ -80,6 +85,32 @@ export function AppRoutes() {
           <Route path="recordings" element={<RecordingsPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="affiliate" element={<AffiliatePage />} />
+          <Route path="ai" element={<AiDashboardPage />} />
+          <Route path="ai/chat" element={<AiChatPage />} />
+          <Route
+            path="ai/prompts"
+            element={
+              <AdminRoute>
+                <AiPromptsPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="ai/prompts/new"
+            element={
+              <AdminRoute>
+                <AiPromptFormPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="ai/prompts/:id"
+            element={
+              <AdminRoute>
+                <AiPromptFormPage />
+              </AdminRoute>
+            }
+          />
           <Route path="billing" element={<BillingPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

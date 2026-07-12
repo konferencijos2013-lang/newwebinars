@@ -4,7 +4,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 // Temporary diagnostic: log environment state without exposing the full key.
-// eslint-disable-next-line no-console
+ 
 console.log('[supabase.ts] env check', {
   urlType: typeof supabaseUrl,
   urlLength: supabaseUrl?.length ?? 0,

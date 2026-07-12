@@ -4,5 +4,67 @@
   "newChat": "Naujas pokalbis",
   "hint": "Klauskite bet ko apie webinarus, piltuvus arba savo paskyrą.",
   "placeholder": "Rašykite žinutę...",
-  "empty": "Pradėkite pokalbį su AI asistentu."
+  "empty": "Pradėkite pokalbį su AI asistentu.",
+  "dashboard": {
+    "title": "DI Studija",
+    "subtitle": "Generuokite laiškus, skaidrių tekstus, chat scenarijus ir daugiau.",
+    "placeholder": "Apibūdinkite, ko reikia...",
+    "modeLabel": "Režimas",
+    "generate": "Generuoti",
+    "result": "Rezultatas",
+    "prompts": "Tvarkyti promptus"
+  },
+  "chat": {
+    "title": "DI Pokalbis",
+    "history": "Istorija",
+    "noThreads": "Dar nėra pokalbų.",
+    "empty": "Pradėkite pokalbį su DI asistentu.",
+    "placeholder": "Rašykite žinutę..."
+  },
+  "modes": {
+    "email": {
+      "title": "Marketinginis laiškas",
+      "description": "Generuoti webinar reklaminį laišką."
+    },
+    "storytelling": {
+      "title": "Storytelling",
+      "description": "Sukurkite atvėrimo istoriją savo webinarui."
+    },
+    "slides": {
+      "title": "Skaidrių tekstas",
+      "description": "Generuoti skaidrių struktūrą ir kalbėtojo užrašus."
+    },
+    "chat_script": {
+      "title": "Evergreen chat scenarijus",
+      "description": "Generuoti laiku orientuotą simuliuoto chat scenarijų."
+    }
+  },
+  "prompts": {
+    "title": "DI Promptai",
+    "subtitle": "Tvarkykite AI asistento naudojamus system promptus.",
+    "create": "Sukurti promptą",
+    "edit": "Redaguoti",
+    "delete": "Ištrinti",
+    "inactive": "Neaktyvus",
+    "empty": "Promptų nerasta.",
+    "noSystem": "Nėra system prompt",
+    "createTitle": "Sukurti promptą",
+    "editTitle": "Redaguoti promptą",
+    "formSubtitle": "Konfigūruokite system prompt ir vartotojo šabloną.",
+    "nameLabel": "Pavadinimas",
+    "scopeLabel": "Scope",
+    "systemLabel": "System prompt",
+    "templateLabel": "User prompt template",
+    "activeLabel": "Aktyvus",
+    "deleteConfirm": "Ištrinti šį promptą?",
+    "deleteError": "Nepavyko ištrinti prompto.",
+    "loadError": "Nepavyko įkelti promptų."
+  },
+  "scopes": {
+    "global": "Globalus",
+    "webinar": "Webinaro",
+    "funnel": "Funnelio",
+    "chat_script": "Chat scenarijaus",
+    "support": "Pagalbos"
+  }
 }

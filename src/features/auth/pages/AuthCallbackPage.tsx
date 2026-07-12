@@ -27,7 +27,7 @@ export function AuthCallbackPage() {
       if (resolvedRef.current) return
       resolvedRef.current = true
       if (authListener) authListener.subscription.unsubscribe()
-      // eslint-disable-next-line no-console
+       
       console.error('[AuthCallback] failed:', reason, details)
       if (isActive) {
         setErrorMessage(reason)
@@ -35,14 +35,14 @@ export function AuthCallbackPage() {
       }
     }
 
-    // eslint-disable-next-line no-console
+     
     console.log('[AuthCallback] mount', {
       hasAccessToken: window.location.hash.includes('access_token'),
       hasCode: window.location.search.includes('code='),
     })
 
     authListener = supabase.auth.onAuthStateChange((event, session) => {
-      // eslint-disable-next-line no-console
+       
       console.log('[AuthCallback] auth event', { event, hasSession: !!session })
       if (event === 'SIGNED_IN' && session) {
         finish('/dashboard')
@@ -75,7 +75,7 @@ export function AuthCallbackPage() {
             access_token: accessToken,
             refresh_token: refreshToken ?? '',
           })
-          // eslint-disable-next-line no-console
+           
           console.log('[AuthCallback] setSession result', { error: setError?.message })
           if (!isActive || resolvedRef.current) return
           if (setError) {

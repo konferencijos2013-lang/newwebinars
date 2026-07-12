@@ -39,7 +39,7 @@ export function useAccount() {
       if (!isActive) return
 
       if (error) {
-        // eslint-disable-next-line no-console
+         
         console.error('[useAccount] query error', error)
         setState({ status: 'error', account: null, membership: null, error })
         return

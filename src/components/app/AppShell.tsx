@@ -9,6 +9,7 @@ import {
   Settings,
   Users,
   Video,
+  Bot,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useUser } from '@/features/auth/hooks/useUser'
@@ -92,6 +93,11 @@ export function AppShell() {
             to="/recordings"
             icon={Film}
             label={t('navigation.recordings')}
+          />
+          <SidebarNavLink
+            to="/ai"
+            icon={Bot}
+            label={t('navigation.ai')}
           />
           <SidebarNavLink
             to="/analytics"

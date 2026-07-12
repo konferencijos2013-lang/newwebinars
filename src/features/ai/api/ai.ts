@@ -1,6 +1,15 @@
 import { supabase } from '@/lib/supabase'
 import type { AiPrompt, AiThread, AiMessage } from '@/shared/database.types'
 
+export type PromptInput = {
+  account_id: string | null
+  scope: string
+  name: string
+  system_prompt: string
+  user_prompt_template: string
+  is_active?: boolean
+}
+
 export async function fetchPrompts(accountId: string, scope?: string) {
   let query = supabase
     .from('ai_prompts')
@@ -15,6 +24,57 @@ export async function fetchPrompts(accountId: string, scope?: string) {
   const { data, error } = await query
   if (error) throw error
   return (data ?? []) as AiPrompt[]
+}
+
+export async function fetchAllPrompts(accountId: string, scope?: string) {
+  let query = supabase
+    .from('ai_prompts')
+    .select('*')
+    .or(`account_id.eq.${accountId},account_id.is.null`)
+
+  if (scope) {
+    query = query.eq('scope', scope)
+  }
+
+  const { data, error } = await query.order('scope').order('name')
+  if (error) throw error
+  return (data ?? []) as AiPrompt[]
+}
+
+export async function fetchPrompt(id: string) {
+  const { data, error } = await supabase
+    .from('ai_prompts')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (error) throw error
+  return data as AiPrompt
+}
+
+export async function createPrompt(input: PromptInput) {
+  const { data, error } = await supabase
+    .from('ai_prompts')
+    .insert(input)
+    .select()
+    .single()
+  if (error) throw error
+  return data as AiPrompt
+}
+
+export async function updatePrompt(id: string, input: Partial<PromptInput>) {
+  const { data, error } = await supabase
+    .from('ai_prompts')
+    .update(input)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data as AiPrompt
+}
+
+export async function deletePrompt(id: string) {
+  const { error } = await supabase.from('ai_prompts').delete().eq('id', id)
+  if (error) throw error
 }
 
 export async function fetchThread(threadId: string) {

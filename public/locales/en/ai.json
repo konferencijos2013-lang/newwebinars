@@ -4,5 +4,67 @@
   "newChat": "New chat",
   "hint": "Ask me anything about webinars, funnels, or your account.",
   "placeholder": "Type your message...",
-  "empty": "Start a conversation with the AI assistant."
+  "empty": "Start a conversation with the AI assistant.",
+  "dashboard": {
+    "title": "AI Studio",
+    "subtitle": "Generate emails, slide copy, chat scripts, and more.",
+    "placeholder": "Describe what you need...",
+    "modeLabel": "Mode",
+    "generate": "Generate",
+    "result": "Result",
+    "prompts": "Manage prompts"
+  },
+  "chat": {
+    "title": "AI Chat",
+    "history": "History",
+    "noThreads": "No threads yet.",
+    "empty": "Start a conversation with the AI assistant.",
+    "placeholder": "Type your message..."
+  },
+  "modes": {
+    "email": {
+      "title": "Marketing email",
+      "description": "Generate a webinar promotion email."
+    },
+    "storytelling": {
+      "title": "Storytelling",
+      "description": "Create an opening story for your webinar."
+    },
+    "slides": {
+      "title": "Slides copy",
+      "description": "Generate slide outline and speaker notes."
+    },
+    "chat_script": {
+      "title": "Evergreen chat script",
+      "description": "Generate a timed simulated chat script."
+    }
+  },
+  "prompts": {
+    "title": "AI Prompts",
+    "subtitle": "Manage system prompts used by the AI assistant.",
+    "create": "Create prompt",
+    "edit": "Edit",
+    "delete": "Delete",
+    "inactive": "Inactive",
+    "empty": "No prompts found.",
+    "noSystem": "No system prompt",
+    "createTitle": "Create prompt",
+    "editTitle": "Edit prompt",
+    "formSubtitle": "Configure the system prompt and user template.",
+    "nameLabel": "Name",
+    "scopeLabel": "Scope",
+    "systemLabel": "System prompt",
+    "templateLabel": "User prompt template",
+    "activeLabel": "Active",
+    "deleteConfirm": "Delete this prompt?",
+    "deleteError": "Could not delete prompt.",
+    "loadError": "Could not load prompts."
+  },
+  "scopes": {
+    "global": "Global",
+    "webinar": "Webinar",
+    "funnel": "Funnel",
+    "chat_script": "Chat script",
+    "support": "Support"
+  }
 }

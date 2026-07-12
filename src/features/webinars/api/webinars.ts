@@ -18,7 +18,7 @@ export type CreateWebinarInput = {
 }
 
 export async function fetchWebinars(accountId: string) {
-  // eslint-disable-next-line no-console
+   
   console.log('[fetchWebinars] accountId', accountId)
 
   const { data, error } = await supabase
@@ -27,7 +27,7 @@ export async function fetchWebinars(accountId: string) {
     .eq('account_id', accountId)
     .order('created_at', { ascending: false })
 
-  // eslint-disable-next-line no-console
+   
   console.log('[fetchWebinars] result', { data, error: error?.message })
 
   if (error) throw error
@@ -57,7 +57,7 @@ export async function fetchWebinarSchedules(webinarId: string) {
 }
 
 export async function createWebinar(input: CreateWebinarInput) {
-  // eslint-disable-next-line no-console
+   
   console.log('[createWebinar] input', input)
 
   const { data, error } = await supabase
@@ -66,7 +66,7 @@ export async function createWebinar(input: CreateWebinarInput) {
     .select()
     .single()
 
-  // eslint-disable-next-line no-console
+   
   console.log('[createWebinar] result', { data, error: error?.message })
 
   if (error) throw error

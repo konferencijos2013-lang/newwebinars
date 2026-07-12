@@ -27,6 +27,7 @@
     "affiliate": "Affiliate",
     "billing": "Billing",
     "settings": "Settings",
+    "ai": "AI",
     "user": "User"
   },
   "dashboard": {
@@ -39,5 +40,9 @@
     "funnelsDescription": "Build registration and sales pages",
     "recordingsDescription": "Manage recordings and storage",
     "analyticsDescription": "View performance and usage"
+  },
+  "adminRequired": {
+    "title": "Admin access required",
+    "description": "You don't have permission to view this page."
   }
 }

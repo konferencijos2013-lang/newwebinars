@@ -7,14 +7,17 @@ type UserState =
   | { status: 'authenticated'; user: AppUser }
   | { status: 'unauthenticated'; user: null }
 
-function mapUser(sessionUser: {
-  id: string
-  email?: string | undefined
-}): AppUser {
+function mapUser(
+  sessionUser: {
+    id: string
+    email?: string | undefined
+  },
+  profileRole: string | null,
+): AppUser {
   return {
     id: sessionUser.id,
     email: sessionUser.email ?? null,
-    role: 'guest',
+    role: (profileRole as AppUser['role']) ?? 'guest',
   }
 }
 
@@ -27,17 +30,32 @@ export function useUser() {
   useEffect(() => {
     let isActive = true
 
-    supabase.auth.getSession().then(({ data, error }) => {
+    async function load() {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession()
       if (!isActive) return
-      const session = data.session
 
-      if (error || !session) {
+      if (sessionError || !sessionData.session) {
         setState({ status: 'unauthenticated', user: null })
         return
       }
 
-      setState({ status: 'authenticated', user: mapUser(session.user) })
-    })
+      const sessionUser = sessionData.session.user
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', sessionUser.id)
+        .single()
+
+      if (!isActive) return
+
+      setState({
+        status: 'authenticated',
+        user: mapUser(sessionUser, profile?.role ?? null),
+      })
+    }
+
+    load()
 
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isActive) return
@@ -47,7 +65,19 @@ export function useUser() {
         return
       }
 
-      setState({ status: 'authenticated', user: mapUser(session.user) })
+      // Refetch profile role after sign-in to keep admin check accurate.
+      supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (!isActive) return
+          setState({
+            status: 'authenticated',
+            user: mapUser(session.user, profile?.role ?? null),
+          })
+        })
     })
 
     return () => {

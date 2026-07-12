@@ -27,6 +27,7 @@
     "affiliate": "Partnerystė",
     "billing": "Mokėjimai",
     "settings": "Nustatymai",
+    "ai": "DI",
     "user": "Vartotojas"
   },
   "dashboard": {
@@ -39,5 +40,9 @@
     "funnelsDescription": "Kurkite registracijos ir pardavimo puslapius",
     "recordingsDescription": "Tvarkykite įrašus ir saugyklą",
     "analyticsDescription": "Matykite rezultatus ir naudojimą"
+  },
+  "adminRequired": {
+    "title": "Reikalingas admin prieiga",
+    "description": "Jūs neturite teisės matyti šį puslapį."
   }
 }
