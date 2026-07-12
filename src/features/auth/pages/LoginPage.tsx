@@ -85,10 +85,6 @@ export function LoginPage() {
       provider: 'google',
       options: {
         redirectTo: getRedirectTo(),
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        },
       },
     })
 

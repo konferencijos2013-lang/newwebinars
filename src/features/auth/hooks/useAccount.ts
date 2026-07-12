@@ -27,32 +27,35 @@ export function useAccount() {
         return
       }
 
+      // Use .limit(1) without .single() because PostgREST returns 406 when the
+      // user has no membership rows. An empty array is handled below.
       const { data, error } = await supabase
         .from('account_members')
         .select('*, accounts(*)')
         .eq('user_id', userId)
         .order('joined_at', { ascending: true })
         .limit(1)
-        .single()
+
+      if (!isActive) return
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          if (isActive)
-            setState({ status: 'empty', account: null, membership: null })
-          return
-        }
-        if (isActive)
-          setState({ status: 'error', account: null, membership: null, error })
+        // eslint-disable-next-line no-console
+        console.error('[useAccount] query error', error)
+        setState({ status: 'error', account: null, membership: null, error })
         return
       }
 
-      if (isActive) {
-        setState({
-          status: 'ready',
-          account: data.accounts as unknown as Account,
-          membership: data as unknown as AccountMember,
-        })
+      const first = data?.[0]
+      if (!first) {
+        setState({ status: 'empty', account: null, membership: null })
+        return
       }
+
+      setState({
+        status: 'ready',
+        account: first.accounts as unknown as Account,
+        membership: first as unknown as AccountMember,
+      })
     }
 
     load()
