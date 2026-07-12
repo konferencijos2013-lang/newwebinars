@@ -8,7 +8,7 @@ language plpgsql
 security definer
 set search_path = public
 as $$
-decl
+declare
   new_account_id uuid;
   base_slug text;
   final_slug text;
@@ -83,8 +83,7 @@ where not exists (
 )
 and not exists (
   select 1 from public.accounts a where a.owner_id = p.id
-)
-on conflict (owner_id) do nothing;
+);
 
 insert into public.account_members (account_id, user_id, role, joined_at)
 select a.id, a.owner_id, 'owner', now ()
