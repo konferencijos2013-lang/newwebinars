@@ -3,6 +3,18 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// Temporary diagnostic: log environment state without exposing the full key.
+// eslint-disable-next-line no-console
+console.log('[supabase.ts] env check', {
+  urlType: typeof supabaseUrl,
+  urlLength: supabaseUrl?.length ?? 0,
+  keyType: typeof supabaseAnonKey,
+  keyLength: supabaseAnonKey?.length ?? 0,
+  keyPreview: typeof supabaseAnonKey === 'string' && supabaseAnonKey.length > 8
+    ? `${supabaseAnonKey.slice(0, 4)}...${supabaseAnonKey.slice(-4)}`
+    : 'missing',
+})
+
 if (typeof supabaseUrl !== 'string' || supabaseUrl.length === 0) {
   throw new Error('Missing environment variable: VITE_SUPABASE_URL')
 }
