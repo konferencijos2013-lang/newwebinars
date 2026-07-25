@@ -26,14 +26,25 @@ if (typeof supabaseAnonKey !== 'string' || supabaseAnonKey.length === 0) {
 
 // Cookie-backed storage helper. Cookies survive cross-site redirects better
 // than localStorage / sessionStorage in some browsers (Safari, Incognito).
+//
+// The PKCE code verifier only needs to live for the duration of the OAuth
+// round-trip, but the actual session (access/refresh token) must persist for
+// the whole login — giving everything a 5 minute expiry silently logged
+// users out a few minutes after sign-in.
+const FIVE_MINUTES_MS = 5 * 60 * 1000
+const HUNDRED_DAYS_MS = 100 * 24 * 60 * 60 * 1000
+
+function cookieMaxAge(key: string): number {
+  return key.endsWith('-code-verifier') ? FIVE_MINUTES_MS : HUNDRED_DAYS_MS
+}
+
 const cookieStorage = {
   getItem(key: string): string | null {
     const match = document.cookie.match(new RegExp('(^| )' + key + '=([^;]+)'))
     return match ? decodeURIComponent(match[2]) : null
   },
   setItem(key: string, value: string): void {
-    // 5 minute expiry is enough for the OAuth round-trip.
-    const expires = new Date(Date.now() + 5 * 60 * 1000).toUTCString()
+    const expires = new Date(Date.now() + cookieMaxAge(key)).toUTCString()
     document.cookie = `${key}=${encodeURIComponent(value)}; path=/; expires=${expires}; SameSite=Lax; secure`
   },
   removeItem(key: string): void {

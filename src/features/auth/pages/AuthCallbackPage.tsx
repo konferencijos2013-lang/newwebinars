@@ -36,10 +36,27 @@ export function AuthCallbackPage() {
       }
     }
 
+    const queryParams = new URLSearchParams(window.location.search)
+    const hashParamsForError = new URLSearchParams(
+      window.location.hash.slice(1),
+    )
+    const oauthError =
+      queryParams.get('error_description') ||
+      queryParams.get('error') ||
+      hashParamsForError.get('error_description') ||
+      hashParamsForError.get('error')
+
     console.log('[AuthCallback] mount', {
+      href: window.location.href,
       hasAccessToken: window.location.hash.includes('access_token'),
       hasCode: window.location.search.includes('code='),
+      oauthError,
     })
+
+    if (oauthError) {
+      fail(oauthError)
+      return
+    }
 
     authListener = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[AuthCallback] auth event', { event, hasSession: !!session })
@@ -51,7 +68,7 @@ export function AuthCallbackPage() {
     async function handleCallback() {
       try {
         // PKCE path (if Supabase is configured for it server-side).
-        const code = new URLSearchParams(window.location.search).get('code')
+        const code = queryParams.get('code')
         if (code) {
           const { error: exchangeError } =
             await supabase.auth.exchangeCodeForSession(code)
