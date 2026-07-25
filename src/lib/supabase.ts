@@ -56,7 +56,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true,
+    // AuthCallbackPage exchanges the code / sets the session manually. If
+    // this were left on, supabase-js's own automatic URL detection races
+    // against that manual handling and consumes the (single-use) PKCE code
+    // first, so the page's own exchange fails with an empty/stripped URL
+    // and no usable error — exactly the "no_session_or_code" symptom.
+    detectSessionInUrl: false,
     storage: cookieStorage,
   },
 })
