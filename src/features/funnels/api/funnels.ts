@@ -56,15 +56,31 @@ export async function deleteFunnel(id: string) {
   if (error) throw error
 }
 
+// Funnel flow order (registration -> waiting room -> webinar room -> offer),
+// not alphabetical — sorting by `path` put "Offer" before "Registration".
+const STEP_TYPE_ORDER: Record<string, number> = {
+  registration: 0,
+  waiting_room: 1,
+  webinar_room: 2,
+  offer: 3,
+  order_form: 4,
+  thank_you: 5,
+  lead_magnet: 6,
+}
+
 export async function fetchFunnelPages(funnelId: string) {
   const { data, error } = await supabase
     .from('funnel_pages')
     .select('*')
     .eq('funnel_id', funnelId)
-    .order('path', { ascending: true })
 
   if (error) throw error
-  return (data ?? []) as FunnelPage[]
+  const pages = (data ?? []) as FunnelPage[]
+  return pages.sort(
+    (a, b) =>
+      (STEP_TYPE_ORDER[a.step_type] ?? 99) -
+      (STEP_TYPE_ORDER[b.step_type] ?? 99),
+  )
 }
 
 export async function createDefaultPages(

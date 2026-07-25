@@ -1,6 +1,23 @@
 import { MessageCircle, Play, User, Clock } from 'lucide-react'
 import type { FunnelBlock } from '@/shared/database.types'
 
+function Rich({
+  html,
+  fallback,
+  className,
+}: {
+  html: unknown
+  fallback: string
+  className?: string
+}) {
+  return (
+    <div
+      className={className}
+      dangerouslySetInnerHTML={{ __html: (html as string) || fallback }}
+    />
+  )
+}
+
 export function BlockRenderer({
   block,
   isPreview = false,
@@ -10,9 +27,7 @@ export function BlockRenderer({
 }) {
   const content = (block.content as Record<string, unknown>) || {}
 
-  const common = isPreview
-    ? 'border-2 border-dashed border-transparent hover:border-primary/30 p-4 rounded-lg transition-colors'
-    : 'p-4'
+  const common = isPreview ? 'p-6 rounded-lg' : 'p-4'
 
   switch (block.block_type) {
     case 'hero':
@@ -24,20 +39,26 @@ export function BlockRenderer({
               (content.align as React.CSSProperties['textAlign']) || 'center',
           }}
         >
-          <h2 className="text-foreground text-3xl font-bold">
-            {(content.title as string) ?? 'Hero title'}
-          </h2>
-          <p className="text-muted-foreground mt-2">
-            {(content.subtitle as string) ?? 'Subtitle'}
-          </p>
+          <Rich
+            html={content.title}
+            fallback="Hero title"
+            className="text-foreground text-3xl font-bold [&_a]:underline"
+          />
+          <Rich
+            html={content.subtitle}
+            fallback="Subtitle"
+            className="text-muted-foreground mt-2 [&_a]:underline"
+          />
         </div>
       )
     case 'text':
       return (
         <div className={common}>
-          <p className="text-foreground whitespace-pre-wrap">
-            {(content.text as string) ?? 'Text content'}
-          </p>
+          <Rich
+            html={content.text}
+            fallback="Text content"
+            className="text-foreground [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+          />
         </div>
       )
     case 'video':
@@ -82,7 +103,7 @@ export function BlockRenderer({
             {(
               (content.items as string[]) ?? ['Benefit one', 'Benefit two']
             ).map((item, idx) => (
-              <li key={idx}>{item}</li>
+              <li key={idx} dangerouslySetInnerHTML={{ __html: item }} />
             ))}
           </ul>
         </div>
@@ -96,9 +117,11 @@ export function BlockRenderer({
               <p className="font-semibold">
                 {(content.name as string) ?? 'Speaker name'}
               </p>
-              <p className="text-muted-foreground text-sm">
-                {(content.bio as string) ?? 'Short bio'}
-              </p>
+              <Rich
+                html={content.bio}
+                fallback="Short bio"
+                className="text-muted-foreground text-sm"
+              />
             </div>
           </div>
         </div>
@@ -109,7 +132,7 @@ export function BlockRenderer({
           <div className="border-border bg-muted mx-auto max-w-md rounded-lg border p-4">
             <div className="flex items-center gap-2 border-b pb-2 text-sm font-medium">
               <MessageCircle className="h-4 w-4" />
-              {(content.title as string) ?? 'Live chat'}
+              <Rich html={content.title} fallback="Live chat" />
             </div>
             <div className="text-muted-foreground py-4 text-center text-sm">
               Chat messages will appear here
@@ -125,7 +148,7 @@ export function BlockRenderer({
               href={(content.url as string) ?? '#'}
               className="bg-primary text-primary-foreground inline-block rounded-md px-6 py-3 font-medium"
             >
-              {(content.text as string) ?? 'Get access now'}
+              <Rich html={content.text} fallback="Get access now" />
             </a>
           </div>
         </div>
@@ -134,9 +157,11 @@ export function BlockRenderer({
       return (
         <div className={common}>
           <div className="border-border mx-auto max-w-md rounded-lg border p-6 text-center">
-            <p className="font-semibold">
-              {(content.title as string) ?? 'Special offer'}
-            </p>
+            <Rich
+              html={content.title}
+              fallback="Special offer"
+              className="font-semibold"
+            />
             <p className="text-muted-foreground text-sm">
               {(content.price as string) ?? '$0.00'}
             </p>
@@ -165,8 +190,16 @@ export function BlockRenderer({
               }>) ?? [{ question: 'Question?', answer: 'Answer.' }]
             ).map((item, idx) => (
               <div key={idx} className="border-b py-2">
-                <p className="font-medium">{item.question}</p>
-                <p className="text-muted-foreground text-sm">{item.answer}</p>
+                <Rich
+                  html={item.question}
+                  fallback="Question?"
+                  className="font-medium"
+                />
+                <Rich
+                  html={item.answer}
+                  fallback="Answer."
+                  className="text-muted-foreground text-sm"
+                />
               </div>
             ))}
           </div>
