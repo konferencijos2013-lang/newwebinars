@@ -8,12 +8,15 @@
   "submit": "Pateikti",
   "close": "Uždaryti",
   "open": "Atidaryti",
+  "pricing": "Kainos",
+  "partners": "Partneriai",
   "language": {
     "en": "English",
     "lt": "Lietuvių",
     "ru": "Русский"
   },
   "theme": {
+    "label": "Tema",
     "light": "Šviesi",
     "dark": "Tamsi",
     "system": "Sistema"
@@ -42,7 +45,10 @@
     "analyticsDescription": "Matykite rezultatus ir naudojimą"
   },
   "adminRequired": {
-    "title": "Reikalingas admin prieiga",
+    "title": "Reikalinga administratoriaus prieiga",
     "description": "Jūs neturite teisės matyti šį puslapį."
+  },
+  "footer": {
+    "rights": "Visos teisės saugomos."
   }
 }

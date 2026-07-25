@@ -3,9 +3,12 @@
     "headline": "Webinars that convert",
     "subheadline": "NewWebinars helps you host live and automated webinars, capture registrations, engage attendees, and drive offers — all in one place.",
     "ctaPrimary": "Get started free",
-    "ctaSecondary": "See how it works"
+    "ctaSecondary": "See how it works",
+    "note": "Free to start · No card required",
+    "liveLabel": "LIVE"
   },
   "features": {
+    "eyebrow": "Features",
     "title": "Everything you need to run professional webinars",
     "subtitle": "From first click to final follow-up.",
     "items": [
@@ -36,6 +39,7 @@
     ]
   },
   "howItWorks": {
+    "eyebrow": "Process",
     "title": "How it works",
     "steps": [
       {

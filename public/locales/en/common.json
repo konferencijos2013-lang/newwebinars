@@ -8,12 +8,15 @@
   "submit": "Submit",
   "close": "Close",
   "open": "Open",
+  "pricing": "Pricing",
+  "partners": "Partners",
   "language": {
     "en": "English",
     "lt": "Lietuvių",
     "ru": "Русский"
   },
   "theme": {
+    "label": "Theme",
     "light": "Light",
     "dark": "Dark",
     "system": "System"
@@ -44,5 +47,8 @@
   "adminRequired": {
     "title": "Admin access required",
     "description": "You don't have permission to view this page."
+  },
+  "footer": {
+    "rights": "All rights reserved."
   }
 }

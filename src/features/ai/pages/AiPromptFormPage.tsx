@@ -136,7 +136,7 @@ export function AiPromptFormPage() {
             onChange={(e) =>
               setForm((f) => ({ ...f, system_prompt: e.target.value }))
             }
-            className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+            className="border-border bg-background text-foreground focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
             required
           />
         </div>
@@ -152,7 +152,7 @@ export function AiPromptFormPage() {
             onChange={(e) =>
               setForm((f) => ({ ...f, user_prompt_template: e.target.value }))
             }
-            className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+            className="border-border bg-background text-foreground focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
           />
         </div>
 
@@ -164,7 +164,7 @@ export function AiPromptFormPage() {
             onChange={(e) =>
               setForm((f) => ({ ...f, is_active: e.target.checked }))
             }
-            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
           />
           <Label htmlFor="is_active">{t('prompts.activeLabel')}</Label>
         </div>

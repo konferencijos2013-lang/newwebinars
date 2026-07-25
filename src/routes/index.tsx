@@ -4,7 +4,10 @@ import { PublicLayout } from '@/components/layout/PublicLayout'
 // #region agent log
 fetch('http://127.0.0.1:7510/ingest/98e51e74-2cb8-43d7-ae19-9d551565ede3', {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '85756a' },
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Debug-Session-Id': '85756a',
+  },
   body: JSON.stringify({
     sessionId: '85756a',
     id: 'log_routes_module',

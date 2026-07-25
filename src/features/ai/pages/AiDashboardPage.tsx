@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { Bot, FileText, Mail, MessageSquare, SlidersHorizontal, Sparkles } from 'lucide-react'
+import {
+  Bot,
+  FileText,
+  Mail,
+  MessageSquare,
+  SlidersHorizontal,
+  Sparkles,
+} from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardDescription } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
@@ -13,12 +20,14 @@ const scopes = [
   {
     key: 'email',
     icon: Mail,
-    prompt: 'Write a marketing email for a webinar. Include a hook, value, date, and CTA.',
+    prompt:
+      'Write a marketing email for a webinar. Include a hook, value, date, and CTA.',
   },
   {
     key: 'storytelling',
     icon: Sparkles,
-    prompt: 'Create a short storytelling script for a webinar opening (150 words).',
+    prompt:
+      'Create a short storytelling script for a webinar opening (150 words).',
   },
   {
     key: 'slides',
@@ -28,7 +37,8 @@ const scopes = [
   {
     key: 'chat_script',
     icon: MessageSquare,
-    prompt: 'Create a simulated evergreen webinar chat script with 5 messages and timestamps.',
+    prompt:
+      'Create a simulated evergreen webinar chat script with 5 messages and timestamps.',
   },
 ]
 
@@ -83,7 +93,9 @@ export function AiDashboardPage() {
           <h1 className="text-foreground text-2xl font-bold tracking-tight">
             {t('dashboard.title')}
           </h1>
-          <p className="text-muted-foreground text-sm">{t('dashboard.subtitle')}</p>
+          <p className="text-muted-foreground text-sm">
+            {t('dashboard.subtitle')}
+          </p>
         </div>
         {isAdmin ? (
           <div className="flex gap-2">
@@ -99,7 +111,7 @@ export function AiDashboardPage() {
         {scopes.map((s) => (
           <Card
             key={s.key}
-            className="cursor-pointer transition-colors hover:border-primary/50"
+            className="hover:border-primary/50 cursor-pointer transition-colors"
             onClick={() => {
               setMode(s.key)
               setInput(s.prompt)
@@ -126,15 +138,20 @@ export function AiDashboardPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           rows={4}
-          className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+          className="border-border bg-background text-foreground focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
           placeholder={t('dashboard.placeholder')}
         />
         <div className="flex items-center justify-between">
           <div className="text-muted-foreground text-sm">
-            {t('dashboard.modeLabel')}: <span className="font-medium">{t(`modes.${mode}.title`)}</span>
+            {t('dashboard.modeLabel')}:{' '}
+            <span className="font-medium">{t(`modes.${mode}.title`)}</span>
           </div>
           <Button onClick={handleGenerate} disabled={loading || !input.trim()}>
-            {loading ? <Spinner className="mr-2 h-4 w-4" /> : <Bot className="mr-2 h-4 w-4" />}
+            {loading ? (
+              <Spinner className="mr-2 h-4 w-4" />
+            ) : (
+              <Bot className="mr-2 h-4 w-4" />
+            )}
             {t('dashboard.generate')}
           </Button>
         </div>
@@ -143,7 +160,7 @@ export function AiDashboardPage() {
       {reply ? (
         <div className="space-y-2">
           <h3 className="font-semibold">{t('dashboard.result')}</h3>
-          <div className="border-border bg-muted/50 dark:bg-muted/30 whitespace-pre-wrap rounded-md border p-4 text-sm">
+          <div className="border-border bg-muted/50 dark:bg-muted/30 rounded-md border p-4 text-sm whitespace-pre-wrap">
             {reply}
           </div>
         </div>

@@ -78,8 +78,9 @@ export function LoginPage() {
     setError(null)
     setIsLoadingGoogle(true)
 
-     
-    console.log('[LoginPage] initiating Google OAuth', { redirectTo: getRedirectTo() })
+    console.log('[LoginPage] initiating Google OAuth', {
+      redirectTo: getRedirectTo(),
+    })
 
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -88,8 +89,9 @@ export function LoginPage() {
       },
     })
 
-     
-    console.log('[LoginPage] signInWithOAuth result', { error: oauthError?.message })
+    console.log('[LoginPage] signInWithOAuth result', {
+      error: oauthError?.message,
+    })
 
     setIsLoadingGoogle(false)
 

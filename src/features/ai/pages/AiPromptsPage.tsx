@@ -67,7 +67,9 @@ export function AiPromptsPage() {
           <h1 className="text-foreground text-2xl font-bold tracking-tight">
             {t('prompts.title')}
           </h1>
-          <p className="text-muted-foreground text-sm">{t('prompts.subtitle')}</p>
+          <p className="text-muted-foreground text-sm">
+            {t('prompts.subtitle')}
+          </p>
         </div>
         <Button onClick={() => navigate('/ai/prompts/new')}>
           <Plus className="mr-2 h-4 w-4" />
@@ -80,11 +82,11 @@ export function AiPromptsPage() {
           <p className="text-muted-foreground">{t('prompts.empty')}</p>
         </div>
       ) : (
-        <div className="divide-y divide-border rounded-lg border">
+        <div className="divide-border divide-y rounded-lg border">
           {prompts.map((prompt) => (
             <div
               key={prompt.id}
-              className="flex items-start justify-between gap-4 p-4 hover:bg-muted/50"
+              className="hover:bg-muted/50 flex items-start justify-between gap-4 p-4"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">

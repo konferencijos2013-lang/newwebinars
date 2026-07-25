@@ -65,7 +65,10 @@ export function AiChatPage() {
 
       const previousMessages: Message[] = messages
         .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+        .map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        }))
 
       await sendMessage({
         thread_id: thread.id,
@@ -112,7 +115,7 @@ export function AiChatPage() {
 
   return (
     <div className="mx-auto flex h-[calc(100vh-6rem)] max-w-6xl gap-4 overflow-hidden">
-      <aside className="border-border w-64 shrink-0 rounded-l-lg border bg-card">
+      <aside className="border-border bg-card w-64 shrink-0 rounded-l-lg border">
         <div className="border-b p-3">
           <h3 className="font-semibold">{t('chat.history')}</h3>
         </div>
@@ -143,7 +146,7 @@ export function AiChatPage() {
         </div>
       </aside>
 
-      <div className="border-border flex flex-1 flex-col rounded-r-lg border bg-card">
+      <div className="border-border bg-card flex flex-1 flex-col rounded-r-lg border">
         <div className="border-b p-4">
           <h2 className="font-semibold">
             {activeThread?.title ?? t('chat.title')}

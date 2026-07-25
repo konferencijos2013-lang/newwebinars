@@ -20,10 +20,13 @@ export function Features() {
   }>
 
   return (
-    <section className="bg-muted/50 py-20 lg:py-32">
+    <section className="relative py-20 lg:py-32">
       <Container>
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <span className="text-primary text-sm font-semibold tracking-wide uppercase">
+            {t('features.eyebrow')}
+          </span>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
             {t('features.title')}
           </h2>
           <p className="text-muted-foreground mt-4 text-lg">
@@ -31,19 +34,22 @@ export function Features() {
           </p>
         </div>
 
-        <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item, index) => {
             const Icon = icons[index] ?? Calendar
             return (
               <div
                 key={item.title}
-                className="bg-card text-card-foreground rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-md"
+                className="group bg-card/60 border-border hover:border-primary/30 relative overflow-hidden rounded-2xl border p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
-                <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg">
+                <div className="from-primary/10 pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="from-primary text-primary-foreground shadow-primary/20 relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br to-indigo-500 shadow-lg">
                   <Icon className="h-5 w-5" />
                 </div>
-                <h3 className="mt-4 text-lg font-semibold">{item.title}</h3>
-                <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                <h3 className="relative mt-5 text-lg font-semibold">
+                  {item.title}
+                </h3>
+                <p className="text-muted-foreground relative mt-2 text-sm leading-relaxed">
                   {item.description}
                 </p>
               </div>

@@ -94,11 +94,7 @@ export function AppShell() {
             icon={Film}
             label={t('navigation.recordings')}
           />
-          <SidebarNavLink
-            to="/ai"
-            icon={Bot}
-            label={t('navigation.ai')}
-          />
+          <SidebarNavLink to="/ai" icon={Bot} label={t('navigation.ai')} />
           <SidebarNavLink
             to="/analytics"
             icon={BarChart3}

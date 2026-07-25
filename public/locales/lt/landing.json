@@ -1,71 +1,75 @@
 {
   "hero": {
-    "headline": "Vebinarai, kurie parduoda",
-    "subheadline": "NewWebinars padeda vesti tiesioginius ir automatizuotus internetinius seminarus, rinkti registracijas, įtraukti dalyvius ir pateikti pasiūlymus — viskas vienoje vietoje.",
+    "headline": "Webinarai, kurie parduoda",
+    "subheadline": "NewWebinars padeda vesti tiesioginius ir automatizuotus webinarus, rinkti registracijas, įtraukti dalyvius ir pristatyti pasiūlymus — viskas vienoje vietoje.",
     "ctaPrimary": "Pradėti nemokamai",
-    "ctaSecondary": "Kaip tai veikia"
+    "ctaSecondary": "Kaip tai veikia",
+    "note": "Nemokama pradžia · Kortelė nereikalinga",
+    "liveLabel": "TIESIOGIAI"
   },
   "features": {
+    "eyebrow": "Funkcijos",
     "title": "Viskas, ko reikia profesionaliems webinarams",
-    "subtitle": "Nuo pirmojo paspaudimo iki galutinio aptarnavimo.",
+    "subtitle": "Nuo pirmo paspaudimo iki paskutinio priminimo.",
     "items": [
       {
         "title": "Tiesioginiai ir automatizuoti webinarai",
-        "description": "Veskite realaus laiko užsiėmimus arba nuolat veikiančius automatizuotus renginius."
+        "description": "Rengite tiesiogines transliacijas arba visą parą veikiančius automatizuotus webinarus."
       },
       {
-        "title": "Prekiniai registracijos puslapiai",
-        "description": "Kiekvienam webinarui pritaikomi, konversijai palankūs registracijos puslapiai."
+        "title": "Prekės ženklą atspindintys registracijos puslapiai",
+        "description": "Kiekvienam webinarui pritaikomi, konversijai optimizuoti registracijos puslapiai."
       },
       {
-        "title": "Laukimo ir transliacijos kambariai",
-        "description": "Išbaigtas priešrenginis lankytojo patirtis ir skirta viena pristatymui."
+        "title": "Laukimo kambarys ir tiesioginė transliacija",
+        "description": "Puikiai suplanuota patirtis prieš renginį ir atskira erdvė pačiai transliacijai."
       },
       {
         "title": "Integruotas pokalbis ir pasiūlymai",
-        "description": "Bendraukite su auditorija ir pateikite pasiūlymus neišeidami iš kambario."
+        "description": "Bendraukite su auditorija ir pristatykite pasiūlymus neišeidami iš transliacijos kambario."
       },
       {
-        "title": "Priminimai ir laiškai",
-        "description": "Automatizuoti el. laiškų scenarijai, kad dalyviai niekada nepavėluotų."
+        "title": "Priminimai ir laiškai po renginio",
+        "description": "Automatizuoti el. laiškų scenarijai, kad dalyviai nepraleistų nė vieno svarbaus momento."
       },
       {
-        "title": "Dalyvių stebėjimo statistika",
-        "description": "Matykite, kas registravosi, prisijungė, žiūrėjo ir paspaudė."
+        "title": "Išsami dalyvių statistika",
+        "description": "Matykite, kas užsiregistravo, prisijungė, žiūrėjo ir spaudė nuorodas."
       }
     ]
   },
   "howItWorks": {
+    "eyebrow": "Procesas",
     "title": "Kaip tai veikia",
     "steps": [
       {
         "title": "Sukurkite webinarą",
-        "description": "Nustatykite temą, grafiką ir prekės ženklą per kelias minutes."
+        "description": "Nustatykite temą, laiką ir prekės ženklo stilių per kelias minutes."
       },
       {
-        "title": "Pasidalinkite puslapiu",
+        "title": "Pasidalykite nuoroda",
         "description": "Išsiųskite viešą registracijos nuorodą savo auditorijai."
       },
       {
-        "title": "Įtraukite ir parduokite",
-        "description": "Veskite webinarą, atsakykite į klausimus ir pateikite savo pasiūlymą."
+        "title": "Bendraukite ir parduokite",
+        "description": "Veskite webinarą, atsakykite į klausimus ir pristatykite savo pasiūlymą."
       }
     ]
   },
   "cta": {
-    "title": "Pasiruošę vesti pirmąjį webinarą?",
-    "subtitle": "Pradėkite nemokamai šiandien ir atnaujinkite, kai prireiks daugiau galimybių.",
-    "button": "Pradėti"
+    "title": "Pasiruošę surengti savo pirmąjį webinarą?",
+    "subtitle": "Pradėkite nemokamai šiandien ir atnaujinkite planą, kai prireiks daugiau galimybių.",
+    "button": "Pradėti dabar"
   },
   "pricing": {
     "title": "Paprasta kainodara",
-    "subtitle": "Pradėkite nemokamai, auginkite su kreditais",
+    "subtitle": "Pradėkite nemokamai, augkite naudodami kreditus",
     "free": {
       "name": "Nemokamas",
       "feature1": "1 webinaras"
     },
     "paid": {
-      "name": "Mokėkite pagal naudojimą",
+      "name": "Mokėkite už naudojimą",
       "price": "Nuo 10 €",
       "feature1": "Kreditai webinarams",
       "feature2": "Įrašų saugykla"
@@ -74,9 +78,9 @@
   },
   "partners": {
     "title": "Tapkite NewWebinars partneriu",
-    "subtitle": "Uždirbkite 30% komisinių pirmus 12 mėnesių kviesdami klientus",
-    "commissionTitle": "30% pasikartojanti komisija",
-    "commissionDescription": "Už kiekvieną pakviestą klientą uždirbsite komisinius iš jo mokėjimų pirmus 12 mėnesių.",
+    "subtitle": "Kviesdami klientus uždirbkite 30 % komisinių pirmuosius 12 mėnesių",
+    "commissionTitle": "30 % pasikartojantys komisiniai",
+    "commissionDescription": "Už kiekvieną pakviestą klientą gausite komisinius nuo jo mokėjimų pirmuosius 12 mėnesių.",
     "cta": "Tapti partneriu"
   }
 }

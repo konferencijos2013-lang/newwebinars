@@ -39,7 +39,6 @@ export function useAccount() {
       if (!isActive) return
 
       if (error) {
-         
         console.error('[useAccount] query error', error)
         setState({ status: 'error', account: null, membership: null, error })
         return

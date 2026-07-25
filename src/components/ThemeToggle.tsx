@@ -1,26 +1,24 @@
+import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
 import { type Theme } from '@/shared/utils/storage'
 
-const options: { value: Theme; label: string }[] = [
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-  { value: 'system', label: 'System' },
-]
+const values: Theme[] = ['light', 'dark', 'system']
 
 export function ThemeToggle() {
+  const { t } = useTranslation('common')
   const { theme, set } = useTheme()
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-muted-foreground text-sm">Theme</span>
+      <span className="text-muted-foreground text-sm">{t('theme.label')}</span>
       <select
         value={theme}
         onChange={(event) => set(event.target.value as Theme)}
         className="border-border bg-card rounded-md border px-2 py-1 text-sm"
       >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
+        {values.map((value) => (
+          <option key={value} value={value}>
+            {t(`theme.${value}`)}
           </option>
         ))}
       </select>

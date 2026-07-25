@@ -14,7 +14,8 @@ export function AuthCallbackPage() {
 
   useEffect(() => {
     let isActive = true
-    let authListener: { subscription: { unsubscribe: () => void } } | null = null
+    let authListener: { subscription: { unsubscribe: () => void } } | null =
+      null
 
     const finish = (target: string) => {
       if (resolvedRef.current) return
@@ -27,7 +28,7 @@ export function AuthCallbackPage() {
       if (resolvedRef.current) return
       resolvedRef.current = true
       if (authListener) authListener.subscription.unsubscribe()
-       
+
       console.error('[AuthCallback] failed:', reason, details)
       if (isActive) {
         setErrorMessage(reason)
@@ -35,14 +36,12 @@ export function AuthCallbackPage() {
       }
     }
 
-     
     console.log('[AuthCallback] mount', {
       hasAccessToken: window.location.hash.includes('access_token'),
       hasCode: window.location.search.includes('code='),
     })
 
     authListener = supabase.auth.onAuthStateChange((event, session) => {
-       
       console.log('[AuthCallback] auth event', { event, hasSession: !!session })
       if (event === 'SIGNED_IN' && session) {
         finish('/dashboard')
@@ -54,7 +53,8 @@ export function AuthCallbackPage() {
         // PKCE path (if Supabase is configured for it server-side).
         const code = new URLSearchParams(window.location.search).get('code')
         if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+          const { error: exchangeError } =
+            await supabase.auth.exchangeCodeForSession(code)
           if (!isActive || resolvedRef.current) return
           if (exchangeError) {
             fail(exchangeError.message)
@@ -75,8 +75,10 @@ export function AuthCallbackPage() {
             access_token: accessToken,
             refresh_token: refreshToken ?? '',
           })
-           
-          console.log('[AuthCallback] setSession result', { error: setError?.message })
+
+          console.log('[AuthCallback] setSession result', {
+            error: setError?.message,
+          })
           if (!isActive || resolvedRef.current) return
           if (setError) {
             fail(setError.message)
@@ -127,7 +129,7 @@ export function AuthCallbackPage() {
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
       <p className="text-destructive">{t('authError')}</p>
       {errorMessage && (
-        <p className="text-muted-foreground max-w-md whitespace-pre-wrap break-words text-xs">
+        <p className="text-muted-foreground max-w-md text-xs break-words whitespace-pre-wrap">
           {errorMessage}
         </p>
       )}
