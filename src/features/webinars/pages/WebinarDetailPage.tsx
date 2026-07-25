@@ -8,6 +8,7 @@ import {
   Edit,
   Globe,
   Lock,
+  Radio,
   Trash,
   Users,
 } from 'lucide-react'
@@ -146,6 +147,16 @@ export function WebinarDetailPage() {
             <Edit className="mr-2 h-4 w-4" />
             {t('save')}
           </Button>
+          {webinar.type === 'live' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/webinars/${webinar.id}/host`)}
+            >
+              <Radio className="mr-2 h-4 w-4" />
+              {t('hostStream')}
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleDelete}>
             <Trash className="mr-2 h-4 w-4" />
             {t('delete')}

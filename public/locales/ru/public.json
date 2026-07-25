@@ -17,6 +17,7 @@
   "host": "Ведущий",
   "attendee": "Участник",
   "videoPlaceholder": "Видео появится здесь",
+  "streamOffline": "Трансляция ещё не началась.",
   "chatPlaceholder": "Напишите сообщение...",
   "notFound": "Страница не найдена"
 }

@@ -17,6 +17,7 @@
   "host": "Host",
   "attendee": "Attendee",
   "videoPlaceholder": "Video stream will appear here",
+  "streamOffline": "The broadcast hasn't started yet.",
   "chatPlaceholder": "Type a message...",
   "notFound": "Page not found"
 }

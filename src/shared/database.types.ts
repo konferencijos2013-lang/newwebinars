@@ -84,6 +84,8 @@ export interface Partner {
   updated_at: string
 }
 
+export type CfStreamStatus = 'idle' | 'connected' | 'live' | 'ended' | 'errored'
+
 export interface Webinar {
   id: string
   account_id: string
@@ -106,9 +108,30 @@ export interface Webinar {
   access_mode: WebinarAccessMode
   password_hash: string | null
   price_cents: number | null
+  cf_live_input_uid: string | null
+  cf_stream_status: CfStreamStatus
+  cf_playback_hls_url: string | null
+  cf_playback_dash_url: string | null
+  cf_recording_video_uid: string | null
   created_at: string
   updated_at: string
 }
+
+export interface WebinarLiveSession {
+  id: string
+  webinar_id: string
+  cf_live_input_uid: string
+  started_at: string | null
+  ended_at: string | null
+  duration_seconds: number
+  peak_viewers: number
+  recording_video_uid: string | null
+  status: WebinarLiveSessionStatus
+  created_at: string
+  updated_at: string
+}
+
+export type WebinarLiveSessionStatus = 'pending' | 'live' | 'ended' | 'errored'
 
 export interface WebinarOffer {
   id: string

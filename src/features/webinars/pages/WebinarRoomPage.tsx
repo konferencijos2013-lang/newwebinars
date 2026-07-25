@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams } from 'react-router'
 import { Send } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { AiAssistant } from '@/features/ai/components/AiAssistant'
+import { subscribeToStreamStatus } from '@/features/webinars/api/stream'
 import {
   fetchWebinarBySlug,
   fetchRegistrationByToken,
@@ -39,6 +41,8 @@ export function WebinarRoomPage() {
   const scriptsRef = useRef<WebinarChatScript[]>([])
   const itemsRef = useRef<ChatDisplayItem[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const hlsRef = useRef<{ destroy: () => void } | null>(null)
 
   useEffect(() => {
     if (!slug || !token) return
@@ -87,6 +91,41 @@ export function WebinarRoomPage() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [items])
+
+  useEffect(() => {
+    if (!webinar?.id) return
+    const channel = subscribeToStreamStatus(webinar.id, (next) => {
+      setWebinar((prev) => (prev ? { ...prev, cf_stream_status: next } : prev))
+    })
+    return () => {
+      void supabase.removeChannel?.(channel)
+    }
+  }, [webinar?.id])
+
+  useEffect(() => {
+    if (!webinar?.cf_playback_hls_url || !videoRef.current) return
+    let cancelled = false
+
+    if (videoRef.current.canPlayType('application/vnd.apple.mpegurl') !== '') {
+      videoRef.current.src = webinar.cf_playback_hls_url
+    } else {
+      import('hls.js').then(({ default: Hls }) => {
+        if (cancelled || !videoRef.current || !Hls.isSupported()) return
+        const hls = new Hls()
+        hls.loadSource(webinar.cf_playback_hls_url!)
+        hls.attachMedia(videoRef.current!)
+        hlsRef.current = hls
+      })
+    }
+
+    return () => {
+      cancelled = true
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+        hlsRef.current = null
+      }
+    }
+  }, [webinar?.cf_playback_hls_url])
 
   useEffect(() => {
     const newScripts = scriptsRef.current
@@ -146,8 +185,28 @@ export function WebinarRoomPage() {
       </div>
 
       <div className="grid flex-1 gap-4 overflow-hidden p-4 lg:grid-cols-[1fr_320px]">
-        <div className="bg-muted flex items-center justify-center rounded-lg">
-          <p className="text-muted-foreground">{t('videoPlaceholder')}</p>
+        <div className="bg-muted relative flex aspect-video items-center justify-center overflow-hidden rounded-lg">
+          {(webinar.cf_stream_status === 'live' ||
+            webinar.cf_stream_status === 'connected') &&
+          webinar.cf_playback_hls_url ? (
+            <video
+              ref={videoRef}
+              controls
+              autoPlay
+              muted
+              playsInline
+              className="h-full w-full"
+            />
+          ) : (
+            <div className="text-center">
+              <p className="text-muted-foreground text-lg font-medium">
+                {t('videoPlaceholder')}
+              </p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {t('streamOffline')}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="border-border flex flex-col rounded-lg border">

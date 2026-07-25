@@ -17,6 +17,7 @@
   "host": "Pristatytojas",
   "attendee": "Dalyvis",
   "videoPlaceholder": "Vaizdo įrašas pasirodys čia",
+  "streamOffline": "Transliacija dar neprasidėjo.",
   "chatPlaceholder": "Rašykite žinutę...",
   "notFound": "Puslapis nerastas"
 }
