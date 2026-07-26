@@ -56,12 +56,15 @@ serve(async (req) => {
       })
     }
 
-    const isHost = await supabaseAdmin.rpc('has_account_role', {
-      p_account_id: webinar.account_id,
-      p_roles: ['owner', 'admin', 'editor', 'host'],
-    })
+    const { data: membership } = await supabaseAdmin
+      .from('account_members')
+      .select('role')
+      .eq('account_id', webinar.account_id)
+      .eq('user_id', userData.user.id)
+      .in('role', ['owner', 'admin', 'editor', 'host'])
+      .maybeSingle()
 
-    if (!isHost.data) {
+    if (!membership) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
