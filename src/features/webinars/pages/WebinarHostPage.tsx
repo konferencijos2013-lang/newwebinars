@@ -171,7 +171,7 @@ export function WebinarHostPage() {
 
   const isLive = webinar.cf_stream_status === 'live'
   const hasInput = Boolean(webinar.cf_live_input_uid)
-  const viewerUrl = `/w/${webinar.slug}/room`
+  const viewerUrl = `/w/${webinar.slug}/room?preview=1`
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import type { CfStreamStatus } from '@/shared/database.types'
 
@@ -9,6 +10,18 @@ export type LiveInputResponse = {
   playback_hls_url: string
 }
 
+async function describeError(error: unknown): Promise<Error> {
+  if (error instanceof FunctionsHttpError) {
+    try {
+      const body = await error.context.json()
+      return new Error(body?.error ?? error.message)
+    } catch {
+      return new Error(error.message)
+    }
+  }
+  return error instanceof Error ? error : new Error(String(error))
+}
+
 export async function createLiveInput(webinarId: string) {
   const { data, error } = await supabase.functions.invoke<LiveInputResponse>(
     'create-live-input',
@@ -17,7 +30,7 @@ export async function createLiveInput(webinarId: string) {
     },
   )
 
-  if (error) throw error
+  if (error) throw await describeError(error)
   if (!data) throw new Error('No response from create-live-input')
   return data
 }
@@ -30,7 +43,7 @@ export async function endLiveInput(webinarId: string) {
     },
   )
 
-  if (error) throw error
+  if (error) throw await describeError(error)
   if (!data) throw new Error('No response from end-live-input')
   return data
 }

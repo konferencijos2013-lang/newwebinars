@@ -31,6 +31,7 @@ export function WebinarRoomPage() {
   const { slug } = useParams<{ slug: string }>()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') ?? ''
+  const isHostPreview = searchParams.get('preview') === '1'
 
   const [items, setItems] = useState<ChatDisplayItem[]>([])
   const [webinar, setWebinar] = useState<Webinar | null>(null)
@@ -44,25 +45,52 @@ export function WebinarRoomPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<{ destroy: () => void } | null>(null)
 
+  const hasAccessParams = Boolean(slug) && (Boolean(token) || isHostPreview)
+
   useEffect(() => {
-    if (!slug || !token) return
+    if (!hasAccessParams || !slug) return
     let isActive = true
 
     fetchWebinarBySlug(slug)
       .then(async (w) => {
         if (!isActive) return
         setWebinar(w)
-        const [r, history, s] = await Promise.all([
-          fetchRegistrationByToken(token).catch(() => null),
+        const [history, s] = await Promise.all([
           fetchChatMessages(w.id).catch(() => [] as ChatMessage[]),
           fetchChatScripts(w.id).catch(() => [] as WebinarChatScript[]),
         ])
         if (!isActive) return
-        if (!r) {
-          setStatus('error')
-          return
+
+        if (token) {
+          const r = await fetchRegistrationByToken(token).catch(() => null)
+          if (!isActive) return
+          if (!r) {
+            setStatus('error')
+            return
+          }
+          setRegistration(r)
+          await markJoinedWebinar(token)
+        } else {
+          const { data: session } = await supabase.auth.getSession()
+          if (!isActive) return
+          const userId = session.session?.user.id
+          if (!userId) {
+            setStatus('error')
+            return
+          }
+          const { data: membership } = await supabase
+            .from('account_members')
+            .select('role')
+            .eq('account_id', w.account_id)
+            .eq('user_id', userId)
+            .maybeSingle()
+          if (!isActive) return
+          if (!membership) {
+            setStatus('error')
+            return
+          }
         }
-        setRegistration(r)
+
         scriptsRef.current = s
         const initialItems = history.map((m) => ({
           ...m,
@@ -70,7 +98,6 @@ export function WebinarRoomPage() {
         }))
         itemsRef.current = initialItems
         setItems(initialItems)
-        await markJoinedWebinar(token)
         setStatus('ready')
       })
       .catch(() => {
@@ -81,7 +108,7 @@ export function WebinarRoomPage() {
     return () => {
       isActive = false
     }
-  }, [slug, token])
+  }, [slug, token, isHostPreview, hasAccessParams])
 
   useEffect(() => {
     const id = setInterval(() => setElapsed((e) => e + 1), 1000)
@@ -157,6 +184,14 @@ export function WebinarRoomPage() {
     setNewMessage('')
   }
 
+  if (!hasAccessParams) {
+    return (
+      <div className="mx-auto max-w-2xl py-16 text-center">
+        <h1 className="text-2xl font-bold">{t('errorNotFound')}</h1>
+      </div>
+    )
+  }
+
   if (status === 'loading') {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -165,7 +200,7 @@ export function WebinarRoomPage() {
     )
   }
 
-  if (status === 'error' || !webinar || !registration) {
+  if (status === 'error' || !webinar || (!registration && !isHostPreview)) {
     return (
       <div className="mx-auto max-w-2xl py-16 text-center">
         <h1 className="text-2xl font-bold">{t('errorNotFound')}</h1>
@@ -239,18 +274,20 @@ export function WebinarRoomPage() {
             ))}
             <div ref={chatEndRef} />
           </div>
-          <form onSubmit={handleSend} className="border-t p-3">
-            <div className="flex gap-2">
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder={t('chatPlaceholder')}
-              />
-              <Button type="submit">
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </form>
+          {registration && (
+            <form onSubmit={handleSend} className="border-t p-3">
+              <div className="flex gap-2">
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder={t('chatPlaceholder')}
+                />
+                <Button type="submit">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
