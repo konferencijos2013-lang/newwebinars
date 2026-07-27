@@ -56,42 +56,35 @@ export async function registerForWebinar(input: {
   return data as Registration
 }
 
+// These go through SECURITY DEFINER RPCs instead of direct table access:
+// access_token is an unguessable bearer-style secret, so a blanket anon
+// SELECT/UPDATE grant on registrations would let anyone dump or mutate
+// every attendee's row. The RPC only ever touches the single row whose
+// access_token matches, regardless of what the caller can otherwise see.
 export async function fetchRegistrationByToken(accessToken: string) {
-  const { data, error } = await supabase
-    .from('registrations')
-    .select('*')
-    .eq('access_token', accessToken)
-    .single()
+  const { data, error } = await supabase.rpc('get_registration_by_token', {
+    p_access_token: accessToken,
+  })
 
   if (error) throw error
+  if (!data) throw new Error('Registration not found')
   return data as Registration
 }
 
 export async function markEnteredWaitingRoom(accessToken: string) {
-  const { data, error } = await supabase
-    .from('registrations')
-    .update({
-      entered_waiting_room_at: new Date().toISOString(),
-      entered_at: new Date().toISOString(),
-    })
-    .eq('access_token', accessToken)
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc(
+    'mark_registration_entered_waiting_room',
+    { p_access_token: accessToken },
+  )
 
   if (error) throw error
   return data as Registration
 }
 
 export async function markJoinedWebinar(accessToken: string) {
-  const { data, error } = await supabase
-    .from('registrations')
-    .update({
-      joined_webinar_at: new Date().toISOString(),
-      joined_at: new Date().toISOString(),
-    })
-    .eq('access_token', accessToken)
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('mark_registration_joined_webinar', {
+    p_access_token: accessToken,
+  })
 
   if (error) throw error
   return data as Registration
