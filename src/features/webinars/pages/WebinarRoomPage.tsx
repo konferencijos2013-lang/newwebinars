@@ -7,7 +7,10 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { AiAssistant } from '@/features/ai/components/AiAssistant'
-import { subscribeToStreamStatus } from '@/features/webinars/api/stream'
+import {
+  pollLiveInputStatus,
+  subscribeToStreamStatus,
+} from '@/features/webinars/api/stream'
 import {
   fetchWebinarBySlug,
   fetchRegistrationByToken,
@@ -128,6 +131,35 @@ export function WebinarRoomPage() {
       void supabase.removeChannel?.(channel)
     }
   }, [webinar?.id])
+
+  // Belt-and-suspenders: Cloudflare only pushes live_input.connected/
+  // disconnected events through a separate Notifications policy, so poll
+  // directly as well in case that policy isn't configured for this account.
+  useEffect(() => {
+    if (!webinar?.id || webinar.cf_stream_status === 'live') return
+    let isActive = true
+
+    const poll = () => {
+      pollLiveInputStatus(webinar.id).then((result) => {
+        if (!isActive || !result) return
+        setWebinar((prev) =>
+          prev
+            ? {
+                ...prev,
+                cf_stream_status: result.cf_stream_status,
+                cf_playback_hls_url: result.cf_playback_hls_url,
+              }
+            : prev,
+        )
+      })
+    }
+
+    const intervalId = setInterval(poll, 5000)
+    return () => {
+      isActive = false
+      clearInterval(intervalId)
+    }
+  }, [webinar?.id, webinar?.cf_stream_status])
 
   useEffect(() => {
     if (!webinar?.cf_playback_hls_url || !videoRef.current) return

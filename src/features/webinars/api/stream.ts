@@ -55,6 +55,36 @@ export async function endLiveInput(webinarId: string) {
   return data
 }
 
+export type LiveInputStatus = {
+  cf_stream_status: CfStreamStatus
+  cf_playback_hls_url: string | null
+  cf_playback_dash_url?: string | null
+}
+
+// Cloudflare's live_input.connected/disconnected events are only delivered
+// through a separate account-level Notifications/Alerting policy (not the
+// simple Stream webhook), which requires additional API token permissions.
+// Poll this instead so status stays accurate even if that policy was never
+// configured — it asks Cloudflare directly and self-heals the webinar row.
+// Uses a plain GET so the webinar_id can travel as a query param (function
+// invocations can't carry a body on GET requests).
+export async function pollLiveInputStatus(
+  webinarId: string,
+): Promise<LiveInputStatus | null> {
+  try {
+    const base = import.meta.env.VITE_SUPABASE_URL as string
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+    const res = await fetch(
+      `${base}/functions/v1/get-live-input-status?webinar_id=${encodeURIComponent(webinarId)}`,
+      { headers: { apikey: anonKey } },
+    )
+    if (!res.ok) return null
+    return (await res.json()) as LiveInputStatus
+  } catch {
+    return null
+  }
+}
+
 export function subscribeToStreamStatus(
   webinarId: string,
   onStatus: (status: CfStreamStatus) => void,

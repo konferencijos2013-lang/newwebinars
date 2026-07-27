@@ -137,12 +137,27 @@ serve(async (req) => {
 
     const result = cfBody.result
 
+    // The live_inputs API never returns a `playback` field (that only
+    // exists on per-broadcast video objects under .../live_inputs/{uid}/videos).
+    // Cloudflare's docs recommend building the manifest URL directly from the
+    // live input UID instead, which always reflects the active broadcast (or
+    // an idle placeholder) without needing a second API call per session.
+    const customerSubdomain = (
+      result.webRTCPlayback?.url ?? result.webRTC?.url ?? ''
+    ).match(/https:\/\/(customer-[a-z0-9]+)\.cloudflarestream\.com/)?.[1]
+    const playbackHlsUrl = customerSubdomain
+      ? `https://${customerSubdomain}.cloudflarestream.com/${result.uid}/manifest/video.m3u8`
+      : null
+    const playbackDashUrl = customerSubdomain
+      ? `https://${customerSubdomain}.cloudflarestream.com/${result.uid}/manifest/video.mpd`
+      : null
+
     await supabaseAdmin
       .from('webinars')
       .update({
         cf_live_input_uid: result.uid,
-        cf_playback_hls_url: result.playback?.hls ?? null,
-        cf_playback_dash_url: result.playback?.dash ?? null,
+        cf_playback_hls_url: playbackHlsUrl,
+        cf_playback_dash_url: playbackDashUrl,
         cf_stream_status: 'idle',
       })
       .eq('id', webinar_id)
@@ -158,7 +173,7 @@ serve(async (req) => {
         live_input_uid: result.uid,
         rtmps_url: result.rtmps?.url,
         stream_key: result.rtmps?.streamKey,
-        playback_hls_url: result.playback?.hls,
+        playback_hls_url: playbackHlsUrl,
       }),
       {
         status: 200,

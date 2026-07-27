@@ -19,6 +19,7 @@ import { fetchWebinar, publishWebinar } from '@/features/webinars/api/webinars'
 import {
   createLiveInput,
   endLiveInput,
+  pollLiveInputStatus,
   subscribeToStreamStatus,
 } from '@/features/webinars/api/stream'
 import type { Webinar } from '@/shared/database.types'
@@ -81,6 +82,38 @@ export function WebinarHostPage() {
       void supabase.removeChannel?.(channel)
     }
   }, [id])
+
+  // Belt-and-suspenders: Cloudflare only pushes live_input.connected/
+  // disconnected events through a separate Notifications policy, so poll
+  // directly as well in case that policy isn't configured for this account.
+  useEffect(() => {
+    if (!id || !webinar?.cf_live_input_uid) return
+    let isActive = true
+
+    const poll = () => {
+      pollLiveInputStatus(id).then((result) => {
+        if (!isActive || !result) return
+        setWebinar((prev) =>
+          prev
+            ? {
+                ...prev,
+                cf_stream_status: result.cf_stream_status,
+                cf_playback_hls_url: result.cf_playback_hls_url,
+              }
+            : prev,
+        )
+        setPlaybackUrl(result.cf_playback_hls_url)
+      })
+    }
+
+    poll()
+    const intervalId = setInterval(poll, 5000)
+
+    return () => {
+      isActive = false
+      clearInterval(intervalId)
+    }
+  }, [id, webinar?.cf_live_input_uid])
 
   async function handleGoLive() {
     if (!id) return
