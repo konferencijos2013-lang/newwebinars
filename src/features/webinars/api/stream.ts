@@ -14,7 +14,14 @@ async function describeError(error: unknown): Promise<Error> {
   if (error instanceof FunctionsHttpError) {
     try {
       const body = await error.context.json()
-      return new Error(body?.error ?? error.message)
+      const base = body?.error ?? error.message
+      const d = body?.debug
+      const debugSuffix = d
+        ? ` [${[d.code, d.message ?? d.reason, d.details, d.hint]
+            .filter(Boolean)
+            .join(' | ')}]`
+        : ''
+      return new Error(`${base}${debugSuffix}`)
     } catch {
       return new Error(error.message)
     }

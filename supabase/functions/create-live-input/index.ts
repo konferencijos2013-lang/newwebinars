@@ -50,10 +50,23 @@ serve(async (req) => {
       .single()
 
     if (webinarError || !webinar) {
-      return new Response(JSON.stringify({ error: 'Webinar not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      })
+      return new Response(
+        JSON.stringify({
+          error: 'Webinar not found',
+          debug: webinarError
+            ? {
+                code: webinarError.code,
+                message: webinarError.message,
+                details: webinarError.details,
+                hint: webinarError.hint,
+              }
+            : { reason: 'no row returned for webinar_id', webinar_id },
+        }),
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        },
+      )
     }
 
     const { data: membership } = await supabaseAdmin
