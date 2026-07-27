@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { AiAssistant } from '@/features/ai/components/AiAssistant'
+import { useHlsVideo } from '@/features/webinars/hooks/useHlsVideo'
 import {
   pollLiveInputStatus,
   subscribeToStreamStatus,
@@ -46,7 +47,6 @@ export function WebinarRoomPage() {
   const itemsRef = useRef<ChatDisplayItem[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const hlsRef = useRef<{ destroy: () => void } | null>(null)
 
   const hasAccessParams = Boolean(slug) && (Boolean(token) || isHostPreview)
 
@@ -161,30 +161,11 @@ export function WebinarRoomPage() {
     }
   }, [webinar?.id, webinar?.cf_stream_status])
 
-  useEffect(() => {
-    if (!webinar?.cf_playback_hls_url || !videoRef.current) return
-    let cancelled = false
-
-    if (videoRef.current.canPlayType('application/vnd.apple.mpegurl') !== '') {
-      videoRef.current.src = webinar.cf_playback_hls_url
-    } else {
-      import('hls.js').then(({ default: Hls }) => {
-        if (cancelled || !videoRef.current || !Hls.isSupported()) return
-        const hls = new Hls()
-        hls.loadSource(webinar.cf_playback_hls_url!)
-        hls.attachMedia(videoRef.current!)
-        hlsRef.current = hls
-      })
-    }
-
-    return () => {
-      cancelled = true
-      if (hlsRef.current) {
-        hlsRef.current.destroy()
-        hlsRef.current = null
-      }
-    }
-  }, [webinar?.cf_playback_hls_url])
+  const isStreamViewable =
+    Boolean(webinar?.cf_playback_hls_url) &&
+    (webinar?.cf_stream_status === 'live' ||
+      webinar?.cf_stream_status === 'connected')
+  useHlsVideo(videoRef, isStreamViewable ? webinar?.cf_playback_hls_url : null)
 
   useEffect(() => {
     const newScripts = scriptsRef.current
@@ -253,25 +234,24 @@ export function WebinarRoomPage() {
 
       <div className="grid flex-1 gap-4 overflow-hidden p-4 lg:grid-cols-[1fr_320px]">
         <div className="bg-muted relative flex aspect-video items-center justify-center overflow-hidden rounded-lg">
-          {(webinar.cf_stream_status === 'live' ||
-            webinar.cf_stream_status === 'connected') &&
-          webinar.cf_playback_hls_url ? (
-            <video
-              ref={videoRef}
-              controls
-              autoPlay
-              muted
-              playsInline
-              className="h-full w-full"
-            />
-          ) : (
-            <div className="text-center">
-              <p className="text-muted-foreground text-lg font-medium">
-                {t('videoPlaceholder')}
-              </p>
-              <p className="text-muted-foreground mt-1 text-sm">
-                {t('streamOffline')}
-              </p>
+          <video
+            ref={videoRef}
+            controls
+            autoPlay
+            muted
+            playsInline
+            className="h-full w-full"
+          />
+          {!isStreamViewable && (
+            <div className="bg-muted absolute inset-0 flex items-center justify-center text-center">
+              <div>
+                <p className="text-muted-foreground text-lg font-medium">
+                  {t('videoPlaceholder')}
+                </p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {t('streamOffline')}
+                </p>
+              </div>
             </div>
           )}
         </div>

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { supabase } from '@/lib/supabase'
+import { useHlsVideo } from '@/features/webinars/hooks/useHlsVideo'
 import {
   ArrowLeft,
   Copy,
@@ -38,6 +39,7 @@ export function WebinarHostPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [isEnding, setIsEnding] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     if (!id) return
@@ -114,6 +116,12 @@ export function WebinarHostPage() {
       clearInterval(intervalId)
     }
   }, [id, webinar?.cf_live_input_uid])
+
+  const isStreamViewable =
+    Boolean(playbackUrl) &&
+    (webinar?.cf_stream_status === 'live' ||
+      webinar?.cf_stream_status === 'connected')
+  useHlsVideo(videoRef, isStreamViewable ? playbackUrl : null)
 
   async function handleGoLive() {
     if (!id) return
@@ -266,8 +274,7 @@ export function WebinarHostPage() {
                 {t('streamPreview')}
               </CardTitle>
               <CardDescription className="mt-1">
-                {playbackUrl &&
-                (isLive || webinar.cf_stream_status === 'connected')
+                {isStreamViewable
                   ? t('streamPreviewActive')
                   : t('streamPreviewIdle')}
               </CardDescription>
@@ -275,22 +282,22 @@ export function WebinarHostPage() {
           </div>
 
           <div className="bg-muted relative flex aspect-video items-center justify-center overflow-hidden rounded-lg">
-            {playbackUrl &&
-            (isLive || webinar.cf_stream_status === 'connected') ? (
-              <video
-                src={playbackUrl}
-                controls
-                autoPlay
-                muted
-                playsInline
-                className="h-full w-full"
-              />
-            ) : (
-              <div className="text-center">
-                <Video className="text-muted-foreground mx-auto mb-2 h-12 w-12" />
-                <p className="text-muted-foreground text-sm">
-                  {hasInput ? t('waitingForFeed') : t('videoPlaceholder')}
-                </p>
+            <video
+              ref={videoRef}
+              controls
+              autoPlay
+              muted
+              playsInline
+              className="h-full w-full"
+            />
+            {!isStreamViewable && (
+              <div className="bg-muted absolute inset-0 flex items-center justify-center text-center">
+                <div>
+                  <Video className="text-muted-foreground mx-auto mb-2 h-12 w-12" />
+                  <p className="text-muted-foreground text-sm">
+                    {hasInput ? t('waitingForFeed') : t('videoPlaceholder')}
+                  </p>
+                </div>
               </div>
             )}
           </div>
