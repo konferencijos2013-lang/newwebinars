@@ -66,6 +66,7 @@
   "streamPreviewActive": "Tiesioginė transliacija prijungta",
   "streamPreviewIdle": "Vaizdas pasirodys pradėjus transliuoti",
   "waitingForFeed": "Laukiama encoder signalo...",
+  "videoPlaceholder": "Vaizdas pasirodys čia",
   "goLive": "Pradėti transliaciją",
   "startingStream": "Paleidžiama transliacija...",
   "endStream": "Baigti transliaciją",

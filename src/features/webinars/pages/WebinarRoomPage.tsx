@@ -169,11 +169,11 @@ export function WebinarRoomPage() {
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
-    if (!webinar || !newMessage.trim() || !registration) return
+    if (!webinar || !newMessage.trim() || !(registration || isHostPreview)) return
     const sent = await sendChatMessage({
       webinar_id: webinar.id,
-      registration_id: registration.id,
-      sender_name: registration.full_name ?? t('anonymous'),
+      registration_id: registration?.id ?? null,
+      sender_name: registration?.full_name ?? (isHostPreview ? t('host') : t('anonymous')),
       message: newMessage.trim(),
     })
     itemsRef.current = [
@@ -274,7 +274,7 @@ export function WebinarRoomPage() {
             ))}
             <div ref={chatEndRef} />
           </div>
-          {registration && (
+          {(registration || isHostPreview) && (
             <form onSubmit={handleSend} className="border-t p-3">
               <div className="flex gap-2">
                 <Input

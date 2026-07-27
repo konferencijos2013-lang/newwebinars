@@ -66,6 +66,7 @@
   "streamPreviewActive": "Live feed connected",
   "streamPreviewIdle": "Feed will appear once you go live",
   "waitingForFeed": "Waiting for encoder feed...",
+  "videoPlaceholder": "Video will appear here",
   "goLive": "Go live",
   "startingStream": "Starting stream...",
   "endStream": "End stream",

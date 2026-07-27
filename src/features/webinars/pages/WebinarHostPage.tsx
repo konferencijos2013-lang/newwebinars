@@ -42,11 +42,21 @@ export function WebinarHostPage() {
     if (!id) return
     let isActive = true
 
+    // Reset state left over from a previously viewed webinar (e.g. a stale
+    // error from a failed go-live attempt) so it doesn't bleed into this one.
+    setStatus('loading')
+    setError(null)
+    setWebinar(null)
+    setStreamUrl(null)
+    setStreamKey(null)
+    setPlaybackUrl(null)
+
     fetchWebinar(id)
       .then((w) => {
         if (!isActive) return
         setWebinar(w)
         setPlaybackUrl(w.cf_playback_hls_url)
+        setError(null)
         setStatus('ready')
       })
       .catch((err) => {
