@@ -117,6 +117,10 @@ serve(async (req) => {
         body: JSON.stringify({
           meta: { name: webinar.title },
           recording: { mode: 'automatic' },
+          // Cuts glass-to-glass latency from ~20-30s (standard HLS segment
+          // + buffer) down to a few seconds. Playback also needs
+          // ?protocol=llhls on the manifest URL (see useHlsVideo).
+          preferLowLatency: true,
         }),
       },
     )

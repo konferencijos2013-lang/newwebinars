@@ -19,16 +19,22 @@ export function useHlsVideo(
       if (!cancelled) video?.play().catch(() => {})
     }
 
+    // Live inputs are created with preferLowLatency: true; requesting this
+    // variant of the manifest is what actually opts playback into
+    // Cloudflare's Low-Latency HLS pipeline (glass-to-glass ~3-5s instead of
+    // the standard ~20-30s segment+buffer delay).
+    const llhlsUrl = `${url}${url.includes('?') ? '&' : '?'}protocol=llhls`
+
     if (video.canPlayType('application/vnd.apple.mpegurl') !== '') {
-      video.src = url
+      video.src = llhlsUrl
       video.addEventListener('loadedmetadata', tryPlay, { once: true })
     } else {
       import('hls.js').then(({ default: Hls }) => {
         if (cancelled || !videoRef.current) return
         if (!Hls.isSupported()) return
-        hls = new Hls()
+        hls = new Hls({ lowLatencyMode: true })
         hls.on(Hls.Events.MANIFEST_PARSED, tryPlay)
-        hls.loadSource(url)
+        hls.loadSource(llhlsUrl)
         hls.attachMedia(videoRef.current)
       })
     }
