@@ -249,7 +249,11 @@ export function WebinarHostPage() {
 
   const isLive = webinar.cf_stream_status === 'live'
   const hasInput = Boolean(webinar.cf_live_input_uid)
-  const viewerUrl = `/w/${webinar.slug}/room?preview=1`
+  // Public registration page — attendees must sign up here to get an
+  // access token, then use the waiting room / live room. The old link
+  // pointed directly at /room?preview=1, which is only meant for the
+  // logged-in host's own preview and fails for everyone else.
+  const viewerUrl = `/w/${webinar.slug}`
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
