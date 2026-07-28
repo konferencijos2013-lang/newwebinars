@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
+import { supabase } from '@/lib/supabase'
 import {
   fetchWebinarBySlug,
   registerForWebinar,
@@ -25,6 +26,7 @@ export function PublicWebinarPage() {
   const [registrationToken, setRegistrationToken] = useState<string | null>(
     null,
   )
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (!slug) return
@@ -40,6 +42,11 @@ export function PublicWebinarPage() {
         if (!isActive) return
         setStatus('error')
       })
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isActive) return
+      setIsLoggedIn(!!session?.user)
+    })
 
     return () => {
       isActive = false
@@ -139,35 +146,52 @@ export function PublicWebinarPage() {
         </span>
       </div>
 
-      <Card className="mt-10">
-        <CardTitle>{t('register')}</CardTitle>
-        <CardDescription className="mt-2">
-          {t('registerDescription')}
-        </CardDescription>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="fullName">{t('fullName')}</Label>
-            <Input
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
-          </div>
-          <Button type="submit" isLoading={isSubmitting} className="w-full">
-            {isSubmitting ? t('registering') : t('register')}
+      {isLoggedIn ? (
+        <Card className="mt-10 text-center">
+          <CardTitle>{t('hostPreviewTitle')}</CardTitle>
+          <CardDescription className="mt-2">
+            {t('hostPreviewDescription')}
+          </CardDescription>
+          <Button
+            className="mt-6"
+            onClick={() =>
+              (window.location.href = `/w/${webinar.slug}/room?preview=1`)
+            }
+          >
+            {t('openRoomPreview')}
           </Button>
-        </form>
-      </Card>
+        </Card>
+      ) : (
+        <Card className="mt-10">
+          <CardTitle>{t('register')}</CardTitle>
+          <CardDescription className="mt-2">
+            {t('registerDescription')}
+          </CardDescription>
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fullName">{t('fullName')}</Label>
+              <Input
+                id="fullName"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+            </div>
+            <Button type="submit" isLoading={isSubmitting} className="w-full">
+              {isSubmitting ? t('registering') : t('register')}
+            </Button>
+          </form>
+        </Card>
+      )}
     </div>
   )
 }

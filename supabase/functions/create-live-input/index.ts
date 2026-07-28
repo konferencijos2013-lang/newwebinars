@@ -111,67 +111,84 @@ serve(async (req) => {
     }
 
     if (webinar.cf_live_input_uid) {
-      // Update existing live input with optimal settings instead of failing,
-      // so hosts can recover from a bad configuration without manual cleanup.
-      const cfUpdate = await fetch(
+      // Check if the existing live input is still usable. If Cloudflare
+      // already ended it (encoder disconnected, timeout, etc), updating
+      // won't revive it — we need to create a fresh one instead.
+      const cfStatus = await fetch(
         `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/live_inputs/${webinar.cf_live_input_uid}`,
         {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${apiToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(optimalSettings),
+          headers: { Authorization: `Bearer ${apiToken}` },
         },
       )
-      const updateBody = await cfUpdate.json()
-      if (!cfUpdate.ok || !updateBody.success) {
+      const statusBody = await cfStatus.json()
+      const currentStatus = statusBody.result?.status?.current?.state
+
+      if (currentStatus === 'connected' || currentStatus === 'ready') {
+        // Update existing live input with optimal settings instead of
+        // failing, so hosts can recover from a bad configuration without
+        // manual cleanup.
+        const cfUpdate = await fetch(
+          `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/live_inputs/${webinar.cf_live_input_uid}`,
+          {
+            method: 'PUT',
+            headers: {
+              Authorization: `Bearer ${apiToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(optimalSettings),
+          },
+        )
+        const updateBody = await cfUpdate.json()
+        if (!cfUpdate.ok || !updateBody.success) {
+          return new Response(
+            JSON.stringify({
+              error: 'Failed to update existing live input',
+              details: updateBody.errors,
+            }),
+            {
+              status: 502,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            },
+          )
+        }
+
+        // Re-extract the customer subdomain after an update; Cloudflare may
+        // rotate it, and without playback urls the players will stay blank.
+        const updatedSubdomain = (
+          updateBody.result?.webRTCPlayback?.url ??
+          updateBody.result?.webRTC?.url ??
+          ''
+        ).match(/https:\/\/(customer-[a-z0-9]+)\.cloudflarestream\.com/)?.[1]
+        const updatedHlsUrl = updatedSubdomain
+          ? `https://${updatedSubdomain}.cloudflarestream.com/${webinar.cf_live_input_uid}/manifest/video.m3u8`
+          : null
+        const updatedDashUrl = updatedSubdomain
+          ? `https://${updatedSubdomain}.cloudflarestream.com/${webinar.cf_live_input_uid}/manifest/video.mpd`
+          : null
+
+        await supabaseAdmin
+          .from('webinars')
+          .update({
+            cf_playback_hls_url: updatedHlsUrl ?? undefined,
+            cf_playback_dash_url: updatedDashUrl ?? undefined,
+          })
+          .eq('id', webinar_id)
+
         return new Response(
           JSON.stringify({
-            error: 'Failed to update existing live input',
-            details: updateBody.errors,
+            live_input_uid: webinar.cf_live_input_uid,
+            rtmps_url: updateBody.result?.rtmps?.url,
+            stream_key: updateBody.result?.rtmps?.streamKey,
+            playback_hls_url: updatedHlsUrl,
           }),
           {
-            status: 502,
+            status: 200,
             headers: { 'Content-Type': 'application/json', ...corsHeaders },
           },
         )
       }
-
-      // Re-extract the customer subdomain after an update; Cloudflare may
-      // rotate it, and without playback urls the players will stay blank.
-      const updatedSubdomain = (
-        updateBody.result?.webRTCPlayback?.url ??
-        updateBody.result?.webRTC?.url ??
-        ''
-      ).match(/https:\/\/(customer-[a-z0-9]+)\.cloudflarestream\.com/)?.[1]
-      const updatedHlsUrl = updatedSubdomain
-        ? `https://${updatedSubdomain}.cloudflarestream.com/${webinar.cf_live_input_uid}/manifest/video.m3u8`
-        : null
-      const updatedDashUrl = updatedSubdomain
-        ? `https://${updatedSubdomain}.cloudflarestream.com/${webinar.cf_live_input_uid}/manifest/video.mpd`
-        : null
-
-      await supabaseAdmin
-        .from('webinars')
-        .update({
-          cf_playback_hls_url: updatedHlsUrl ?? undefined,
-          cf_playback_dash_url: updatedDashUrl ?? undefined,
-        })
-        .eq('id', webinar_id)
-
-      return new Response(
-        JSON.stringify({
-          live_input_uid: webinar.cf_live_input_uid,
-          rtmps_url: updateBody.result?.rtmps?.url,
-          stream_key: updateBody.result?.rtmps?.streamKey,
-          playback_hls_url: updatedHlsUrl,
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        },
-      )
+      // Fall through to create a new live input when the old one is ended
+      // or in an unknown state.
     }
 
     const cfResponse = await fetch(

@@ -19,5 +19,8 @@
   "videoPlaceholder": "Видео появится здесь",
   "streamOffline": "Трансляция ещё не началась.",
   "chatPlaceholder": "Напишите сообщение...",
-  "notFound": "Страница не найдена"
+  "notFound": "Страница не найдена",
+  "hostPreviewTitle": "Вы вошли в систему",
+  "hostPreviewDescription": "Вы можете просмотреть вебинар как администратор.",
+  "openRoomPreview": "Открыть предпросмотр комнаты"
 }

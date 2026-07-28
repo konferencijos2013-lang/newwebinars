@@ -19,5 +19,8 @@
   "videoPlaceholder": "Vaizdo įrašas pasirodys čia",
   "streamOffline": "Transliacija dar neprasidėjo.",
   "chatPlaceholder": "Rašykite žinutę...",
-  "notFound": "Puslapis nerastas"
+  "notFound": "Puslapis nerastas",
+  "hostPreviewTitle": "Esate prisijungęs",
+  "hostPreviewDescription": "Galite peržiūrėti webinarą kaip administratorius.",
+  "openRoomPreview": "Atidaryti kambario peržiūrą"
 }

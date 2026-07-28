@@ -19,5 +19,8 @@
   "videoPlaceholder": "Video stream will appear here",
   "streamOffline": "The broadcast hasn't started yet.",
   "chatPlaceholder": "Type a message...",
-  "notFound": "Page not found"
+  "notFound": "Page not found",
+  "hostPreviewTitle": "You're signed in",
+  "hostPreviewDescription": "You can preview the webinar as an administrator.",
+  "openRoomPreview": "Open room preview"
 }
