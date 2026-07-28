@@ -8,10 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { AiAssistant } from '@/features/ai/components/AiAssistant'
 import { useHlsVideo } from '@/features/webinars/hooks/useHlsVideo'
-import {
-  pollLiveInputStatus,
-  subscribeToStreamStatus,
-} from '@/features/webinars/api/stream'
+import { subscribeToStreamStatus } from '@/features/webinars/api/stream'
 import {
   fetchWebinarBySlug,
   fetchRegistrationByToken,
@@ -132,26 +129,28 @@ export function WebinarRoomPage() {
     }
   }, [webinar?.id])
 
-  // Belt-and-suspenders: Cloudflare only pushes live_input.connected/
-  // disconnected events through a separate Notifications policy, so poll
-  // directly as well in case that policy isn't configured for this account.
+  // Cloudflare only pushes live_input.connected/disconnected through a
+  // separate Notifications policy, so poll the webinar row directly as a
+  // fallback — this also picks up cf_playback_hls_url when it appears after
+  // the live input is created (page may have loaded before that happened).
   useEffect(() => {
     if (!webinar?.id || webinar.cf_stream_status === 'live') return
     let isActive = true
 
     const poll = () => {
-      pollLiveInputStatus(webinar.id).then((result) => {
-        if (!isActive || !result) return
+      fetchWebinarBySlug(webinar.slug).then((updated) => {
+        if (!isActive) return
         setWebinar((prev) =>
           prev
             ? {
                 ...prev,
-                cf_stream_status: result.cf_stream_status,
-                cf_playback_hls_url: result.cf_playback_hls_url,
+                cf_stream_status: updated.cf_stream_status,
+                cf_playback_hls_url: updated.cf_playback_hls_url,
+                cf_playback_dash_url: updated.cf_playback_dash_url,
               }
             : prev,
         )
-      })
+      }).catch(() => {})
     }
 
     const intervalId = setInterval(poll, 5000)
@@ -159,7 +158,7 @@ export function WebinarRoomPage() {
       isActive = false
       clearInterval(intervalId)
     }
-  }, [webinar?.id, webinar?.cf_stream_status])
+  }, [webinar?.id, webinar?.slug, webinar?.cf_stream_status])
 
   const isStreamViewable =
     Boolean(webinar?.cf_playback_hls_url) &&

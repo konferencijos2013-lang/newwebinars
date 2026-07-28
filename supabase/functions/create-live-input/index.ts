@@ -84,16 +84,6 @@ serve(async (req) => {
       })
     }
 
-    if (webinar.cf_live_input_uid) {
-      return new Response(
-        JSON.stringify({ error: 'Live input already exists for this webinar' }),
-        {
-          status: 409,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        },
-      )
-    }
-
     const accountId = Deno.env.get('CLOUDFLARE_ACCOUNT_ID')
     const apiToken = Deno.env.get('CLOUDFLARE_API_TOKEN')
     if (!accountId || !apiToken) {
@@ -101,6 +91,68 @@ serve(async (req) => {
         JSON.stringify({ error: 'Cloudflare not configured' }),
         {
           status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        },
+      )
+    }
+
+    const optimalSettings = {
+      meta: { name: webinar.title },
+      recording: { mode: 'automatic' },
+      // Cuts glass-to-glass latency from ~20-30s (standard HLS segment
+      // + buffer) down to a few seconds. Playback also needs
+      // ?protocol=llhls on the manifest URL (see useHlsVideo).
+      preferLowLatency: true,
+      // timeoutSeconds: 0 disables Cloudflare's automatic disconnect when
+      // the encoder stops sending data for a while (obs restart, network
+      // blip, etc). Without this, brief ingest interruptions permanently
+      // kill the stream instead of letting the encoder reconnect.
+      timeoutSeconds: 0,
+    }
+
+    if (webinar.cf_live_input_uid) {
+      // Update existing live input with optimal settings instead of failing,
+      // so hosts can recover from a bad configuration without manual cleanup.
+      const cfUpdate = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/live_inputs/${webinar.cf_live_input_uid}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(optimalSettings),
+        },
+      )
+      const updateBody = await cfUpdate.json()
+      if (!cfUpdate.ok || !updateBody.success) {
+        return new Response(
+          JSON.stringify({
+            error: 'Failed to update existing live input',
+            details: updateBody.errors,
+          }),
+          {
+            status: 502,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          },
+        )
+      }
+
+      const { data: updated } = await supabaseAdmin
+        .from('webinars')
+        .select('cf_playback_hls_url')
+        .eq('id', webinar_id)
+        .single()
+
+      return new Response(
+        JSON.stringify({
+          live_input_uid: webinar.cf_live_input_uid,
+          rtmps_url: updateBody.result?.rtmps?.url,
+          stream_key: updateBody.result?.rtmps?.streamKey,
+          playback_hls_url: updated?.cf_playback_hls_url,
+        }),
+        {
+          status: 200,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         },
       )
@@ -114,14 +166,7 @@ serve(async (req) => {
           Authorization: `Bearer ${apiToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          meta: { name: webinar.title },
-          recording: { mode: 'automatic' },
-          // Cuts glass-to-glass latency from ~20-30s (standard HLS segment
-          // + buffer) down to a few seconds. Playback also needs
-          // ?protocol=llhls on the manifest URL (see useHlsVideo).
-          preferLowLatency: true,
-        }),
+        body: JSON.stringify(optimalSettings),
       },
     )
 

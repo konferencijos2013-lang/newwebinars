@@ -20,7 +20,6 @@ import { fetchWebinar, publishWebinar } from '@/features/webinars/api/webinars'
 import {
   createLiveInput,
   endLiveInput,
-  pollLiveInputStatus,
   subscribeToStreamStatus,
 } from '@/features/webinars/api/stream'
 import type { Webinar } from '@/shared/database.types'
@@ -85,27 +84,29 @@ export function WebinarHostPage() {
     }
   }, [id])
 
-  // Belt-and-suspenders: Cloudflare only pushes live_input.connected/
-  // disconnected events through a separate Notifications policy, so poll
-  // directly as well in case that policy isn't configured for this account.
+  // Cloudflare only pushes live_input.connected/disconnected through a
+  // separate Notifications policy, so poll the webinar row directly as a
+  // fallback — this also picks up cf_playback_hls_url when it appears after
+  // the live input is created (page may have loaded before that happened).
   useEffect(() => {
     if (!id || !webinar?.cf_live_input_uid) return
     let isActive = true
 
     const poll = () => {
-      pollLiveInputStatus(id).then((result) => {
-        if (!isActive || !result) return
+      fetchWebinar(id).then((updated) => {
+        if (!isActive) return
         setWebinar((prev) =>
           prev
             ? {
                 ...prev,
-                cf_stream_status: result.cf_stream_status,
-                cf_playback_hls_url: result.cf_playback_hls_url,
+                cf_stream_status: updated.cf_stream_status,
+                cf_playback_hls_url: updated.cf_playback_hls_url,
+                cf_playback_dash_url: updated.cf_playback_dash_url,
               }
             : prev,
         )
-        setPlaybackUrl(result.cf_playback_hls_url)
-      })
+        setPlaybackUrl(updated.cf_playback_hls_url)
+      }).catch(() => {})
     }
 
     poll()
