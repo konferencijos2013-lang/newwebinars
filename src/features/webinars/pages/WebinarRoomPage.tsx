@@ -8,7 +8,10 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { AiAssistant } from '@/features/ai/components/AiAssistant'
 import { useHlsVideo } from '@/features/webinars/hooks/useHlsVideo'
-import { subscribeToStreamStatus } from '@/features/webinars/api/stream'
+import {
+  pollLiveInputStatus,
+  subscribeToStreamStatus,
+} from '@/features/webinars/api/stream'
 import {
   fetchWebinarBySlug,
   fetchRegistrationByToken,
@@ -130,35 +133,74 @@ export function WebinarRoomPage() {
   }, [webinar?.id])
 
   // Cloudflare only pushes live_input.connected/disconnected through a
-  // separate Notifications policy, so poll the webinar row directly as a
-  // fallback — this also picks up cf_playback_hls_url when it appears after
-  // the live input is created (page may have loaded before that happened).
+  // separate Notifications policy, so poll directly through
+  // get-live-input-status. That function asks Cloudflare and writes the latest
+  // status + playback URLs into the webinar row, so viewers see the stream as
+  // soon as the encoder connects without needing a page reload.
   useEffect(() => {
-    if (!webinar?.id || webinar.cf_stream_status === 'live') return
+    if (!webinar?.id) return
+    let isActive = true
+    let consecutiveErrors = 0
+
+    const poll = async () => {
+      if (!isActive) return
+      try {
+        const status = await pollLiveInputStatus(webinar.id)
+        if (!isActive || !status) return
+        consecutiveErrors = 0
+        setWebinar((prev) =>
+          prev
+            ? {
+                ...prev,
+                cf_stream_status: status.cf_stream_status,
+                cf_playback_hls_url: status.cf_playback_hls_url,
+                cf_playback_dash_url: status.cf_playback_dash_url,
+              }
+            : prev,
+        )
+      } catch {
+        consecutiveErrors += 1
+        if (consecutiveErrors > 5) {
+          // Give up after repeated failures so we don't hammer errors.
+          clearInterval(intervalId)
+        }
+      }
+    }
+
+    poll()
+    const intervalId = setInterval(poll, 3000)
+    return () => {
+      isActive = false
+      clearInterval(intervalId)
+    }
+  }, [webinar?.id])
+
+  // Keep the full webinar row in sync periodically for non-streaming fields.
+  useEffect(() => {
+    if (!webinar?.slug) return
     let isActive = true
 
-    const poll = () => {
+    const sync = () => {
       fetchWebinarBySlug(webinar.slug).then((updated) => {
         if (!isActive) return
         setWebinar((prev) =>
           prev
             ? {
                 ...prev,
-                cf_stream_status: updated.cf_stream_status,
-                cf_playback_hls_url: updated.cf_playback_hls_url,
-                cf_playback_dash_url: updated.cf_playback_dash_url,
+                status: updated.status,
+                scheduled_at: updated.scheduled_at,
               }
             : prev,
         )
       }).catch(() => {})
     }
 
-    const intervalId = setInterval(poll, 5000)
+    const intervalId = setInterval(sync, 15000)
     return () => {
       isActive = false
       clearInterval(intervalId)
     }
-  }, [webinar?.id, webinar?.slug, webinar?.cf_stream_status])
+  }, [webinar?.slug])
 
   const isStreamViewable =
     Boolean(webinar?.cf_playback_hls_url) &&

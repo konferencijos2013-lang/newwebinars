@@ -138,18 +138,34 @@ serve(async (req) => {
         )
       }
 
-      const { data: updated } = await supabaseAdmin
+      // Re-extract the customer subdomain after an update; Cloudflare may
+      // rotate it, and without playback urls the players will stay blank.
+      const updatedSubdomain = (
+        updateBody.result?.webRTCPlayback?.url ??
+        updateBody.result?.webRTC?.url ??
+        ''
+      ).match(/https:\/\/(customer-[a-z0-9]+)\.cloudflarestream\.com/)?.[1]
+      const updatedHlsUrl = updatedSubdomain
+        ? `https://${updatedSubdomain}.cloudflarestream.com/${webinar.cf_live_input_uid}/manifest/video.m3u8`
+        : null
+      const updatedDashUrl = updatedSubdomain
+        ? `https://${updatedSubdomain}.cloudflarestream.com/${webinar.cf_live_input_uid}/manifest/video.mpd`
+        : null
+
+      await supabaseAdmin
         .from('webinars')
-        .select('cf_playback_hls_url')
+        .update({
+          cf_playback_hls_url: updatedHlsUrl ?? undefined,
+          cf_playback_dash_url: updatedDashUrl ?? undefined,
+        })
         .eq('id', webinar_id)
-        .single()
 
       return new Response(
         JSON.stringify({
           live_input_uid: webinar.cf_live_input_uid,
           rtmps_url: updateBody.result?.rtmps?.url,
           stream_key: updateBody.result?.rtmps?.streamKey,
-          playback_hls_url: updated?.cf_playback_hls_url,
+          playback_hls_url: updatedHlsUrl,
         }),
         {
           status: 200,

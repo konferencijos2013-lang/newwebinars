@@ -20,6 +20,7 @@ import { fetchWebinar, publishWebinar } from '@/features/webinars/api/webinars'
 import {
   createLiveInput,
   endLiveInput,
+  pollLiveInputStatus,
   subscribeToStreamStatus,
 } from '@/features/webinars/api/stream'
 import type { Webinar } from '@/shared/database.types'
@@ -85,38 +86,63 @@ export function WebinarHostPage() {
   }, [id])
 
   // Cloudflare only pushes live_input.connected/disconnected through a
-  // separate Notifications policy, so poll the webinar row directly as a
-  // fallback — this also picks up cf_playback_hls_url when it appears after
-  // the live input is created (page may have loaded before that happened).
+  // separate Notifications policy, so poll directly through
+  // get-live-input-status. That function asks Cloudflare and writes the latest
+  // status + playback URLs into the webinar row, so the preview appears as soon
+  // as the encoder connects.
   useEffect(() => {
-    if (!id || !webinar?.cf_live_input_uid) return
+    if (!id) return
     let isActive = true
 
     const poll = () => {
-      fetchWebinar(id).then((updated) => {
-        if (!isActive) return
+      pollLiveInputStatus(id).then((status) => {
+        if (!isActive || !status) return
         setWebinar((prev) =>
           prev
             ? {
                 ...prev,
-                cf_stream_status: updated.cf_stream_status,
-                cf_playback_hls_url: updated.cf_playback_hls_url,
-                cf_playback_dash_url: updated.cf_playback_dash_url,
+                cf_stream_status: status.cf_stream_status,
+                cf_playback_hls_url: status.cf_playback_hls_url,
+                cf_playback_dash_url: status.cf_playback_dash_url,
               }
             : prev,
         )
-        setPlaybackUrl(updated.cf_playback_hls_url)
+        setPlaybackUrl(status.cf_playback_hls_url)
       }).catch(() => {})
     }
 
     poll()
-    const intervalId = setInterval(poll, 5000)
+    // 3s is a good balance between responsiveness and rate-limit friendliness.
+    const intervalId = setInterval(poll, 3000)
 
     return () => {
       isActive = false
       clearInterval(intervalId)
     }
-  }, [id, webinar?.cf_live_input_uid])
+  }, [id])
+
+  // Also keep the full webinar row in sync periodically so other fields (e.g.
+  // stream_key shown in the right panel) never go stale.
+  useEffect(() => {
+    if (!id) return
+    let isActive = true
+
+    const sync = () => {
+      fetchWebinar(id).then((updated) => {
+        if (!isActive) return
+        setWebinar(updated)
+        if (updated.cf_playback_hls_url) {
+          setPlaybackUrl(updated.cf_playback_hls_url)
+        }
+      }).catch(() => {})
+    }
+
+    const intervalId = setInterval(sync, 15000)
+    return () => {
+      isActive = false
+      clearInterval(intervalId)
+    }
+  }, [id])
 
   const isStreamViewable =
     Boolean(playbackUrl) &&

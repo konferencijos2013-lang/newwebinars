@@ -83,11 +83,16 @@ serve(async (req) => {
     let nextStatus = webinar.cf_stream_status
     if (cfState === 'connected' || cfState === 'reconnected') {
       nextStatus = 'live'
-    } else if (webinar.cf_stream_status === 'live') {
-      // Was live, Cloudflare no longer reports it connected -> broadcast ended.
-      nextStatus = 'ended'
+    } else if (cfState === 'disconnected' || cfState === 'error' || cfState === 'ready') {
+      // The encoder is definitely not streaming. Only transition out of live
+      // to a terminal state; never wipe 'created'/'idle' just from a ready/disconnected
+      // check while the host is still setting things up.
+      if (webinar.cf_stream_status === 'live') {
+        nextStatus = 'ended'
+      }
     }
 
+    // Prefer the playback urls already stored; fall back to deriving them.
     const customerSubdomain = (
       result.webRTCPlayback?.url ?? result.webRTC?.url ?? ''
     ).match(/https:\/\/(customer-[a-z0-9]+)\.cloudflarestream\.com/)?.[1]
@@ -102,6 +107,7 @@ serve(async (req) => {
         ? `https://${customerSubdomain}.cloudflarestream.com/${result.uid}/manifest/video.mpd`
         : null)
 
+    // Always sync the database/notify clients when the status changes.
     if (
       nextStatus !== webinar.cf_stream_status ||
       playbackHlsUrl !== webinar.cf_playback_hls_url ||

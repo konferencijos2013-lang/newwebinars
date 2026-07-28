@@ -58,7 +58,7 @@ export async function endLiveInput(webinarId: string) {
 export type LiveInputStatus = {
   cf_stream_status: CfStreamStatus
   cf_playback_hls_url: string | null
-  cf_playback_dash_url?: string | null
+  cf_playback_dash_url: string | null
 }
 
 // Cloudflare's live_input.connected/disconnected events are only delivered
