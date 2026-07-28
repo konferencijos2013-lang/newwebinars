@@ -29,6 +29,13 @@ export async function fetchWebinarBySlug(slug: string) {
   return data as Webinar
 }
 
+// Goes through a SECURITY DEFINER RPC instead of a direct insert: anon only
+// ever had INSERT (not SELECT) granted on registrations, so the old
+// `.insert().select().single()` call failed with "permission denied for
+// table registrations" (42501) — Postgres needs SELECT to return the
+// RETURNING row. The RPC re-checks the same open-for-registration/partner-code
+// rules the previous INSERT policy enforced and returns only the row it just
+// created, so it's safe for anon without a blanket table grant.
 export async function registerForWebinar(input: {
   webinar_id: string
   email: string
@@ -38,19 +45,15 @@ export async function registerForWebinar(input: {
   referrer_url?: string | null
   referral_code?: string | null
 }) {
-  const { data, error } = await supabase
-    .from('registrations')
-    .insert({
-      ...input,
-      status: 'registered',
-      full_name: input.full_name ?? null,
-      phone: input.phone ?? null,
-      company: input.company ?? null,
-      referrer_url: input.referrer_url ?? null,
-      referral_code: input.referral_code ?? null,
-    })
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('register_for_webinar', {
+    p_webinar_id: input.webinar_id,
+    p_email: input.email,
+    p_full_name: input.full_name ?? null,
+    p_phone: input.phone ?? null,
+    p_company: input.company ?? null,
+    p_referrer_url: input.referrer_url ?? null,
+    p_referral_code: input.referral_code ?? null,
+  })
 
   if (error) throw error
   return data as Registration
