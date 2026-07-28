@@ -26,13 +26,25 @@ export function useHlsVideo(
     const llhlsUrl = `${url}${url.includes('?') ? '&' : '?'}protocol=llhls`
 
     if (video.canPlayType('application/vnd.apple.mpegurl') !== '') {
+      // Safari's native HLS handles LL-HLS automatically when the manifest
+      // has the llhls protocol parameter, so we can use the same URL.
       video.src = llhlsUrl
       video.addEventListener('loadedmetadata', tryPlay, { once: true })
     } else {
       import('hls.js').then(({ default: Hls }) => {
         if (cancelled || !videoRef.current) return
         if (!Hls.isSupported()) return
-        hls = new Hls({ lowLatencyMode: true })
+        // Cloudflare's recommended hls.js config for LL-HLS: keep the buffer
+        // as small as possible so we play the newest partial segments as they
+        // arrive, rather than accumulating a safety buffer that adds delay.
+        hls = new Hls({
+          lowLatencyMode: true,
+          backBufferLength: 0,
+          maxBufferLength: 2,
+          maxMaxBufferLength: 4,
+          liveSyncDurationCount: 1,
+          liveMaxLatencyDurationCount: 3,
+        })
         hls.on(Hls.Events.MANIFEST_PARSED, tryPlay)
         hls.loadSource(llhlsUrl)
         hls.attachMedia(videoRef.current)
