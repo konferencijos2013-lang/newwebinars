@@ -43,6 +43,8 @@ export function WebinarRoomPage() {
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
   const [newMessage, setNewMessage] = useState('')
   const [elapsed, setElapsed] = useState(0)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [chatError, setChatError] = useState<string | null>(null)
   const scriptsRef = useRef<WebinarChatScript[]>([])
   const itemsRef = useRef<ChatDisplayItem[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -92,6 +94,11 @@ export function WebinarRoomPage() {
             setStatus('error')
             return
           }
+          setIsAdmin(true)
+        }
+
+        if (isHostPreview) {
+          setIsAdmin(true)
         }
 
         scriptsRef.current = s
@@ -221,14 +228,23 @@ export function WebinarRoomPage() {
     setItems(itemsRef.current)
   }, [elapsed])
 
+  // Matches http(s)://, www., and bare domains like example.com/path.
+  const URL_REGEX = /(?:https?:\/\/|www\.)[^\s]+|(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?/i
+
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
+    setChatError(null)
     if (!webinar || !newMessage.trim() || !(registration || isHostPreview)) return
+    const text = newMessage.trim()
+    if (!isAdmin && URL_REGEX.test(text)) {
+      setChatError(t('linksNotAllowed'))
+      return
+    }
     const sent = await sendChatMessage({
       webinar_id: webinar.id,
       registration_id: registration?.id ?? null,
       sender_name: registration?.full_name ?? (isHostPreview ? t('host') : t('anonymous')),
-      message: newMessage.trim(),
+      message: text,
     })
     itemsRef.current = [
       ...itemsRef.current,
@@ -275,7 +291,11 @@ export function WebinarRoomPage() {
 
       <div className="grid flex-1 gap-4 overflow-hidden p-4 lg:grid-cols-[1fr_320px]">
         <div className="bg-muted relative flex aspect-video items-center justify-center overflow-hidden rounded-lg">
+          {/* key forces a remount when the HLS URL appears so useHlsVideo
+              re-initialises hls.js with a real source instead of staying
+              stuck on the initial null. */}
           <video
+            key={webinar?.cf_playback_hls_url ?? 'no-stream'}
             ref={videoRef}
             controls
             autoPlay
@@ -329,6 +349,9 @@ export function WebinarRoomPage() {
           </div>
           {(registration || isHostPreview) && (
             <form onSubmit={handleSend} className="border-t p-3">
+              {chatError && (
+                <p className="text-destructive mb-2 text-xs">{chatError}</p>
+              )}
               <div className="flex gap-2">
                 <Input
                   value={newMessage}

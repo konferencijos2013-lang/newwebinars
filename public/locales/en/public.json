@@ -22,5 +22,6 @@
   "notFound": "Page not found",
   "hostPreviewTitle": "You're signed in",
   "hostPreviewDescription": "You can preview the webinar as an administrator.",
-  "openRoomPreview": "Open room preview"
+  "openRoomPreview": "Open room preview",
+  "linksNotAllowed": "Only the administrator can send links."
 }
