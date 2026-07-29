@@ -8,10 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { AiAssistant } from '@/features/ai/components/AiAssistant'
 import { useHlsVideo } from '@/features/webinars/hooks/useHlsVideo'
-import {
-  pollLiveInputStatus,
-  subscribeToStreamStatus,
-} from '@/features/webinars/api/stream'
+import { subscribeToStreamStatus } from '@/features/webinars/api/stream'
 import {
   fetchWebinarBySlug,
   fetchRegistrationByToken,
@@ -140,37 +137,31 @@ export function WebinarRoomPage() {
   }, [webinar?.id])
 
   // Cloudflare only pushes live_input.connected/disconnected through a
-  // separate Notifications policy, so poll directly through
-  // get-live-input-status. That function asks Cloudflare and writes the latest
-  // status + playback URLs into the webinar row, so viewers see the stream as
-  // soon as the encoder connects without needing a page reload.
+  // separate Notifications policy, so poll the webinar row directly for the
+  // latest status + playback URLs. The get-live-input-status edge function
+  // also self-heals the row, but reading straight from Postgres is one less
+  // moving part and works even if the edge function is misconfigured.
   useEffect(() => {
-    if (!webinar?.id) return
+    if (!webinar?.slug) return
     let isActive = true
-    let consecutiveErrors = 0
 
     const poll = async () => {
       if (!isActive) return
       try {
-        const status = await pollLiveInputStatus(webinar.id)
-        if (!isActive || !status) return
-        consecutiveErrors = 0
+        const updated = await fetchWebinarBySlug(webinar.slug)
+        if (!isActive) return
         setWebinar((prev) =>
           prev
             ? {
                 ...prev,
-                cf_stream_status: status.cf_stream_status,
-                cf_playback_hls_url: status.cf_playback_hls_url,
-                cf_playback_dash_url: status.cf_playback_dash_url,
+                cf_stream_status: updated.cf_stream_status,
+                cf_playback_hls_url: updated.cf_playback_hls_url,
+                cf_playback_dash_url: updated.cf_playback_dash_url,
               }
             : prev,
         )
       } catch {
-        consecutiveErrors += 1
-        if (consecutiveErrors > 5) {
-          // Give up after repeated failures so we don't hammer errors.
-          clearInterval(intervalId)
-        }
+        // Ignore transient errors; next poll will retry.
       }
     }
 
@@ -180,7 +171,7 @@ export function WebinarRoomPage() {
       isActive = false
       clearInterval(intervalId)
     }
-  }, [webinar?.id])
+  }, [webinar?.slug])
 
   // Keep the full webinar row in sync periodically for non-streaming fields.
   useEffect(() => {
