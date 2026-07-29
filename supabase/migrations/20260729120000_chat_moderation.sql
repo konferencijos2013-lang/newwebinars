@@ -11,13 +11,16 @@ comment on column public.chat_messages.deleted_at is 'Soft-delete timestamp; whe
 comment on column public.chat_messages.deleted_by is 'Profile id of the moderator who deleted the message.';
 
 -- Only account members with admin/owner/editor/host role can delete.
+-- We look up the webinar's account_id first, then check membership.
 drop policy if exists "Chat messages: account members can delete" on public.chat_messages;
 create policy "Chat messages: account members can delete"
   on public.chat_messages
   for delete
   to authenticated
   using (
-    public.is_account_member (webinar_id, auth.uid())
+    public.is_account_member (
+      (select account_id from public.webinars where id = webinar_id)
+    )
   );
 
 -- Hide deleted messages from the public view.
