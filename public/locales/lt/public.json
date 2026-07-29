@@ -23,5 +23,6 @@
   "hostPreviewTitle": "Esate prisijungęs",
   "hostPreviewDescription": "Galite peržiūrėti webinarą kaip administratorius.",
   "openRoomPreview": "Atidaryti kambario peržiūrą",
-  "linksNotAllowed": "Nuorodas gali siųsti tik administratorius."
+  "linksNotAllowed": "Nuorodas gali siųsti tik administratorius.",
+  "deleteMessage": "Ištrinti žinutę"
 }

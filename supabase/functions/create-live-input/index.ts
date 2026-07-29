@@ -191,6 +191,69 @@ serve(async (req) => {
       // or in an unknown state.
     }
 
+    // If we reach here, either there was no cf_live_input_uid, or the existing
+    // one is ended/deleted. Check webinar_live_sessions for a recent live input
+    // that might still be active in Cloudflare (e.g. end-live-input was called
+    // but the encoder is still pushing). This lets us recover without forcing
+    // the host to restart OBS.
+    const { data: recentSession } = await supabaseAdmin
+      .from('webinar_live_sessions')
+      .select('cf_live_input_uid')
+      .eq('webinar_id', webinar_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (recentSession?.cf_live_input_uid) {
+      const cfStatus = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/live_inputs/${recentSession.cf_live_input_uid}`,
+        {
+          headers: { Authorization: `Bearer ${apiToken}` },
+        },
+      )
+      const statusBody = await cfStatus.json()
+      const currentStatus = statusBody.result?.status?.current?.state
+
+      if (currentStatus === 'connected' || currentStatus === 'ready') {
+        // The old live input is still alive in Cloudflare — reuse it and
+        // re-sync the webinars row so viewers get the playback URL again.
+        const customerSubdomain = (
+          statusBody.result?.webRTCPlayback?.url ??
+          statusBody.result?.webRTC?.url ??
+          ''
+        ).match(/https:\/\/(customer-[a-z0-9]+)\.cloudflarestream\.com/)?.[1]
+        const playbackHlsUrl = customerSubdomain
+          ? `https://${customerSubdomain}.cloudflarestream.com/${recentSession.cf_live_input_uid}/manifest/video.m3u8`
+          : null
+        const playbackDashUrl = customerSubdomain
+          ? `https://${customerSubdomain}.cloudflarestream.com/${recentSession.cf_live_input_uid}/manifest/video.mpd`
+          : null
+
+        await supabaseAdmin
+          .from('webinars')
+          .update({
+            cf_live_input_uid: recentSession.cf_live_input_uid,
+            cf_playback_hls_url: playbackHlsUrl,
+            cf_playback_dash_url: playbackDashUrl,
+            cf_stream_status: 'idle',
+          })
+          .eq('id', webinar_id)
+
+        return new Response(
+          JSON.stringify({
+            live_input_uid: recentSession.cf_live_input_uid,
+            rtmps_url: statusBody.result?.rtmps?.url,
+            stream_key: statusBody.result?.rtmps?.streamKey,
+            playback_hls_url: playbackHlsUrl,
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          },
+        )
+      }
+    }
+
     const cfResponse = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/live_inputs`,
       {

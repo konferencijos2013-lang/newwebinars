@@ -135,3 +135,12 @@ export async function fetchChatScripts(webinarId: string) {
   if (error) throw error
   return (data ?? []) as WebinarChatScript[]
 }
+
+export async function deleteChatMessage(messageId: string) {
+  const { error } = await supabase
+    .from('chat_messages')
+    .delete()
+    .eq('id', messageId)
+
+  if (error) throw error
+}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams } from 'react-router'
-import { Send } from 'lucide-react'
+import { Send, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -16,6 +16,7 @@ import {
   sendChatMessage,
   fetchChatScripts,
   markJoinedWebinar,
+  deleteChatMessage,
 } from '@/features/webinars/api/public'
 import type {
   ChatMessage,
@@ -245,6 +246,18 @@ export function WebinarRoomPage() {
     setNewMessage('')
   }
 
+  async function handleDeleteMessage(messageId: string) {
+    try {
+      await deleteChatMessage(messageId)
+      itemsRef.current = itemsRef.current.filter(
+        (item) => !(item.kind === 'message' && item.id === messageId),
+      )
+      setItems(itemsRef.current)
+    } catch {
+      // Ignore transient errors; message may already be gone.
+    }
+  }
+
   if (!hasAccessParams) {
     return (
       <div className="mx-auto max-w-2xl py-16 text-center">
@@ -320,7 +333,7 @@ export function WebinarRoomPage() {
             {items.map((m, idx) => (
               <div
                 key={idx}
-                className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                className={`group relative max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                   m.kind === 'message'
                     ? 'bg-primary text-primary-foreground ml-auto'
                     : 'bg-muted'
@@ -334,6 +347,16 @@ export function WebinarRoomPage() {
                     : m.sender_name}
                 </p>
                 <p>{m.message}</p>
+                {isAdmin && m.kind === 'message' && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteMessage(m.id)}
+                    className="absolute -right-8 top-1/2 -translate-y-1/2 rounded p-1 text-destructive opacity-0 transition-opacity hover:bg-destructive/10 group-hover:opacity-100"
+                    title={t('deleteMessage')}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             ))}
             <div ref={chatEndRef} />
