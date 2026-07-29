@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams } from 'react-router'
-import { Send, Trash2 } from 'lucide-react'
+import { Send, Trash2, VolumeX } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -43,6 +43,7 @@ export function WebinarRoomPage() {
   const [elapsed, setElapsed] = useState(0)
   const [isAdmin, setIsAdmin] = useState(false)
   const [chatError, setChatError] = useState<string | null>(null)
+  const [isMuted, setIsMuted] = useState(true)
   const scriptsRef = useRef<WebinarChatScript[]>([])
   const itemsRef = useRef<ChatDisplayItem[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -303,10 +304,27 @@ export function WebinarRoomPage() {
             ref={videoRef}
             controls
             autoPlay
-            muted
+            muted={isMuted}
             playsInline
             className="h-full w-full"
           />
+          {isStreamViewable && isMuted && (
+            <button
+              type="button"
+              onClick={() => {
+                const video = videoRef.current
+                if (!video) return
+                video.muted = false
+                video.volume = 1
+                video.play().catch(() => {})
+                setIsMuted(false)
+              }}
+              className="bg-primary text-primary-foreground absolute bottom-16 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium shadow-lg transition-transform hover:scale-105"
+            >
+              <VolumeX className="h-4 w-4" />
+              {t('unmute')}
+            </button>
+          )}
           {!isStreamViewable && (
             <div className="bg-muted absolute inset-0 flex items-center justify-center text-center">
               <div>

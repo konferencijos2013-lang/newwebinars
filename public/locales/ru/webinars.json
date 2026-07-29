@@ -65,6 +65,7 @@
   "streamPreview": "Предпросмотр трансляции",
   "streamPreviewActive": "Прямой эфир подключён",
   "streamPreviewIdle": "Изображение появится после начала трансляции",
+  "unmute": "Включить звук",
   "waitingForFeed": "Ожидание сигнала энкодера...",
   "videoPlaceholder": "Видео появится здесь",
   "goLive": "Начать трансляцию",

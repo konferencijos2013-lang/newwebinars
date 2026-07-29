@@ -11,6 +11,7 @@ import {
   Circle,
   ExternalLink,
   AlertCircle,
+  VolumeX,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
@@ -39,6 +40,7 @@ export function WebinarHostPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [isEnding, setIsEnding] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [isMuted, setIsMuted] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -317,10 +319,27 @@ export function WebinarHostPage() {
               ref={videoRef}
               controls
               autoPlay
-              muted
+              muted={isMuted}
               playsInline
               className="h-full w-full"
             />
+            {isStreamViewable && isMuted && (
+              <button
+                type="button"
+                onClick={() => {
+                  const video = videoRef.current
+                  if (!video) return
+                  video.muted = false
+                  video.volume = 1
+                  video.play().catch(() => {})
+                  setIsMuted(false)
+                }}
+                className="bg-primary text-primary-foreground absolute bottom-16 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium shadow-lg transition-transform hover:scale-105"
+              >
+                <VolumeX className="h-4 w-4" />
+                {t('unmute')}
+              </button>
+            )}
             {!isStreamViewable && (
               <div className="bg-muted absolute inset-0 flex items-center justify-center text-center">
                 <div>

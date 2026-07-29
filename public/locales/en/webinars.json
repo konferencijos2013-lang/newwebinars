@@ -65,6 +65,7 @@
   "streamPreview": "Stream preview",
   "streamPreviewActive": "Live feed connected",
   "streamPreviewIdle": "Feed will appear once you go live",
+  "unmute": "Unmute",
   "waitingForFeed": "Waiting for encoder feed...",
   "videoPlaceholder": "Video will appear here",
   "goLive": "Go live",

@@ -24,5 +24,6 @@
   "hostPreviewDescription": "You can preview the webinar as an administrator.",
   "openRoomPreview": "Open room preview",
   "linksNotAllowed": "Only the administrator can send links.",
-  "deleteMessage": "Delete message"
+  "deleteMessage": "Delete message",
+  "unmute": "Unmute"
 }
