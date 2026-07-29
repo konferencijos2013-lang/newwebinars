@@ -1,16 +1,27 @@
-import { useEffect, type RefObject } from 'react'
+import { useEffect, useState, type RefObject } from 'react'
 
 // Cloudflare's HLS manifests need hls.js in Chrome/Firefox (only Safari can
 // play .m3u8 natively via <video src>). Also explicitly call .play() once
 // the media is ready — setting `src`/attaching hls.js asynchronously after
 // mount doesn't reliably re-trigger the `autoPlay` attribute in every
 // browser, so playback can silently stay paused at 0:00 with no picture.
+//
+// The hook takes a RefObject for backward compatibility but internally
+// tracks the element with state so that a `key`-driven remount (or any
+// other ref swap) reliably re-runs the effect with the new element.
 export function useHlsVideo(
   videoRef: RefObject<HTMLVideoElement | null>,
   url: string | null | undefined,
 ) {
+  const [video, setVideo] = useState<HTMLVideoElement | null>(null)
+
+  // Sync the ref into state so the effect below re-runs when the element
+  // changes (e.g. after a key-driven remount).
   useEffect(() => {
-    const video = videoRef.current
+    setVideo(videoRef.current)
+  }, [videoRef, videoRef.current])
+
+  useEffect(() => {
     if (!url || !video) return
     let cancelled = false
     let hls: import('hls.js').default | null = null
@@ -35,7 +46,7 @@ export function useHlsVideo(
       video.addEventListener('error', tryPlay)
     } else {
       import('hls.js').then(({ default: Hls }) => {
-        if (cancelled || !videoRef.current) return
+        if (cancelled) return
         if (!Hls.isSupported()) return
         // Cloudflare's recommended hls.js config for LL-HLS: keep the buffer
         // as small as possible so we play the newest partial segments as they
@@ -70,10 +81,9 @@ export function useHlsVideo(
               } else {
                 hls.destroy()
                 hls = null
-                if (!cancelled && videoRef.current) {
+                if (!cancelled) {
                   import('hls.js').then(({ default: Hls2 }) => {
-                    if (cancelled || !videoRef.current || !Hls2.isSupported())
-                      return
+                    if (cancelled || !Hls2.isSupported()) return
                     hls = new Hls2({
                       lowLatencyMode: true,
                       backBufferLength: 0,
@@ -84,7 +94,7 @@ export function useHlsVideo(
                     })
                     hls.on(Hls2.Events.MANIFEST_PARSED, tryPlay)
                     hls.loadSource(llhlsUrl)
-                    hls.attachMedia(videoRef.current)
+                    hls.attachMedia(video)
                   })
                 }
               }
@@ -100,7 +110,7 @@ export function useHlsVideo(
           }
         })
         hls.loadSource(llhlsUrl)
-        hls.attachMedia(videoRef.current)
+        hls.attachMedia(video)
       })
     }
 
@@ -110,5 +120,5 @@ export function useHlsVideo(
       video.removeEventListener('error', tryPlay)
       hls?.destroy()
     }
-  }, [videoRef, url])
+  }, [video, url])
 }
