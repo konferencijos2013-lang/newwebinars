@@ -200,10 +200,10 @@ export function WebinarRoomPage() {
     }
   }, [webinar?.slug])
 
-  const isStreamViewable =
-    Boolean(webinar?.cf_playback_hls_url) &&
-    (webinar?.cf_stream_status === 'live' ||
-      webinar?.cf_stream_status === 'connected')
+  // Start playback as soon as we have a URL. hls.js will retry while the
+  // manifest is still 404ing before the encoder connects, so there's no
+  // need to gate on cf_stream_status being 'live' first.
+  const isStreamViewable = Boolean(webinar?.cf_playback_hls_url)
   useHlsVideo(videoRef, isStreamViewable ? webinar?.cf_playback_hls_url : null)
 
   useEffect(() => {
