@@ -11,6 +11,7 @@ import {
   Type,
   User,
   FormInput,
+  ImageIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
@@ -22,6 +23,7 @@ import {
 const BLOCK_ICONS = {
   hero: Sparkles,
   text: Type,
+  image: ImageIcon,
   video: Play,
   registration_form: FormInput,
   countdown: Clock,

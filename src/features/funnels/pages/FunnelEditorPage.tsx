@@ -141,7 +141,18 @@ export function FunnelEditorPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              activePage &&
+              window.open(
+                `/funnels/${funnel.id}/preview/${activePage.path}`,
+                '_blank',
+                'noopener,noreferrer',
+              )
+            }
+          >
             <Eye className="mr-2 h-4 w-4" />
             {t('preview')}
           </Button>
@@ -169,7 +180,11 @@ export function FunnelEditorPage() {
       </div>
 
       {activePage ? (
-        <FunnelEditor page={activePage} initialBlocks={blocks} />
+        <FunnelEditor
+          page={activePage}
+          accountId={funnel.account_id}
+          initialBlocks={blocks}
+        />
       ) : (
         <Card className="py-12 text-center">
           <p className="text-muted-foreground">{t('noPages')}</p>

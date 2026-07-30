@@ -21,7 +21,11 @@ import {
   FUNNEL_BLOCK_REGISTRY,
   type FunnelBlockType,
 } from '@/features/funnels/types'
-import { upsertBlock, deleteBlock } from '@/features/funnels/api/funnels'
+import {
+  upsertBlock,
+  deleteBlock,
+  uploadFunnelImage,
+} from '@/features/funnels/api/funnels'
 import type { FunnelBlock, FunnelPage } from '@/shared/database.types'
 
 type MobilePanel = 'blocks' | 'settings' | null
@@ -29,10 +33,12 @@ type PreviewDevice = 'desktop' | 'mobile'
 
 export function FunnelEditor({
   page,
+  accountId,
   initialBlocks,
   onChange,
 }: {
   page: FunnelPage
+  accountId: string
   initialBlocks: FunnelBlock[]
   onChange?: (blocks: FunnelBlock[]) => void
 }) {
@@ -140,6 +146,7 @@ export function FunnelEditor({
                 },
               })
             }
+            accountId={accountId}
             saving={saving}
           />
           <Button
@@ -201,20 +208,26 @@ export function FunnelEditor({
               previewDevice === 'desktop' ? 'max-w-4xl' : 'max-w-[390px]',
             )}
           >
-            <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-5">
+            <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-6 sm:p-5">
               {blocks.map((block) => {
-                const columnSpan =
-                  (block.settings as Record<string, unknown>)?.column_span === 6
-                    ? 6
+                const columnSpan = (
+                  [4, 6].includes(
+                    Number(
+                      (block.settings as Record<string, unknown>)?.column_span,
+                    ),
+                  )
+                    ? (block.settings as Record<string, unknown>).column_span
                     : 12
+                ) as 4 | 6 | 12
                 return (
                   <button
                     key={block.id}
                     type="button"
                     onClick={() => selectBlock(block.id)}
                     className={cn(
-                      'group focus-visible:ring-primary/40 relative block w-full rounded-lg border-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none sm:col-span-2',
-                      columnSpan === 6 && 'sm:col-span-1',
+                      'group focus-visible:ring-primary/40 relative block w-full rounded-lg border-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none sm:col-span-3',
+                      columnSpan === 6 && 'sm:col-span-3',
+                      columnSpan === 4 && 'sm:col-span-2',
                       selectedId === block.id
                         ? 'border-primary bg-background'
                         : 'hover:border-primary/30 border-transparent',
@@ -422,17 +435,24 @@ function BlockEditor({
   block,
   onChange,
   onLayoutChange,
+  accountId,
   saving,
 }: {
   block: FunnelBlock
   onChange: (content: Record<string, unknown>) => void
-  onLayoutChange: (columnSpan: 6 | 12) => void
+  onLayoutChange: (columnSpan: 4 | 6 | 12) => void
+  accountId: string
   saving: boolean
 }) {
   const { t } = useTranslation('funnels')
   const content = (block.content as Record<string, unknown>) || {}
-  const columnSpan =
-    (block.settings as Record<string, unknown>)?.column_span === 6 ? 6 : 12
+  const columnSpan = (
+    [4, 6].includes(
+      Number((block.settings as Record<string, unknown>)?.column_span),
+    )
+      ? (block.settings as Record<string, unknown>).column_span
+      : 12
+  ) as 4 | 6 | 12
   const set = (patch: Record<string, unknown>) =>
     onChange({ ...content, ...patch })
 
@@ -443,14 +463,15 @@ function BlockEditor({
           className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
           value={columnSpan}
           onChange={(event) =>
-            onLayoutChange(Number(event.target.value) as 6 | 12)
+            onLayoutChange(Number(event.target.value) as 4 | 6 | 12)
           }
         >
           <option value={12}>{t('fullWidth')}</option>
           <option value={6}>{t('halfWidth')}</option>
+          <option value={4}>{t('thirdWidth')}</option>
         </select>
         <p className="text-muted-foreground mt-1 text-xs">
-          {t('halfWidthHint')}
+          {t('blockWidthHint')}
         </p>
       </Field>
       {block.block_type === 'hero' && (
@@ -490,6 +511,14 @@ function BlockEditor({
           />
         </Field>
       )}
+      {block.block_type === 'image' && (
+        <ImageBlockFields
+          accountId={accountId}
+          url={(content.url as string) ?? ''}
+          alt={(content.alt as string) ?? ''}
+          onChange={(patch) => set(patch)}
+        />
+      )}
       {block.block_type === 'video' && (
         <>
           <Field label={t('videoUrl')}>
@@ -522,13 +551,40 @@ function BlockEditor({
         </Field>
       )}
       {block.block_type === 'countdown' && (
-        <Field label={t('countdownTarget')}>
-          <TextInput
-            type="datetime-local"
-            value={(content.target as string) ?? ''}
-            onChange={(target) => set({ target })}
-          />
-        </Field>
+        <>
+          <Field label={t('countdownMode')}>
+            <select
+              className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+              value={(content.mode as string) ?? 'fixed'}
+              onChange={(event) => set({ mode: event.target.value })}
+            >
+              <option value="fixed">{t('countdownModeFixed')}</option>
+              <option value="visitor">{t('countdownModeVisitor')}</option>
+            </select>
+          </Field>
+          {(content.mode as string) === 'visitor' ? (
+            <Field label={t('countdownDuration')}>
+              <TextInput
+                type="number"
+                value={String(content.duration_minutes ?? 10)}
+                onChange={(value) =>
+                  set({ duration_minutes: Math.max(1, Number(value) || 1) })
+                }
+              />
+              <p className="text-muted-foreground text-xs">
+                {t('countdownVisitorHint')}
+              </p>
+            </Field>
+          ) : (
+            <Field label={t('countdownTarget')}>
+              <TextInput
+                type="datetime-local"
+                value={(content.target as string) ?? ''}
+                onChange={(target) => set({ target })}
+              />
+            </Field>
+          )}
+        </>
       )}
       {block.block_type === 'benefits' && (
         <Field label={t('benefitsItems')}>
@@ -638,5 +694,65 @@ function BlockEditor({
       )}
       {saving && <p className="text-muted-foreground text-xs">{t('saving')}</p>}
     </div>
+  )
+}
+
+function ImageBlockFields({
+  accountId,
+  url,
+  alt,
+  onChange,
+}: {
+  accountId: string
+  url: string
+  alt: string
+  onChange: (patch: Record<string, unknown>) => void
+}) {
+  const { t } = useTranslation('funnels')
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleFile(file?: File) {
+    if (!file) return
+    setUploading(true)
+    setError(null)
+    try {
+      onChange({ url: await uploadFunnelImage(accountId, file) })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <>
+      <Field label={t('imageUpload')}>
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+          disabled={uploading}
+          onChange={(event) => handleFile(event.target.files?.[0])}
+        />
+        <p className="text-muted-foreground text-xs">
+          {uploading ? t('imageUploading') : t('imageUploadHint')}
+        </p>
+        {error && <p className="text-destructive text-xs">{error}</p>}
+      </Field>
+      <Field label={t('imageUrl')}>
+        <TextInput
+          value={url}
+          placeholder="https://..."
+          onChange={(nextUrl) => onChange({ url: nextUrl })}
+        />
+      </Field>
+      <Field label={t('imageAlt')}>
+        <TextInput
+          value={alt}
+          onChange={(nextAlt) => onChange({ alt: nextAlt })}
+        />
+      </Field>
+    </>
   )
 }

@@ -10,6 +10,8 @@ import {
   AlignCenter,
   AlignRight,
   Eraser,
+  Palette,
+  TextCursorInput,
 } from 'lucide-react'
 import { cn } from '@/shared/utils/cn'
 
@@ -163,6 +165,59 @@ export function RichTextEditor({
             </ToolbarButton>
           </>
         )}
+        <div className="bg-border mx-1 h-5 w-px" />
+        <label
+          title="Teksto spalva"
+          className="text-muted-foreground hover:bg-muted flex h-7 w-7 cursor-pointer items-center justify-center rounded"
+        >
+          <Palette className="h-4 w-4" />
+          <input
+            type="color"
+            className="sr-only"
+            onChange={(event) =>
+              runCommand({ command: 'foreColor', value: event.target.value })
+            }
+          />
+        </label>
+        <label
+          title="Šriftas"
+          className="text-muted-foreground flex h-7 items-center"
+        >
+          <TextCursorInput className="h-4 w-4" />
+          <select
+            aria-label="Šriftas"
+            className="bg-transparent text-xs outline-none"
+            defaultValue=""
+            onChange={(event) =>
+              runCommand({ command: 'fontName', value: event.target.value })
+            }
+          >
+            <option value="" disabled>
+              Šriftas
+            </option>
+            <option value="Arial">Arial</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Times New Roman">Times</option>
+          </select>
+        </label>
+        <select
+          aria-label="Teksto dydis"
+          title="Teksto dydis"
+          className="text-muted-foreground bg-transparent text-xs outline-none"
+          defaultValue=""
+          onChange={(event) =>
+            runCommand({ command: 'fontSize', value: event.target.value })
+          }
+        >
+          <option value="" disabled>
+            Dydis
+          </option>
+          <option value="2">Mažas</option>
+          <option value="3">Normalus</option>
+          <option value="5">Didelis</option>
+          <option value="7">Labai didelis</option>
+        </select>
         <div className="bg-border mx-1 h-5 w-px" />
         <ToolbarButton title="Nuoroda" onClick={handleLink}>
           <LinkIcon className="h-4 w-4" />

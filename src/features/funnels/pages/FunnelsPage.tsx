@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { Plus, Funnel as FunnelIcon, ArrowRight } from 'lucide-react'
+import { Plus, Funnel as FunnelIcon, ArrowRight, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
-import { fetchFunnels } from '@/features/funnels/api/funnels'
+import { deleteFunnel, fetchFunnels } from '@/features/funnels/api/funnels'
 import type { Funnel as FunnelType } from '@/shared/database.types'
 
 export function FunnelsPage() {
@@ -38,6 +38,16 @@ export function FunnelsPage() {
       isActive = false
     }
   }, [account.status, account.account?.id])
+
+  async function handleDelete(funnel: FunnelType) {
+    if (!window.confirm(t('deleteConfirm', { name: funnel.name }))) return
+    try {
+      await deleteFunnel(funnel.id)
+      setFunnels((current) => current.filter((item) => item.id !== funnel.id))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
 
   if (account.status === 'loading' || status === 'loading') {
     return (
@@ -99,7 +109,21 @@ export function FunnelsPage() {
                     /{funnel.slug}
                   </p>
                 </div>
-                <ArrowRight className="text-muted-foreground h-4 w-4" />
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive h-8 w-8 px-0"
+                    aria-label={t('delete')}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      void handleDelete(funnel)
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <ArrowRight className="text-muted-foreground h-4 w-4" />
+                </div>
               </div>
               <div className="mt-4 flex items-center gap-2">
                 <span

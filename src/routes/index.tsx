@@ -38,6 +38,8 @@ import { ChatScriptEditorPage } from '@/features/webinars/pages/ChatScriptEditor
 import { FunnelsPage } from '@/features/funnels/pages/FunnelsPage'
 import { FunnelCreatePage } from '@/features/funnels/pages/FunnelCreatePage'
 import { FunnelEditorPage } from '@/features/funnels/pages/FunnelEditorPage'
+import { PublicFunnelPage } from '@/features/funnels/pages/PublicFunnelPage'
+import { FunnelPreviewPage } from '@/features/funnels/pages/FunnelPreviewPage'
 import { PublicWebinarPage } from '@/features/webinars/pages/PublicWebinarPage'
 import { WaitingRoomPage } from '@/features/webinars/pages/WaitingRoomPage'
 import { WebinarRoomPage } from '@/features/webinars/pages/WebinarRoomPage'
@@ -57,6 +59,7 @@ export function AppRoutes() {
     <BrowserRouter>
       <Routes>
         {/* Public webinar funnel pages (no marketing wrapper) */}
+        <Route path="f/:slug/:path" element={<PublicFunnelPage />} />
         <Route path="w/:slug" element={<PublicWebinarPage />} />
         <Route path="w/:slug/waiting-room" element={<WaitingRoomPage />} />
         <Route path="w/:slug/room" element={<WebinarRoomPage />} />
@@ -91,6 +94,10 @@ export function AppRoutes() {
           />
           <Route path="funnels" element={<FunnelsPage />} />
           <Route path="funnels/new" element={<FunnelCreatePage />} />
+          <Route
+            path="funnels/:id/preview/:path"
+            element={<FunnelPreviewPage />}
+          />
           <Route path="funnels/:id" element={<FunnelEditorPage />} />
           <Route path="recordings" element={<RecordingsPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />

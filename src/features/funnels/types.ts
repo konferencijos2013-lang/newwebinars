@@ -1,6 +1,7 @@
 export type FunnelBlockType =
   | 'hero'
   | 'text'
+  | 'image'
   | 'video'
   | 'registration_form'
   | 'countdown'
@@ -39,6 +40,13 @@ export const FUNNEL_BLOCK_REGISTRY: Record<FunnelBlockType, FunnelBlockDef> = {
     defaultContent: { text: 'Write something compelling...' },
     defaultSettings: {},
   },
+  image: {
+    type: 'image',
+    label: 'Image',
+    icon: 'Image',
+    defaultContent: { url: '', alt: '' },
+    defaultSettings: {},
+  },
   video: {
     type: 'video',
     label: 'Video',
@@ -57,7 +65,11 @@ export const FUNNEL_BLOCK_REGISTRY: Record<FunnelBlockType, FunnelBlockDef> = {
     type: 'countdown',
     label: 'Countdown',
     icon: 'Clock',
-    defaultContent: { target: null },
+    defaultContent: {
+      target: null,
+      mode: 'fixed',
+      duration_minutes: 10,
+    },
     defaultSettings: {},
   },
   benefits: {

@@ -1,5 +1,48 @@
-import { MessageCircle, Play, User, Clock } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { MessageCircle, Play, User, Clock, ImageIcon } from 'lucide-react'
 import type { FunnelBlock } from '@/shared/database.types'
+
+function Countdown({
+  content,
+  blockId,
+}: {
+  content: Record<string, unknown>
+  blockId: string
+}) {
+  const [now, setNow] = useState(() => Date.now())
+  const mode = content.mode === 'visitor' ? 'visitor' : 'fixed'
+  const durationMinutes = Math.max(1, Number(content.duration_minutes) || 10)
+  const storageKey = `newwebinars:countdown:${blockId}`
+  const [visitorStart] = useState(() => {
+    if (mode !== 'visitor' || typeof window === 'undefined') return Date.now()
+    const existing = window.sessionStorage.getItem(storageKey)
+    if (existing && Number.isFinite(Number(existing))) return Number(existing)
+    const startedAt = Date.now()
+    window.sessionStorage.setItem(storageKey, String(startedAt))
+    return startedAt
+  })
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 1_000)
+    return () => window.clearInterval(interval)
+  }, [])
+
+  const target =
+    mode === 'visitor'
+      ? visitorStart + durationMinutes * 60_000
+      : new Date(String(content.target ?? '')).getTime()
+  const seconds = Number.isFinite(target)
+    ? Math.max(0, Math.ceil((target - now) / 1_000))
+    : 0
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainingSeconds = seconds % 60
+  const value = [hours, minutes, remainingSeconds]
+    .map((part) => String(part).padStart(2, '0'))
+    .join(':')
+
+  return <span className="text-2xl font-bold tabular-nums">{value}</span>
+}
 
 function Rich({
   html,
@@ -61,6 +104,25 @@ export function BlockRenderer({
           />
         </div>
       )
+    case 'image': {
+      const url = content.url as string
+      const alt = (content.alt as string) || ''
+      return (
+        <div className={common}>
+          {url ? (
+            <img
+              src={url}
+              alt={alt}
+              className="mx-auto h-auto max-w-full rounded-lg object-contain"
+            />
+          ) : (
+            <div className="bg-muted text-muted-foreground flex aspect-video items-center justify-center rounded-lg">
+              <ImageIcon className="h-12 w-12" />
+            </div>
+          )}
+        </div>
+      )
+    }
     case 'video':
       return (
         <div className={common}>
@@ -92,7 +154,7 @@ export function BlockRenderer({
         <div className={common}>
           <div className="flex justify-center gap-4">
             <Clock className="text-muted-foreground h-8 w-8" />
-            <span className="text-2xl font-bold">00:00:00</span>
+            <Countdown content={content} blockId={block.id} />
           </div>
         </div>
       )

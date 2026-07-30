@@ -19,6 +19,17 @@ export async function fetchFunnels(accountId: string) {
   return (data ?? []) as Funnel[]
 }
 
+export async function fetchFunnelBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from('funnels')
+    .select('*')
+    .eq('slug', slug)
+    .single()
+
+  if (error) throw error
+  return data as Funnel
+}
+
 export async function fetchFunnel(id: string) {
   const { data, error } = await supabase
     .from('funnels')
@@ -153,4 +164,31 @@ export async function upsertBlock(
 export async function deleteBlock(id: string) {
   const { error } = await supabase.from('funnel_blocks').delete().eq('id', id)
   if (error) throw error
+}
+
+export async function uploadFunnelImage(accountId: string, file: File) {
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Pasirinkite paveikslėlio failą.')
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error('Paveikslėlis negali viršyti 10 MB.')
+  }
+
+  const extension =
+    file.name
+      .split('.')
+      .pop()
+      ?.replace(/[^a-z0-9]/gi, '') || 'jpg'
+  const path = `${accountId}/${crypto.randomUUID()}.${extension.toLowerCase()}`
+  const { error } = await supabase.storage
+    .from('funnel-assets')
+    .upload(path, file, {
+      cacheControl: '3600',
+      contentType: file.type,
+      upsert: false,
+    })
+  if (error) throw error
+
+  const { data } = supabase.storage.from('funnel-assets').getPublicUrl(path)
+  return data.publicUrl
 }
