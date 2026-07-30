@@ -65,9 +65,9 @@ export function PublicFunnelPage() {
                 key={block.id}
                 className={
                   span === 4
-                    ? 'sm:col-span-1'
+                    ? 'sm:col-span-2'
                     : span === 6
-                      ? 'sm:col-span-2'
+                      ? 'sm:col-span-3'
                       : 'sm:col-span-6'
                 }
               >
