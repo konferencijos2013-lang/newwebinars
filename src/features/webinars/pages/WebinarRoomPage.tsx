@@ -181,18 +181,20 @@ export function WebinarRoomPage() {
     let isActive = true
 
     const sync = () => {
-      fetchWebinarBySlug(webinar.slug).then((updated) => {
-        if (!isActive) return
-        setWebinar((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: updated.status,
-                scheduled_at: updated.scheduled_at,
-              }
-            : prev,
-        )
-      }).catch(() => {})
+      fetchWebinarBySlug(webinar.slug)
+        .then((updated) => {
+          if (!isActive) return
+          setWebinar((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  status: updated.status,
+                  scheduled_at: updated.scheduled_at,
+                }
+              : prev,
+          )
+        })
+        .catch(() => {})
     }
 
     const intervalId = setInterval(sync, 15000)
@@ -222,12 +224,14 @@ export function WebinarRoomPage() {
   }, [elapsed])
 
   // Matches http(s)://, www., and bare domains like example.com/path.
-  const URL_REGEX = /(?:https?:\/\/|www\.)[^\s]+|(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?/i
+  const URL_REGEX =
+    /(?:https?:\/\/|www\.)[^\s]+|(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?/i
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
     setChatError(null)
-    if (!webinar || !newMessage.trim() || !(registration || isHostPreview)) return
+    if (!webinar || !newMessage.trim() || !(registration || isHostPreview))
+      return
     const text = newMessage.trim()
     if (!isAdmin && URL_REGEX.test(text)) {
       setChatError(t('linksNotAllowed'))
@@ -236,7 +240,8 @@ export function WebinarRoomPage() {
     const sent = await sendChatMessage({
       webinar_id: webinar.id,
       registration_id: registration?.id ?? null,
-      sender_name: registration?.full_name ?? (isHostPreview ? t('host') : t('anonymous')),
+      sender_name:
+        registration?.full_name ?? (isHostPreview ? t('host') : t('anonymous')),
       message: text,
     })
     itemsRef.current = [
@@ -369,7 +374,7 @@ export function WebinarRoomPage() {
                   <button
                     type="button"
                     onClick={() => handleDeleteMessage(m.id)}
-                    className="absolute -right-8 top-1/2 -translate-y-1/2 rounded p-1 text-destructive opacity-0 transition-opacity hover:bg-destructive/10 group-hover:opacity-100"
+                    className="text-destructive hover:bg-destructive/10 absolute top-1/2 -right-8 -translate-y-1/2 rounded p-1 opacity-0 transition-opacity group-hover:opacity-100"
                     title={t('deleteMessage')}
                   >
                     <Trash2 className="h-3.5 w-3.5" />

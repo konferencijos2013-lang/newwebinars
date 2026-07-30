@@ -97,20 +97,22 @@ export function WebinarHostPage() {
     let isActive = true
 
     const poll = () => {
-      pollLiveInputStatus(id).then((status) => {
-        if (!isActive || !status) return
-        setWebinar((prev) =>
-          prev
-            ? {
-                ...prev,
-                cf_stream_status: status.cf_stream_status,
-                cf_playback_hls_url: status.cf_playback_hls_url,
-                cf_playback_dash_url: status.cf_playback_dash_url,
-              }
-            : prev,
-        )
-        setPlaybackUrl(status.cf_playback_hls_url)
-      }).catch(() => {})
+      pollLiveInputStatus(id)
+        .then((status) => {
+          if (!isActive || !status) return
+          setWebinar((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  cf_stream_status: status.cf_stream_status,
+                  cf_playback_hls_url: status.cf_playback_hls_url,
+                  cf_playback_dash_url: status.cf_playback_dash_url,
+                }
+              : prev,
+          )
+          setPlaybackUrl(status.cf_playback_hls_url)
+        })
+        .catch(() => {})
     }
 
     poll()
@@ -130,13 +132,15 @@ export function WebinarHostPage() {
     let isActive = true
 
     const sync = () => {
-      fetchWebinar(id).then((updated) => {
-        if (!isActive) return
-        setWebinar(updated)
-        if (updated.cf_playback_hls_url) {
-          setPlaybackUrl(updated.cf_playback_hls_url)
-        }
-      }).catch(() => {})
+      fetchWebinar(id)
+        .then((updated) => {
+          if (!isActive) return
+          setWebinar(updated)
+          if (updated.cf_playback_hls_url) {
+            setPlaybackUrl(updated.cf_playback_hls_url)
+          }
+        })
+        .catch(() => {})
     }
 
     const intervalId = setInterval(sync, 15000)

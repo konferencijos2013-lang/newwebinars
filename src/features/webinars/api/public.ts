@@ -85,9 +85,12 @@ export async function markEnteredWaitingRoom(accessToken: string) {
 }
 
 export async function markJoinedWebinar(accessToken: string) {
-  const { data, error } = await supabase.rpc('mark_registration_joined_webinar', {
-    p_access_token: accessToken,
-  })
+  const { data, error } = await supabase.rpc(
+    'mark_registration_joined_webinar',
+    {
+      p_access_token: accessToken,
+    },
+  )
 
   if (error) throw error
   return data as Registration

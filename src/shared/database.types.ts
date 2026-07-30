@@ -27,6 +27,7 @@ export type WebinarAccessMode =
 export type WebinarScheduleType =
   'on_demand' | 'fixed' | 'recurring' | 'just_in_time'
 export type ChatScriptSenderRole = 'attendee' | 'host'
+export type ChatScriptSource = 'manual' | 'imported' | 'ai'
 export type RecordingStatus = 'processing' | 'ready' | 'archived' | 'deleted'
 export type CreditType =
   | 'live_webinar_minute'
@@ -200,6 +201,7 @@ export interface WebinarChatScript {
   message: string
   sort_order: number
   is_active: boolean
+  source: ChatScriptSource
   created_at: string
   updated_at: string
 }

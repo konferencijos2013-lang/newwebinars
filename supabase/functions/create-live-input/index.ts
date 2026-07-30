@@ -288,7 +288,9 @@ serve(async (req) => {
     // live input UID instead, which always reflects the active broadcast (or
     // an idle placeholder) without needing a second API call per session.
     const customerSubdomain = (
-      result.webRTCPlayback?.url ?? result.webRTC?.url ?? ''
+      result.webRTCPlayback?.url ??
+      result.webRTC?.url ??
+      ''
     ).match(/https:\/\/(customer-[a-z0-9]+)\.cloudflarestream\.com/)?.[1]
     const playbackHlsUrl = customerSubdomain
       ? `https://${customerSubdomain}.cloudflarestream.com/${result.uid}/manifest/video.m3u8`

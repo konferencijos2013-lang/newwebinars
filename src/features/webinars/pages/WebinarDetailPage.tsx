@@ -9,6 +9,7 @@ import {
   Globe,
   Lock,
   Radio,
+  MessageSquare,
   Trash,
   Users,
 } from 'lucide-react'
@@ -157,6 +158,14 @@ export function WebinarDetailPage() {
               {t('hostStream')}
             </Button>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/webinars/${webinar.id}/chat-script`)}
+          >
+            <MessageSquare className="mr-2 h-4 w-4" />
+            {t('chatScenario')}
+          </Button>
           <Button variant="outline" size="sm" onClick={handleDelete}>
             <Trash className="mr-2 h-4 w-4" />
             {t('delete')}

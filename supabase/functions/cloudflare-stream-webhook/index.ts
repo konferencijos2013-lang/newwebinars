@@ -4,7 +4,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 // Cloudflare signs webhook deliveries with `Webhook-Signature: time=...,sig1=...`
 // using the secret returned by `GET /accounts/{id}/stream/webhook`. See
 // https://developers.cloudflare.com/stream/manage-video-library/using-webhooks/#verify-webhook-authenticity
-async function verifySignature(body: string, header: string | null, secret: string) {
+async function verifySignature(
+  body: string,
+  header: string | null,
+  secret: string,
+) {
   if (!header) return false
   const parts = Object.fromEntries(
     header.split(',').map((part) => part.split('=') as [string, string]),

@@ -34,6 +34,7 @@ import { WebinarCreatePage } from '@/features/webinars/pages/WebinarCreatePage'
 import { WebinarDetailPage } from '@/features/webinars/pages/WebinarDetailPage'
 import { WebinarEditPage } from '@/features/webinars/pages/WebinarEditPage'
 import { WebinarHostPage } from '@/features/webinars/pages/WebinarHostPage'
+import { ChatScriptEditorPage } from '@/features/webinars/pages/ChatScriptEditorPage'
 import { FunnelsPage } from '@/features/funnels/pages/FunnelsPage'
 import { FunnelCreatePage } from '@/features/funnels/pages/FunnelCreatePage'
 import { FunnelEditorPage } from '@/features/funnels/pages/FunnelEditorPage'
@@ -84,6 +85,10 @@ export function AppRoutes() {
           <Route path="webinars/:id" element={<WebinarDetailPage />} />
           <Route path="webinars/:id/edit" element={<WebinarEditPage />} />
           <Route path="webinars/:id/host" element={<WebinarHostPage />} />
+          <Route
+            path="webinars/:id/chat-script"
+            element={<ChatScriptEditorPage />}
+          />
           <Route path="funnels" element={<FunnelsPage />} />
           <Route path="funnels/new" element={<FunnelCreatePage />} />
           <Route path="funnels/:id" element={<FunnelEditorPage />} />

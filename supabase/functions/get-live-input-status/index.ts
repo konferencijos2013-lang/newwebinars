@@ -37,7 +37,9 @@ serve(async (req) => {
 
     const { data: webinar, error: webinarError } = await supabaseAdmin
       .from('webinars')
-      .select('id, cf_live_input_uid, cf_stream_status, cf_playback_hls_url, cf_playback_dash_url')
+      .select(
+        'id, cf_live_input_uid, cf_stream_status, cf_playback_hls_url, cf_playback_dash_url',
+      )
       .eq('id', webinarId)
       .single()
 
@@ -51,7 +53,10 @@ serve(async (req) => {
     if (!webinar.cf_live_input_uid) {
       return new Response(
         JSON.stringify({ cf_stream_status: 'idle', cf_playback_hls_url: null }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        },
       )
     }
 
@@ -60,7 +65,10 @@ serve(async (req) => {
     if (!accountId || !apiToken) {
       return new Response(
         JSON.stringify({ error: 'Cloudflare not configured' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        },
       )
     }
 
@@ -72,8 +80,14 @@ serve(async (req) => {
 
     if (!cfResponse.ok || !cfBody.success) {
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch live input status', details: cfBody.errors }),
-        { status: 502, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+        JSON.stringify({
+          error: 'Failed to fetch live input status',
+          details: cfBody.errors,
+        }),
+        {
+          status: 502,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        },
       )
     }
 
@@ -83,7 +97,11 @@ serve(async (req) => {
     let nextStatus = webinar.cf_stream_status
     if (cfState === 'connected' || cfState === 'reconnected') {
       nextStatus = 'live'
-    } else if (cfState === 'disconnected' || cfState === 'error' || cfState === 'ready') {
+    } else if (
+      cfState === 'disconnected' ||
+      cfState === 'error' ||
+      cfState === 'ready'
+    ) {
       // The encoder is definitely not streaming. Only transition out of live
       // to a terminal state; never wipe 'created'/'idle' just from a ready/disconnected
       // check while the host is still setting things up.
@@ -94,7 +112,9 @@ serve(async (req) => {
 
     // Prefer the playback urls already stored; fall back to deriving them.
     const customerSubdomain = (
-      result.webRTCPlayback?.url ?? result.webRTC?.url ?? ''
+      result.webRTCPlayback?.url ??
+      result.webRTC?.url ??
+      ''
     ).match(/https:\/\/(customer-[a-z0-9]+)\.cloudflarestream\.com/)?.[1]
     const playbackHlsUrl =
       webinar.cf_playback_hls_url ??
@@ -135,12 +155,20 @@ serve(async (req) => {
         cf_playback_hls_url: playbackHlsUrl,
         cf_playback_dash_url: playbackDashUrl,
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      },
     )
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      JSON.stringify({
+        error: err instanceof Error ? err.message : String(err),
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      },
     )
   }
 })
