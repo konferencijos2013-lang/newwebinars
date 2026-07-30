@@ -1,6 +1,16 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Trash2 } from 'lucide-react'
+import {
+  Layers3,
+  Monitor,
+  PanelLeft,
+  PanelRight,
+  Plus,
+  Settings2,
+  Smartphone,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { cn } from '@/shared/utils/cn'
@@ -13,6 +23,9 @@ import {
 } from '@/features/funnels/types'
 import { upsertBlock, deleteBlock } from '@/features/funnels/api/funnels'
 import type { FunnelBlock, FunnelPage } from '@/shared/database.types'
+
+type MobilePanel = 'blocks' | 'settings' | null
+type PreviewDevice = 'desktop' | 'mobile'
 
 export function FunnelEditor({
   page,
@@ -27,8 +40,10 @@ export function FunnelEditor({
   const [blocks, setBlocks] = useState<FunnelBlock[]>(initialBlocks)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null)
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop')
 
-  const selectedBlock = blocks.find((b) => b.id === selectedId)
+  const selectedBlock = blocks.find((block) => block.id === selectedId)
 
   const handleAdd = useCallback(
     async (type: FunnelBlockType) => {
@@ -48,6 +63,7 @@ export function FunnelEditor({
         const next = [...blocks, saved]
         setBlocks(next)
         setSelectedId(saved.id)
+        setMobilePanel('settings')
         onChange?.(next)
       } catch (err) {
         console.error('Failed to add block', err)
@@ -60,7 +76,7 @@ export function FunnelEditor({
     async (id: string) => {
       try {
         await deleteBlock(id)
-        const next = blocks.filter((b) => b.id !== id)
+        const next = blocks.filter((block) => block.id !== id)
         setBlocks(next)
         if (selectedId === id) setSelectedId(null)
         onChange?.(next)
@@ -71,17 +87,17 @@ export function FunnelEditor({
     [blocks, onChange, selectedId],
   )
 
-  const handleUpdateContent = useCallback(
-    async (id: string, content: Record<string, unknown>) => {
+  const handleUpdateBlock = useCallback(
+    async (
+      id: string,
+      patch: Pick<Partial<FunnelBlock>, 'content' | 'settings'>,
+    ) => {
       setSaving(true)
       try {
-        const block = blocks.find((b) => b.id === id)
+        const block = blocks.find((item) => item.id === id)
         if (!block) return
-        const saved = await upsertBlock({
-          ...block,
-          content,
-        })
-        const next = blocks.map((b) => (b.id === id ? saved : b))
+        const saved = await upsertBlock({ ...block, ...patch })
+        const next = blocks.map((item) => (item.id === id ? saved : item))
         setBlocks(next)
         onChange?.(next)
       } catch (err) {
@@ -93,79 +109,219 @@ export function FunnelEditor({
     [blocks, onChange],
   )
 
-  return (
-    <div className="grid gap-6 lg:grid-cols-[280px_1fr_280px]">
-      <Card className="h-fit">
-        <BlockToolbar onAdd={handleAdd} />
-      </Card>
+  function selectBlock(id: string) {
+    setSelectedId(id)
+    if (window.matchMedia('(max-width: 1023px)').matches)
+      setMobilePanel('settings')
+  }
 
-      <div className="bg-muted/30 rounded-xl border p-4 sm:p-8">
-        <div className="mx-auto max-w-2xl space-y-3">
-          {blocks.map((block) => (
-            <div
-              key={block.id}
-              onClick={() => setSelectedId(block.id)}
-              className={cn(
-                'group relative cursor-pointer rounded-lg border-2 transition-colors',
-                selectedId === block.id
-                  ? 'border-primary bg-background'
-                  : 'bg-background/60 hover:border-primary/30 border-transparent',
-              )}
-            >
-              <span
-                className={cn(
-                  'bg-primary text-primary-foreground absolute top-2 left-2 z-10 rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase opacity-0 transition-opacity',
-                  selectedId === block.id
-                    ? 'opacity-100'
-                    : 'group-hover:opacity-100',
-                )}
-              >
-                {t(`blocks.${block.block_type}`, block.block_type)}
-              </span>
-              <BlockRenderer block={block} isPreview />
-            </div>
-          ))}
-          {blocks.length === 0 && (
-            <Card className="py-12 text-center">
-              <p className="text-muted-foreground">{t('emptyBlocks')}</p>
-            </Card>
-          )}
+  const settingsContent = (
+    <>
+      <div className="mb-5 flex items-center gap-2">
+        <Settings2 className="text-primary h-4 w-4" />
+        <h2 className="text-sm font-semibold">{t('blockSettings')}</h2>
+      </div>
+      {selectedBlock ? (
+        <div className="space-y-4">
+          <p className="text-muted-foreground text-sm capitalize">
+            {t(`blocks.${selectedBlock.block_type}`, selectedBlock.block_type)}
+          </p>
+          <BlockEditor
+            key={selectedBlock.id}
+            block={selectedBlock}
+            onChange={(content) =>
+              handleUpdateBlock(selectedBlock.id, { content })
+            }
+            onLayoutChange={(column_span) =>
+              handleUpdateBlock(selectedBlock.id, {
+                settings: {
+                  ...(selectedBlock.settings as Record<string, unknown>),
+                  column_span,
+                },
+              })
+            }
+            saving={saving}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-red-600 hover:text-red-700"
+            onClick={() => handleRemove(selectedBlock.id)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {t('removeBlock')}
+          </Button>
         </div>
+      ) : (
+        <p className="text-muted-foreground text-sm">{t('selectBlock')}</p>
+      )}
+    </>
+  )
+
+  return (
+    <div className="relative lg:h-[calc(100svh-14rem)] lg:min-h-[620px]">
+      <div className="border-border bg-card mb-4 flex items-center justify-between rounded-xl border p-2 shadow-sm lg:hidden">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setMobilePanel('blocks')}
+        >
+          <PanelLeft className="h-4 w-4" /> {t('addBlock')}
+        </Button>
+        <PreviewSwitcher value={previewDevice} onChange={setPreviewDevice} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setMobilePanel('settings')}
+        >
+          <PanelRight className="h-4 w-4" />
+          <span className="sr-only">{t('blockSettings')}</span>
+        </Button>
       </div>
 
-      <Card className="h-fit">
-        <h4 className="text-sm font-semibold">{t('blockSettings')}</h4>
-        {selectedBlock ? (
-          <div className="mt-4 space-y-4">
-            <p className="text-muted-foreground text-sm capitalize">
-              {t(
-                `blocks.${selectedBlock.block_type}`,
-                selectedBlock.block_type,
-              )}
-            </p>
-            <BlockEditor
-              key={selectedBlock.id}
-              block={selectedBlock}
-              onChange={(content) =>
-                handleUpdateContent(selectedBlock.id, content)
-              }
-              saving={saving}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => handleRemove(selectedBlock.id)}
-            >
-              {t('removeBlock')}
-            </Button>
+      <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[17rem_minmax(0,1fr)_19rem]">
+        <aside className="border-border bg-card hidden min-h-0 overflow-y-auto rounded-xl border p-4 shadow-sm lg:block">
+          <div className="mb-5 flex items-center gap-2">
+            <Layers3 className="text-primary h-4 w-4" />
+            <h2 className="text-sm font-semibold">{t('addBlock')}</h2>
           </div>
-        ) : (
-          <p className="text-muted-foreground mt-4 text-sm">
-            {t('selectBlock')}
-          </p>
-        )}
-      </Card>
+          <BlockToolbar onAdd={handleAdd} />
+        </aside>
+
+        <section className="border-border bg-muted/40 min-h-[540px] overflow-auto rounded-xl border p-3 sm:p-6 lg:min-h-0">
+          <div className="mb-4 hidden justify-center lg:flex">
+            <PreviewSwitcher
+              value={previewDevice}
+              onChange={setPreviewDevice}
+            />
+          </div>
+          <div
+            className={cn(
+              'bg-background mx-auto min-h-full rounded-lg border shadow-sm transition-[max-width] duration-200',
+              previewDevice === 'desktop' ? 'max-w-4xl' : 'max-w-[390px]',
+            )}
+          >
+            <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-5">
+              {blocks.map((block) => {
+                const columnSpan =
+                  (block.settings as Record<string, unknown>)?.column_span === 6
+                    ? 6
+                    : 12
+                return (
+                  <button
+                    key={block.id}
+                    type="button"
+                    onClick={() => selectBlock(block.id)}
+                    className={cn(
+                      'group focus-visible:ring-primary/40 relative block w-full rounded-lg border-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none sm:col-span-2',
+                      columnSpan === 6 && 'sm:col-span-1',
+                      selectedId === block.id
+                        ? 'border-primary bg-background'
+                        : 'hover:border-primary/30 border-transparent',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'bg-primary text-primary-foreground absolute top-2 left-2 z-10 rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase opacity-0 transition-opacity',
+                        selectedId === block.id
+                          ? 'opacity-100'
+                          : 'group-hover:opacity-100',
+                      )}
+                    >
+                      {t(`blocks.${block.block_type}`, block.block_type)}
+                    </span>
+                    <BlockRenderer block={block} isPreview />
+                  </button>
+                )
+              })}
+              {blocks.length === 0 && (
+                <Card className="py-16 text-center">
+                  <p className="text-muted-foreground">{t('emptyBlocks')}</p>
+                  <Button
+                    className="mt-4 lg:hidden"
+                    variant="outline"
+                    onClick={() => setMobilePanel('blocks')}
+                  >
+                    <Plus className="h-4 w-4" /> {t('addBlock')}
+                  </Button>
+                </Card>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <aside className="border-border bg-card hidden min-h-0 overflow-y-auto rounded-xl border p-4 shadow-sm lg:block">
+          {settingsContent}
+        </aside>
+      </div>
+
+      {mobilePanel && (
+        <div
+          className="fixed inset-0 z-50 lg:hidden"
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            aria-label="Close panel"
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setMobilePanel(null)}
+          />
+          <aside className="bg-card absolute inset-y-0 right-0 flex w-full max-w-sm flex-col shadow-2xl">
+            <div className="border-border flex items-center justify-between border-b p-4">
+              <span className="text-sm font-semibold">
+                {mobilePanel === 'blocks' ? t('addBlock') : t('blockSettings')}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMobilePanel(null)}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </div>
+            <div className="min-h-0 overflow-y-auto p-4">
+              {mobilePanel === 'blocks' ? (
+                <BlockToolbar onAdd={handleAdd} />
+              ) : (
+                settingsContent
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PreviewSwitcher({
+  value,
+  onChange,
+}: {
+  value: PreviewDevice
+  onChange: (value: PreviewDevice) => void
+}) {
+  return (
+    <div className="border-border bg-background inline-flex rounded-md border p-0.5">
+      <Button
+        variant={value === 'desktop' ? 'default' : 'ghost'}
+        size="sm"
+        className="h-7 px-2"
+        aria-label="Desktop preview"
+        onClick={() => onChange('desktop')}
+      >
+        <Monitor className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        variant={value === 'mobile' ? 'default' : 'ghost'}
+        size="sm"
+        className="h-7 px-2"
+        aria-label="Mobile preview"
+        onClick={() => onChange('mobile')}
+      >
+        <Smartphone className="h-3.5 w-3.5" />
+      </Button>
     </div>
   )
 }
@@ -204,7 +360,7 @@ function TextInput({
       className="border-border bg-background text-foreground focus:ring-primary/40 w-full rounded-md border px-2.5 py-1.5 text-sm focus:ring-2 focus:outline-none"
       value={value}
       placeholder={placeholder}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(event) => onChange(event.target.value)}
     />
   )
 }
@@ -224,21 +380,27 @@ function ListEditor<T>({
 }) {
   return (
     <div className="space-y-3">
-      {items.map((item, idx) => (
+      {items.map((item, index) => (
         <div
-          key={idx}
+          key={index}
           className="border-border relative space-y-2 rounded-md border p-2.5"
         >
           <button
             type="button"
-            onClick={() => onChange(items.filter((_, i) => i !== idx))}
+            onClick={() =>
+              onChange(items.filter((_, itemIndex) => itemIndex !== index))
+            }
             className="text-muted-foreground hover:text-destructive absolute top-1.5 right-1.5"
             title="Pašalinti"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
           {renderItem(item, (next) =>
-            onChange(items.map((it, i) => (i === idx ? next : it))),
+            onChange(
+              items.map((current, itemIndex) =>
+                itemIndex === index ? next : current,
+              ),
+            ),
           )}
         </div>
       ))}
@@ -249,7 +411,7 @@ function ListEditor<T>({
         className="w-full"
         onClick={() => onChange([...items, createItem()])}
       >
-        <Plus className="mr-2 h-3.5 w-3.5" />
+        <Plus className="h-3.5 w-3.5" />
         {addLabel}
       </Button>
     </div>
@@ -259,19 +421,38 @@ function ListEditor<T>({
 function BlockEditor({
   block,
   onChange,
+  onLayoutChange,
   saving,
 }: {
   block: FunnelBlock
   onChange: (content: Record<string, unknown>) => void
+  onLayoutChange: (columnSpan: 6 | 12) => void
   saving: boolean
 }) {
   const { t } = useTranslation('funnels')
   const content = (block.content as Record<string, unknown>) || {}
+  const columnSpan =
+    (block.settings as Record<string, unknown>)?.column_span === 6 ? 6 : 12
   const set = (patch: Record<string, unknown>) =>
     onChange({ ...content, ...patch })
 
   return (
     <div className="space-y-4">
+      <Field label={t('blockWidth')}>
+        <select
+          className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+          value={columnSpan}
+          onChange={(event) =>
+            onLayoutChange(Number(event.target.value) as 6 | 12)
+          }
+        >
+          <option value={12}>{t('fullWidth')}</option>
+          <option value={6}>{t('halfWidth')}</option>
+        </select>
+        <p className="text-muted-foreground mt-1 text-xs">
+          {t('halfWidthHint')}
+        </p>
+      </Field>
       {block.block_type === 'hero' && (
         <>
           <Field label={t('heroTitle')}>
@@ -292,7 +473,7 @@ function BlockEditor({
             <select
               className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
               value={(content.align as string) ?? 'center'}
-              onChange={(e) => set({ align: e.target.value })}
+              onChange={(event) => set({ align: event.target.value })}
             >
               <option value="left">{t('alignLeft')}</option>
               <option value="center">{t('alignCenter')}</option>
@@ -301,7 +482,6 @@ function BlockEditor({
           </Field>
         </>
       )}
-
       {block.block_type === 'text' && (
         <Field label={t('textContent')}>
           <RichTextEditor
@@ -310,31 +490,30 @@ function BlockEditor({
           />
         </Field>
       )}
-
       {block.block_type === 'video' && (
         <>
           <Field label={t('videoUrl')}>
             <TextInput
               value={(content.url as string) ?? ''}
-              placeholder="https://youtube.com/watch?v=..."
               onChange={(url) => set({ url })}
+              placeholder="https://..."
             />
           </Field>
           <Field label={t('videoProvider')}>
             <select
               className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
               value={(content.provider as string) ?? 'youtube'}
-              onChange={(e) => set({ provider: e.target.value })}
+              onChange={(event) => set({ provider: event.target.value })}
             >
               <option value="youtube">YouTube</option>
               <option value="vimeo">Vimeo</option>
-              <option value="mp4">MP4</option>
+              <option value="custom">Custom</option>
             </select>
           </Field>
         </>
       )}
-
-      {block.block_type === 'registration_form' && (
+      {(block.block_type === 'registration_form' ||
+        block.block_type === 'order_form') && (
         <Field label={t('formButtonText')}>
           <TextInput
             value={(content.buttonText as string) ?? ''}
@@ -342,7 +521,6 @@ function BlockEditor({
           />
         </Field>
       )}
-
       {block.block_type === 'countdown' && (
         <Field label={t('countdownTarget')}>
           <TextInput
@@ -352,14 +530,11 @@ function BlockEditor({
           />
         </Field>
       )}
-
       {block.block_type === 'benefits' && (
         <Field label={t('benefitsItems')}>
           <ListEditor
             items={(content.items as string[]) ?? []}
             onChange={(items) => set({ items })}
-            createItem={() => 'New benefit'}
-            addLabel={t('addItem')}
             renderItem={(item, update) => (
               <RichTextEditor
                 multiline={false}
@@ -367,10 +542,11 @@ function BlockEditor({
                 onChange={update}
               />
             )}
+            createItem={() => ''}
+            addLabel={t('addItem')}
           />
         </Field>
       )}
-
       {block.block_type === 'speaker' && (
         <>
           <Field label={t('speakerName')}>
@@ -387,7 +563,6 @@ function BlockEditor({
           </Field>
         </>
       )}
-
       {block.block_type === 'chat' && (
         <Field label={t('chatTitle')}>
           <RichTextEditor
@@ -397,7 +572,6 @@ function BlockEditor({
           />
         </Field>
       )}
-
       {block.block_type === 'cta' && (
         <>
           <Field label={t('ctaText')}>
@@ -415,7 +589,6 @@ function BlockEditor({
           </Field>
         </>
       )}
-
       {block.block_type === 'offer' && (
         <>
           <Field label={t('offerTitle')}>
@@ -428,22 +601,11 @@ function BlockEditor({
           <Field label={t('offerPrice')}>
             <TextInput
               value={(content.price as string) ?? ''}
-              placeholder="$97"
               onChange={(price) => set({ price })}
             />
           </Field>
         </>
       )}
-
-      {block.block_type === 'order_form' && (
-        <Field label={t('formButtonText')}>
-          <TextInput
-            value={(content.buttonText as string) ?? ''}
-            onChange={(buttonText) => set({ buttonText })}
-          />
-        </Field>
-      )}
-
       {block.block_type === 'faq' && (
         <Field label={t('faqItems')}>
           <ListEditor
@@ -452,27 +614,28 @@ function BlockEditor({
               []
             }
             onChange={(items) => set({ items })}
-            createItem={() => ({ question: 'Question?', answer: 'Answer.' })}
-            addLabel={t('addItem')}
             renderItem={(item, update) => (
               <>
-                <RichTextEditor
-                  multiline={false}
-                  value={item.question}
-                  onChange={(question) => update({ ...item, question })}
-                  placeholder={t('faqQuestion')}
-                />
-                <RichTextEditor
-                  value={item.answer}
-                  onChange={(answer) => update({ ...item, answer })}
-                  placeholder={t('faqAnswer')}
-                />
+                <Field label={t('faqQuestion')}>
+                  <RichTextEditor
+                    multiline={false}
+                    value={item.question}
+                    onChange={(question) => update({ ...item, question })}
+                  />
+                </Field>
+                <Field label={t('faqAnswer')}>
+                  <RichTextEditor
+                    value={item.answer}
+                    onChange={(answer) => update({ ...item, answer })}
+                  />
+                </Field>
               </>
             )}
+            createItem={() => ({ question: '', answer: '' })}
+            addLabel={t('addItem')}
           />
         </Field>
       )}
-
       {saving && <p className="text-muted-foreground text-xs">{t('saving')}</p>}
     </div>
   )

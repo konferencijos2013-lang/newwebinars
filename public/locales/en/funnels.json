@@ -50,6 +50,10 @@
   "faqItems": "Questions & answers",
   "faqQuestion": "Question",
   "faqAnswer": "Answer",
+  "blockWidth": "Block width",
+  "fullWidth": "Full row",
+  "halfWidth": "Half row",
+  "halfWidthHint": "Two consecutive half-width blocks are displayed in one row on desktop and stack on mobile.",
   "blocks": {
     "hero": "Hero",
     "text": "Text",

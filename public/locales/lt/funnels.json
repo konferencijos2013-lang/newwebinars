@@ -50,6 +50,10 @@
   "faqItems": "Klausimai ir atsakymai",
   "faqQuestion": "Klausimas",
   "faqAnswer": "Atsakymas",
+  "blockWidth": "Bloko plotis",
+  "fullWidth": "Visa eilutė",
+  "halfWidth": "Pusė eilutės",
+  "halfWidthHint": "Du iš eilės pusės pločio blokai darbalaukyje rodomi vienoje eilutėje, o telefone sugula vienas po kitu.",
   "blocks": {
     "hero": "Hero",
     "text": "Tekstas",
