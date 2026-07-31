@@ -8,6 +8,8 @@ export type RegistrationStatus =
   'registered' | 'attended' | 'cancelled' | 'no_show'
 export type MessageType = 'chat' | 'system' | 'offer'
 export type ReminderChannel = 'email' | 'telegram'
+export type IntegrationProvider = 'brevo' | 'resend' | 'smtp' | 'manychat'
+export type IntegrationStatus = 'active' | 'disabled' | 'error'
 export type PartnerType = 'affiliate' | 'business'
 export type WebinarSessionStatus = 'upcoming' | 'live' | 'ended' | 'cancelled'
 export type ReminderStatus =
@@ -75,6 +77,20 @@ export interface AccountMember {
   user_id: string
   role: AccountMemberRole
   joined_at: string
+}
+
+export interface IntegrationConnection {
+  id: string
+  account_id: string
+  provider: IntegrationProvider
+  display_name: string
+  status: IntegrationStatus
+  config: Record<string, unknown>
+  last_tested_at: string | null
+  last_error: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface Partner {

@@ -46,6 +46,7 @@ import { WebinarRoomPage } from '@/features/webinars/pages/WebinarRoomPage'
 import { RecordingsPage } from '@/features/recordings/pages/RecordingsPage'
 import { BillingPage } from '@/features/billing/pages/BillingPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
+import { IntegrationsPage } from '@/features/settings/pages/IntegrationsPage'
 import { AffiliatePage } from '@/features/affiliate/pages/AffiliatePage'
 import { AnalyticsPage } from '@/features/analytics/pages/AnalyticsPage'
 import { AiDashboardPage } from '@/features/ai/pages/AiDashboardPage'
@@ -53,6 +54,9 @@ import { AiChatPage } from '@/features/ai/pages/AiChatPage'
 import { AiPromptsPage } from '@/features/ai/pages/AiPromptsPage'
 import { AiPromptFormPage } from '@/features/ai/pages/AiPromptFormPage'
 import { AdminRoute } from '@/features/auth/components/AdminRoute'
+import { AdminDashboardPage } from '@/features/admin/pages/AdminDashboardPage'
+import { AdminAccountsPage } from '@/features/admin/pages/AdminAccountsPage'
+import { AdminAccountDetailPage } from '@/features/admin/pages/AdminAccountDetailPage'
 
 export function AppRoutes() {
   return (
@@ -132,8 +136,33 @@ export function AppRoutes() {
               </AdminRoute>
             }
           />
+          <Route
+            path="admin"
+            element={
+              <AdminRoute>
+                <AdminDashboardPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="admin/accounts"
+            element={
+              <AdminRoute>
+                <AdminAccountsPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="admin/accounts/:accountId"
+            element={
+              <AdminRoute>
+                <AdminAccountDetailPage />
+              </AdminRoute>
+            }
+          />
           <Route path="billing" element={<BillingPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="integrations" element={<IntegrationsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

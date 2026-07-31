@@ -152,6 +152,7 @@ Edge Functions are in `supabase/functions/`:
 - `create-checkout-session` — creates a Stripe Checkout session.
 - `stripe-webhook` — handles Stripe webhooks.
 - `ai-chat` — sends messages to OpenAI and persists the response.
+- `process-reminder-deliveries` — claims due reminder jobs and sends them through connected delivery providers.
 
 ### Edge Function secrets
 
@@ -162,9 +163,14 @@ supabase secrets set OPENAI_API_KEY=sk-...
 supabase secrets set STRIPE_SECRET_KEY=sk_...
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY=...
+supabase secrets set DELIVERY_WORKER_SECRET=<long-random-value>
 ```
 
 **Never expose these keys to the frontend.** The frontend uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+
+### Reminder worker schedule
+
+The delivery worker is deployed but intentionally will not send anything until `DELIVERY_WORKER_SECRET` is configured. Trigger it every minute from a scheduler (for example, GitHub Actions, Cloudflare Cron Trigger, or Supabase Cron with `pg_net`) using `POST https://<project-ref>.supabase.co/functions/v1/process-reminder-deliveries` and the header `x-delivery-worker-secret: <same secret>`. The worker claims each due job atomically, records every attempt, retries provider failures with exponential backoff, and recovers jobs stranded by an interrupted worker after ten minutes.
 
 ## Deployment
 

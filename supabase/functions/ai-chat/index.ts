@@ -11,10 +11,35 @@ serve(async (req) => {
       )
     }
 
+    const authorization = req.headers.get('Authorization')
+    if (!authorization || !thread_id || !account_id) {
+      return new Response(JSON.stringify({ error: 'Authentication, thread_id, and account_id are required' }), { status: 401, headers: { 'Content-Type': 'application/json' } })
+    }
+
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authorization } } },
+    )
+    const { data: auth, error: authError } = await supabaseAuth.auth.getUser()
+    if (authError || !auth.user) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401, headers: { 'Content-Type': 'application/json' } })
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
+    const { data: thread, error: threadError } = await supabaseAdmin
+      .from('ai_threads')
+      .select('id')
+      .eq('id', thread_id)
+      .eq('account_id', account_id)
+      .eq('user_id', auth.user.id)
+      .maybeSingle()
+    if (threadError || !thread) {
+      return new Response(JSON.stringify({ error: 'AI thread is not available for this account' }), { status: 403, headers: { 'Content-Type': 'application/json' } })
+    }
 
     const apiKey = Deno.env.get('OPENAI_API_KEY')
     if (!apiKey) {
@@ -100,8 +125,23 @@ First critically assess the user's Story Vault details. If the conflict is weak,
     const content = json.choices?.[0]?.message?.content ?? ''
     const tokensUsed = json.usage?.total_tokens ?? null
 
-    // Persist assistant message when thread_id is provided.
-    if (thread_id && content) {
+    if (tokensUsed && tokensUsed > 0) {
+      const { error: creditError } = await supabaseAdmin.rpc('consume_account_credit', {
+        p_account_id: account_id,
+        p_credit_type: 'ai_token',
+        p_quantity: tokensUsed,
+        p_scope: 'ai',
+        p_scope_id: null,
+        p_metadata: { thread_id, model: 'gpt-4o-mini' },
+      })
+      if (creditError) {
+        const exhausted = creditError.message.includes('CREDIT_LIMIT_EXCEEDED')
+        return new Response(JSON.stringify({ error: exhausted ? 'AI token limit reached for this billing period' : 'Unable to record AI usage' }), { status: exhausted ? 429 : 500, headers: { 'Content-Type': 'application/json' } })
+      }
+    }
+
+    // Persist assistant message after its usage has been accounted for.
+    if (content) {
       await supabaseAdmin.from('ai_messages').insert({
         thread_id,
         role: 'assistant',

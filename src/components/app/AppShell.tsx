@@ -10,6 +10,8 @@ import {
   Users,
   Video,
   Bot,
+  ShieldCheck,
+  Link2,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useUser } from '@/features/auth/hooks/useUser'
@@ -109,6 +111,18 @@ export function AppShell() {
             to="/billing"
             icon={BarChart3}
             label={t('navigation.billing')}
+          />
+          {user?.role === 'admin' ? (
+            <SidebarNavLink
+              to="/admin"
+              icon={ShieldCheck}
+              label="Administravimas"
+            />
+          ) : null}
+          <SidebarNavLink
+            to="/integrations"
+            icon={Link2}
+            label="Integracijos"
           />
           <SidebarNavLink
             to="/settings"
