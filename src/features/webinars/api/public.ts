@@ -29,6 +29,20 @@ export async function fetchWebinarBySlug(slug: string) {
   return data as Webinar
 }
 
+// A public branded hostname belongs to a single account. Resolve the slug
+// through the database rather than allowing a slug from another tenant.
+export async function fetchWebinarByHostname(hostname: string, slug: string) {
+  const { data, error } = await supabase
+    .rpc('get_published_webinar_by_hostname', {
+      p_hostname: hostname.toLowerCase(),
+      p_slug: slug,
+    })
+    .single()
+
+  if (error) throw error
+  return data as Webinar
+}
+
 // Goes through a SECURITY DEFINER RPC instead of a direct insert: anon only
 // ever had INSERT (not SELECT) granted on registrations, so the old
 // `.insert().select().single()` call failed with "permission denied for

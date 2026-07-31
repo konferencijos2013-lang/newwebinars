@@ -63,6 +63,9 @@ export interface Account {
   name: string
   owner_id: string
   plan: AccountPlan
+  public_subdomain: string | null
+  custom_domain: string | null
+  custom_domain_status: 'not_configured' | 'pending_dns' | 'verified'
   created_at: string
   updated_at: string
 }

@@ -9,6 +9,7 @@ import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { supabase } from '@/lib/supabase'
 import {
+  fetchWebinarByHostname,
   fetchWebinarBySlug,
   registerForWebinar,
 } from '@/features/webinars/api/public'
@@ -32,7 +33,12 @@ export function PublicWebinarPage() {
     if (!slug) return
     let isActive = true
 
-    fetchWebinarBySlug(slug)
+    const isPlatformHost = /^(?:www\.)?newwebinars\.com(?::\d+)?$/i.test(window.location.host) || /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(window.location.host)
+    const request = isPlatformHost
+      ? fetchWebinarBySlug(slug)
+      : fetchWebinarByHostname(window.location.hostname, slug)
+
+    request
       .then((w) => {
         if (!isActive) return
         setWebinar(w)
@@ -102,7 +108,7 @@ export function PublicWebinarPage() {
           <Button
             className="mt-6"
             onClick={() =>
-              (window.location.href = `/w/${webinar.slug}/waiting-room?token=${registrationToken}`)
+              (window.location.href = `/${webinar.slug}/waiting-room?token=${registrationToken}`)
             }
           >
             {t('enterWaitingRoom')}
@@ -155,7 +161,7 @@ export function PublicWebinarPage() {
           <Button
             className="mt-6"
             onClick={() =>
-              (window.location.href = `/w/${webinar.slug}/room?preview=1`)
+              (window.location.href = `/${webinar.slug}/room?preview=1`)
             }
           >
             {t('openRoomPreview')}

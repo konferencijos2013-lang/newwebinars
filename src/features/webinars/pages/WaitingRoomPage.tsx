@@ -105,7 +105,7 @@ export function WaitingRoomPage() {
           className="mt-8"
           disabled={!canEnter}
           onClick={() =>
-            (window.location.href = `/w/${webinar.slug}/room?token=${registration.access_token}`)
+            (window.location.href = `/${webinar.slug}/room?token=${registration.access_token}`)
           }
         >
           {canEnter ? t('enterRoom') : t('roomNotOpen')}

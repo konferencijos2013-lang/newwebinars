@@ -63,6 +63,10 @@ export function AppRoutes() {
         <Route path="w/:slug" element={<PublicWebinarPage />} />
         <Route path="w/:slug/waiting-room" element={<WaitingRoomPage />} />
         <Route path="w/:slug/room" element={<WebinarRoomPage />} />
+        {/* Branded-domain variant: https://host/verslo-augimas */}
+        <Route path=":slug" element={<PublicWebinarPage />} />
+        <Route path=":slug/waiting-room" element={<WaitingRoomPage />} />
+        <Route path=":slug/room" element={<WebinarRoomPage />} />
 
         {/* Public marketing site */}
         <Route element={<PublicLayout />}>
