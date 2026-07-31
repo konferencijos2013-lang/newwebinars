@@ -8,6 +8,7 @@ import {
   fetchFunnelPages,
 } from '@/features/funnels/api/funnels'
 import type { FunnelBlock, FunnelPage } from '@/shared/database.types'
+import { backgroundStyle } from '@/features/funnels/pageTheme'
 
 export function FunnelPreviewPage() {
   const { id, path } = useParams<{ id: string; path: string }>()
@@ -47,8 +48,11 @@ export function FunnelPreviewPage() {
     )
 
   return (
-    <main className="bg-muted/30 min-h-screen py-6 sm:py-10">
-      <div className="bg-background mx-auto min-h-[80vh] max-w-4xl rounded-lg border shadow-sm">
+    <main
+      className="bg-muted/30 min-h-screen py-6 sm:py-10"
+      style={backgroundStyle(page.theme)}
+    >
+      <div className="mx-auto min-h-[80vh] max-w-4xl rounded-lg border shadow-sm">
         <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-6 sm:p-5">
           {blocks.map((block) => {
             const span = Number(

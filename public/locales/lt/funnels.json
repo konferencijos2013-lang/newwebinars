@@ -82,5 +82,18 @@
     "offer": "Pasiūlymas",
     "order_form": "Užsakymo forma",
     "faq": "DUK"
-  }
+  },
+  "pageBackground": "Puslapio fonas",
+  "blockBackground": "Bloko fonas",
+  "backgroundType": "Fono tipas",
+  "backgroundNone": "Be fono",
+  "backgroundColor": "Spalva",
+  "backgroundGradient": "Gradientas",
+  "backgroundImage": "Paveikslėlis",
+  "gradientFrom": "Pradžios spalva",
+  "gradientTo": "Pabaigos spalva",
+  "gradientDirection": "Kryptis",
+  "backgroundUpload": "Įkelti fono paveikslėlį",
+  "backgroundImageUrl": "Fono paveikslėlio URL",
+  "backgroundOverlay": "Paveikslėlio patamsinimas"
 }

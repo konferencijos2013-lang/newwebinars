@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { MessageCircle, Play, User, Clock, ImageIcon } from 'lucide-react'
 import type { FunnelBlock } from '@/shared/database.types'
+import { backgroundStyle } from '@/features/funnels/pageTheme'
 
 function Countdown({
   content,
@@ -61,7 +62,7 @@ function Rich({
   )
 }
 
-export function BlockRenderer({
+function BlockContent({
   block,
   isPreview = false,
 }: {
@@ -274,4 +275,21 @@ export function BlockRenderer({
         </div>
       )
   }
+}
+
+export function BlockRenderer({
+  block,
+  isPreview = false,
+}: {
+  block: FunnelBlock
+  isPreview?: boolean
+}) {
+  return (
+    <div
+      className="overflow-hidden rounded-lg"
+      style={backgroundStyle(block.settings as Record<string, unknown>)}
+    >
+      <BlockContent block={block} isPreview={isPreview} />
+    </div>
+  )
 }

@@ -33,7 +33,9 @@ export function PublicWebinarPage() {
     if (!slug) return
     let isActive = true
 
-    const isPlatformHost = /^(?:www\.)?newwebinars\.com(?::\d+)?$/i.test(window.location.host) || /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(window.location.host)
+    const isPlatformHost =
+      /^(?:www\.)?newwebinars\.com(?::\d+)?$/i.test(window.location.host) ||
+      /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(window.location.host)
     const request = isPlatformHost
       ? fetchWebinarBySlug(slug)
       : fetchWebinarByHostname(window.location.hostname, slug)

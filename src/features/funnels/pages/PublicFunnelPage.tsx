@@ -5,10 +5,12 @@ import { Spinner } from '@/components/ui/Spinner'
 import { BlockRenderer } from '@/features/funnels/components/BlockRenderer'
 import { supabase } from '@/lib/supabase'
 import type { FunnelBlock } from '@/shared/database.types'
+import { backgroundStyle } from '@/features/funnels/pageTheme'
 
 type PublicFunnelPageData = {
   funnel_name: string
   page_name: string
+  theme: Record<string, unknown> | null
   blocks: FunnelBlock[]
 }
 
@@ -53,8 +55,11 @@ export function PublicFunnelPage() {
     )
 
   return (
-    <main className="bg-muted/30 min-h-screen py-6 sm:py-10">
-      <div className="bg-background mx-auto min-h-[80vh] max-w-4xl rounded-lg border shadow-sm">
+    <main
+      className="bg-muted/30 min-h-screen py-6 sm:py-10"
+      style={backgroundStyle(data.theme)}
+    >
+      <div className="mx-auto min-h-[80vh] max-w-4xl rounded-lg border shadow-sm">
         <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-6 sm:p-5">
           {data.blocks.map((block) => {
             const span = Number(

@@ -82,5 +82,18 @@
     "offer": "Offer",
     "order_form": "Order Form",
     "faq": "FAQ"
-  }
+  },
+  "pageBackground": "Page background",
+  "blockBackground": "Block background",
+  "backgroundType": "Background type",
+  "backgroundNone": "None",
+  "backgroundColor": "Color",
+  "backgroundGradient": "Gradient",
+  "backgroundImage": "Image",
+  "gradientFrom": "From",
+  "gradientTo": "To",
+  "gradientDirection": "Direction",
+  "backgroundUpload": "Upload background image",
+  "backgroundImageUrl": "Background image URL",
+  "backgroundOverlay": "Image darkening"
 }

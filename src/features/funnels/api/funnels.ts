@@ -138,6 +138,17 @@ export async function createDefaultPages(
   return (data ?? []) as FunnelPage[]
 }
 
+export async function updateFunnelPage(id: string, patch: Partial<FunnelPage>) {
+  const { data, error } = await supabase
+    .from('funnel_pages')
+    .update(patch)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data as FunnelPage
+}
+
 export async function fetchFunnelBlocks(pageId: string) {
   const { data, error } = await supabase
     .from('funnel_blocks')

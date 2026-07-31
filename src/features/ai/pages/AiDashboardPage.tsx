@@ -26,13 +26,24 @@ const scopes = [
   {
     key: 'storytelling',
     icon: Sparkles,
-    prompt:
-      'Create a short storytelling script for a webinar opening (150 words).',
+    prompt: `Story Vault details:
+- Character(s):
+- Context (what, where, when, how):
+- Conflict/challenge:
+- Emotional stakes and sensory details:
+- Resolution/lesson:
+- Offer or desired call to action:`,
   },
   {
     key: 'slides',
     icon: FileText,
-    prompt: 'Create slide outline and speaker notes for a webinar about:',
+    prompt: `Product name:
+Target audience:
+Core problem/pain:
+Primary benefit/outcome:
+Price and anchors (for example, 10,000 -> 4,995):
+Bonuses:
+Guarantee:`,
   },
   {
     key: 'chat_script',

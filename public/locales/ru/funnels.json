@@ -82,5 +82,18 @@
     "offer": "Предложение",
     "order_form": "Форма заказа",
     "faq": "FAQ"
-  }
+  },
+  "pageBackground": "Фон страницы",
+  "blockBackground": "Фон блока",
+  "backgroundType": "Тип фона",
+  "backgroundNone": "Без фона",
+  "backgroundColor": "Цвет",
+  "backgroundGradient": "Градиент",
+  "backgroundImage": "Изображение",
+  "gradientFrom": "Начальный цвет",
+  "gradientTo": "Конечный цвет",
+  "gradientDirection": "Направление",
+  "backgroundUpload": "Загрузить фоновое изображение",
+  "backgroundImageUrl": "URL фонового изображения",
+  "backgroundOverlay": "Затемнение изображения"
 }

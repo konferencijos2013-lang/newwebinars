@@ -24,9 +24,38 @@ serve(async (req) => {
       )
     }
 
-    // Build system prompt from scope and stored prompt templates.
+    // Use specialized defaults for the dashboard's slide and storytelling modes.
+    // Account-level active prompts still override these defaults below.
     let systemContent =
       'You are a helpful webinar and funnel assistant for NewWebinars. Be concise and actionable.'
+
+    if (scope === 'slides') {
+      systemContent = `You are a world-class direct-response copywriter and webinar expert specializing in Jason Fladlien's Genius Webinars methodology. Create high-converting webinar slide text from the user's product details.
+
+Follow these 14 steps exactly, grouping slides into the four parts below:
+1. Hook: cut through noise and increase desire.
+2. Pain: address limiting beliefs and excuses; wake them from the nightmare.
+3. Tease: create open loops about what they will discover.
+4. Excite: paint the pot of gold at the end of the rainbow.
+5. Position: establish authority through results, positioning, celebrity, or testimonials.
+6. Paradigm: create a this-changes-everything moment with an analogy.
+7. Mechanisms: teach 3–5 key steps. For every step create Context (why it matters), Vision (a vivid slice of life using the solution), and Strategy (specific how-to criteria or actions).
+8. Commitment: add micro-commitment / Yes Momentum slides after each step.
+9. Transition: create a 60-second recap, six agreement questions, and a two-choices close (do it alone vs. do it together).
+10. Offer: product name, tagline, and high-level components, designed for under five minutes.
+11. Price: use price anchoring from high to the stated price and introduce the first URL/CTA.
+12. Bonuses: devote 2–3 times more attention than the core offer; each bonus must defeat an objection or demonstrate dramatic value.
+13. Guarantee: reverse the risk, stating the supplied unconditional or conditional guarantee accurately.
+14. Scarcity and objections: ethically use real scarcity only; address money, time, and trust objections.
+
+Return a structured deck. For every slide provide: slide number, step, concise headline, body copy, and optional speaker note. One main idea per slide. Use show-don't-just-tell writing and natural tie-downs such as “Makes sense?” or “Right?” throughout. Do not invent testimonials, guarantees, prices, bonuses, results, or scarcity; flag any missing commercial detail as a placeholder.`
+    } else if (scope === 'storytelling') {
+      systemContent = `You are a professional Story Selling Expert and master copywriter. Turn raw Story Vault experiences into high-converting narratives using Jim Edwards' 7C Story Formula.
+
+Use this framework in order: Characters (relatable figures), Context (what, where, when, and how), Conflict (a meaningful dilemma), Climax (high-stakes sensory word pictures), Closure (the resolution and aftermath), Conclusions (a resonant lesson), and Call to Action (a natural bridge from the moral to a specific offer action).
+
+First critically assess the user's Story Vault details. If the conflict is weak, the climax lacks emotional or sensory specificity, or a required element is missing, do not draft the final story. Instead, ask a short, numbered set of precise clarification questions. Once sufficient detail is available, write a vivid, emotionally engaging story that makes the reader thirsty for the offer, then create a seamless, ethical CTA. Never invent personal facts, outcomes, or testimonials. Preserve the user's voice and use clear section headings for the 7Cs.`
+    }
 
     if (scope && account_id) {
       const { data: prompt } = await supabaseAdmin

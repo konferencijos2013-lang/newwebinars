@@ -6,6 +6,7 @@ import {
   PanelLeft,
   PanelRight,
   Plus,
+  Palette,
   Settings2,
   Smartphone,
   Trash2,
@@ -25,8 +26,13 @@ import {
   upsertBlock,
   deleteBlock,
   uploadFunnelImage,
+  updateFunnelPage,
 } from '@/features/funnels/api/funnels'
 import type { FunnelBlock, FunnelPage } from '@/shared/database.types'
+import {
+  backgroundSettings,
+  backgroundStyle,
+} from '@/features/funnels/pageTheme'
 
 type MobilePanel = 'blocks' | 'settings' | null
 type PreviewDevice = 'desktop' | 'mobile'
@@ -48,6 +54,9 @@ export function FunnelEditor({
   const [saving, setSaving] = useState(false)
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null)
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop')
+  const [pageTheme, setPageTheme] = useState<Record<string, unknown>>(
+    page.theme ?? {},
+  )
 
   const selectedBlock = blocks.find((block) => block.id === selectedId)
 
@@ -115,11 +124,41 @@ export function FunnelEditor({
     [blocks, onChange],
   )
 
+  const handleUpdatePageTheme = useCallback(
+    async (theme: Record<string, unknown>) => {
+      setSaving(true)
+      try {
+        await updateFunnelPage(page.id, { theme })
+        setPageTheme(theme)
+      } catch (err) {
+        console.error('Failed to update page theme', err)
+      } finally {
+        setSaving(false)
+      }
+    },
+    [page.id],
+  )
+
   function selectBlock(id: string) {
     setSelectedId(id)
     if (window.matchMedia('(max-width: 1023px)').matches)
       setMobilePanel('settings')
   }
+
+  const pageSettingsContent = (
+    <>
+      <div className="mb-5 flex items-center gap-2">
+        <Palette className="text-primary h-4 w-4" />
+        <h2 className="text-sm font-semibold">{t('pageBackground')}</h2>
+      </div>
+      <BackgroundEditor
+        accountId={accountId}
+        value={pageTheme}
+        onChange={handleUpdatePageTheme}
+        saving={saving}
+      />
+    </>
+  )
 
   const settingsContent = (
     <>
@@ -145,6 +184,9 @@ export function FunnelEditor({
                   column_span,
                 },
               })
+            }
+            onSettingsChange={(settings) =>
+              handleUpdateBlock(selectedBlock.id, { settings })
             }
             accountId={accountId}
             saving={saving}
@@ -204,11 +246,12 @@ export function FunnelEditor({
           </div>
           <div
             className={cn(
-              'bg-background mx-auto min-h-full rounded-lg border shadow-sm transition-[max-width] duration-200',
+              'mx-auto min-h-full rounded-lg border shadow-sm transition-[max-width] duration-200',
               previewDevice === 'desktop' ? 'max-w-4xl' : 'max-w-[390px]',
             )}
+            style={backgroundStyle(pageTheme)}
           >
-            <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-6 sm:p-5">
+            <div className="grid min-h-full grid-cols-1 gap-3 p-3 sm:grid-cols-6 sm:p-5">
               {blocks.map((block) => {
                 const columnSpan = (
                   [4, 6].includes(
@@ -264,7 +307,10 @@ export function FunnelEditor({
         </section>
 
         <aside className="border-border bg-card hidden min-h-0 overflow-y-auto rounded-xl border p-4 shadow-sm lg:block">
-          {settingsContent}
+          <div className="space-y-8">
+            {pageSettingsContent}
+            {settingsContent}
+          </div>
         </aside>
       </div>
 
@@ -298,7 +344,10 @@ export function FunnelEditor({
               {mobilePanel === 'blocks' ? (
                 <BlockToolbar onAdd={handleAdd} />
               ) : (
-                settingsContent
+                <div className="space-y-8">
+                  {pageSettingsContent}
+                  {settingsContent}
+                </div>
               )}
             </div>
           </aside>
@@ -435,12 +484,14 @@ function BlockEditor({
   block,
   onChange,
   onLayoutChange,
+  onSettingsChange,
   accountId,
   saving,
 }: {
   block: FunnelBlock
   onChange: (content: Record<string, unknown>) => void
   onLayoutChange: (columnSpan: 4 | 6 | 12) => void
+  onSettingsChange: (settings: Record<string, unknown>) => void
   accountId: string
   saving: boolean
 }) {
@@ -474,6 +525,13 @@ function BlockEditor({
           {t('blockWidthHint')}
         </p>
       </Field>
+      <BackgroundEditor
+        accountId={accountId}
+        value={block.settings as Record<string, unknown>}
+        onChange={onSettingsChange}
+        saving={saving}
+        compact
+      />
       {block.block_type === 'hero' && (
         <>
           <Field label={t('heroTitle')}>
@@ -754,5 +812,145 @@ function ImageBlockFields({
         />
       </Field>
     </>
+  )
+}
+
+function BackgroundEditor({
+  accountId,
+  value,
+  onChange,
+  saving,
+  compact = false,
+}: {
+  accountId: string
+  value: Record<string, unknown>
+  onChange: (value: Record<string, unknown>) => void
+  saving: boolean
+  compact?: boolean
+}) {
+  const { t } = useTranslation('funnels')
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const settings = backgroundSettings(value)
+  const set = (patch: Record<string, unknown>) =>
+    onChange({ ...value, ...patch })
+
+  async function upload(file?: File) {
+    if (!file) return
+    setUploading(true)
+    setError(null)
+    try {
+      set({
+        background_image: await uploadFunnelImage(accountId, file),
+        background_type: 'image',
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {compact && <p className="text-sm font-medium">{t('blockBackground')}</p>}
+      <Field label={t('backgroundType')}>
+        <select
+          className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+          value={String(settings.background_type)}
+          onChange={(event) => set({ background_type: event.target.value })}
+        >
+          <option value="none">{t('backgroundNone')}</option>
+          <option value="color">{t('backgroundColor')}</option>
+          <option value="gradient">{t('backgroundGradient')}</option>
+          <option value="image">{t('backgroundImage')}</option>
+        </select>
+      </Field>
+      {settings.background_type === 'color' && (
+        <Field label={t('backgroundColor')}>
+          <input
+            className="border-border bg-background h-9 w-full rounded-md border p-1"
+            type="color"
+            value={String(settings.background_color)}
+            onChange={(event) => set({ background_color: event.target.value })}
+          />
+        </Field>
+      )}
+      {settings.background_type === 'gradient' && (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label={t('gradientFrom')}>
+              <input
+                className="border-border bg-background h-9 w-full rounded-md border p-1"
+                type="color"
+                value={String(settings.gradient_from)}
+                onChange={(event) => set({ gradient_from: event.target.value })}
+              />
+            </Field>
+            <Field label={t('gradientTo')}>
+              <input
+                className="border-border bg-background h-9 w-full rounded-md border p-1"
+                type="color"
+                value={String(settings.gradient_to)}
+                onChange={(event) => set({ gradient_to: event.target.value })}
+              />
+            </Field>
+          </div>
+          <Field label={t('gradientDirection')}>
+            <select
+              className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+              value={String(settings.gradient_direction)}
+              onChange={(event) =>
+                set({ gradient_direction: event.target.value })
+              }
+            >
+              <option value="135deg">↘</option>
+              <option value="90deg">→</option>
+              <option value="180deg">↓</option>
+            </select>
+          </Field>
+        </>
+      )}
+      {settings.background_type === 'image' && (
+        <>
+          <Field label={t('backgroundUpload')}>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+              disabled={uploading}
+              onChange={(event) => upload(event.target.files?.[0])}
+            />
+            <p className="text-muted-foreground mt-1 text-xs">
+              {uploading ? t('imageUploading') : t('imageUploadHint')}
+            </p>
+          </Field>
+          <Field label={t('backgroundImageUrl')}>
+            <TextInput
+              value={String(settings.background_image)}
+              placeholder="https://..."
+              onChange={(background_image) => set({ background_image })}
+            />
+          </Field>
+          <Field label={t('backgroundOverlay')}>
+            <input
+              className="w-full"
+              type="range"
+              min="0"
+              max="80"
+              value={Number(settings.background_overlay)}
+              onChange={(event) =>
+                set({ background_overlay: Number(event.target.value) })
+              }
+            />
+            <p className="text-muted-foreground text-xs">
+              {Number(settings.background_overlay)}%
+            </p>
+          </Field>
+        </>
+      )}
+      {error && <p className="text-destructive text-xs">{error}</p>}
+      {saving && <p className="text-muted-foreground text-xs">{t('saving')}</p>}
+    </div>
   )
 }
