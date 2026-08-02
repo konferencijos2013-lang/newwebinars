@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Card } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { fetchWebinar, updateWebinar } from '@/features/webinars/api/webinars'
+import { ReminderRulesCard } from '@/features/webinars/components/ReminderRulesCard'
 import type { Webinar } from '@/shared/database.types'
 
 export function WebinarEditPage() {
@@ -275,6 +276,11 @@ export function WebinarEditPage() {
           </div>
         </form>
       </Card>
+      <ReminderRulesCard
+        webinarId={webinar.id}
+        accountId={webinar.account_id}
+        scheduledAt={webinar.scheduled_at}
+      />
     </div>
   )
 }
