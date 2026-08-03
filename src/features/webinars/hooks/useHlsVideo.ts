@@ -1,4 +1,4 @@
-import { useEffect, useState, type RefObject } from 'react'
+import { useEffect, type RefObject } from 'react'
 
 // Cloudflare's HLS manifests need hls.js in Chrome/Firefox (only Safari can
 // play .m3u8 natively via <video src>). Also explicitly call .play() once
@@ -13,15 +13,10 @@ export function useHlsVideo(
   videoRef: RefObject<HTMLVideoElement | null>,
   url: string | null | undefined,
 ) {
-  const [video, setVideo] = useState<HTMLVideoElement | null>(null)
-
-  // Sync the ref into state so the effect below re-runs when the element
-  // changes (e.g. after a key-driven remount).
   useEffect(() => {
-    setVideo(videoRef.current)
-  }, [videoRef, videoRef.current])
-
-  useEffect(() => {
+    // Reading a ref inside an effect is safe; it also avoids treating the DOM
+    // element as React state, which must remain immutable.
+    const video = videoRef.current
     if (!url || !video) return
     let cancelled = false
     let hls: import('hls.js').default | null = null
@@ -134,5 +129,5 @@ export function useHlsVideo(
       video.removeEventListener('error', tryPlay)
       hls?.destroy()
     }
-  }, [video, url])
+  }, [url, videoRef])
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import {
   ArrowLeft,
@@ -69,7 +69,7 @@ export function ChatScriptEditorPage() {
     [scripts],
   )
 
-  async function reload() {
+  const reload = useCallback(async () => {
     if (!id) return
     const [nextWebinar, nextScripts] = await Promise.all([
       fetchWebinar(id),
@@ -77,15 +77,16 @@ export function ChatScriptEditorPage() {
     ])
     setWebinar(nextWebinar)
     setScripts(nextScripts)
-  }
+  }, [id])
 
   useEffect(() => {
-    void reload()
+    void Promise.resolve()
+      .then(reload)
       .catch((reason) =>
         setError(reason instanceof Error ? reason.message : String(reason)),
       )
       .finally(() => setLoading(false))
-  }, [id])
+  }, [reload])
 
   async function persist(id: string, patch: Partial<ScriptDraft>) {
     setError(null)

@@ -47,16 +47,17 @@ export function WebinarHostPage() {
     if (!id) return
     let isActive = true
 
-    // Reset state left over from a previously viewed webinar (e.g. a stale
-    // error from a failed go-live attempt) so it doesn't bleed into this one.
-    setStatus('loading')
-    setError(null)
-    setWebinar(null)
-    setStreamUrl(null)
-    setStreamKey(null)
-    setPlaybackUrl(null)
-
-    fetchWebinar(id)
+    // Reset state on the next microtask before loading the selected webinar.
+    // This prevents stale data from a prior route from remaining on screen.
+    void Promise.resolve().then(() => {
+      setStatus('loading')
+      setError(null)
+      setWebinar(null)
+      setStreamUrl(null)
+      setStreamKey(null)
+      setPlaybackUrl(null)
+      return fetchWebinar(id)
+    })
       .then((w) => {
         if (!isActive) return
         setWebinar(w)

@@ -6,6 +6,7 @@ import type {
   Profile,
   Subscription,
   UsageEvent,
+  CreditPlan,
 } from '@/shared/database.types'
 
 export type AdminOverview = {
@@ -33,6 +34,20 @@ export type AdminAccountDetail = {
   subscription: Subscription | null
   payments: Payment[]
   usage: UsageEvent[]
+}
+
+export type AdminUserRow = Pick<Profile, 'id' | 'email' | 'full_name' | 'role'> & {
+  accounts_count: number
+  account_names: string[]
+}
+
+export type AdminSubscriptionRow = Subscription & {
+  account: Pick<Account, 'id' | 'name' | 'slug'> | null
+  plan: Pick<CreditPlan, 'id' | 'name'> | null
+}
+
+export type AdminPaymentRow = Payment & {
+  account: Pick<Account, 'id' | 'name' | 'slug'> | null
 }
 
 export async function fetchAdminOverview() {
@@ -183,4 +198,82 @@ export async function fetchAdminAccountDetail(
     payments: (payments ?? []) as Payment[],
     usage: (usage ?? []) as UsageEvent[],
   }
+}
+
+
+export async function fetchAdminUsers(): Promise<AdminUserRow[]> {
+  const [{ data: profiles, error: profilesError }, { data: memberships, error: membershipsError }] =
+    await Promise.all([
+      supabase.from('profiles').select('id,email,full_name,role').order('email').limit(200),
+      supabase.from('account_members').select('user_id,account_id'),
+    ])
+  if (profilesError) throw profilesError
+  if (membershipsError) throw membershipsError
+
+  const accountIds = [...new Set((memberships ?? []).map((member) => member.account_id))]
+  const { data: accounts, error: accountsError } = accountIds.length
+    ? await supabase.from('accounts').select('id,name').in('id', accountIds)
+    : { data: [], error: null }
+  if (accountsError) throw accountsError
+  const accountsById = new Map((accounts ?? []).map((account) => [account.id, account.name]))
+  const accountNamesByUser = new Map<string, string[]>()
+  for (const membership of memberships ?? []) {
+    const name = accountsById.get(membership.account_id)
+    if (name)
+      accountNamesByUser.set(membership.user_id, [
+        ...(accountNamesByUser.get(membership.user_id) ?? []),
+        name,
+      ])
+  }
+  return (profiles ?? []).map((profile) => ({
+    ...profile,
+    accounts_count: accountNamesByUser.get(profile.id)?.length ?? 0,
+    account_names: accountNamesByUser.get(profile.id) ?? [],
+  }))
+}
+
+export async function fetchAdminSubscriptions(
+  status: 'active' | 'past_due',
+): Promise<AdminSubscriptionRow[]> {
+  const statuses = status === 'active' ? ['active', 'trialing'] : ['past_due']
+  const { data: subscriptions, error } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .in('status', statuses)
+    .order('updated_at', { ascending: false })
+    .limit(200)
+  if (error) throw error
+  const rows = (subscriptions ?? []) as Subscription[]
+  const accountIds = [...new Set(rows.map((item) => item.account_id))]
+  const planIds = [...new Set(rows.flatMap((item) => (item.credit_plan_id ? [item.credit_plan_id] : [])))]
+  const [{ data: accounts, error: accountsError }, { data: plans, error: plansError }] = await Promise.all([
+    accountIds.length ? supabase.from('accounts').select('id,name,slug').in('id', accountIds) : Promise.resolve({ data: [], error: null }),
+    planIds.length ? supabase.from('credit_plans').select('id,name').in('id', planIds) : Promise.resolve({ data: [], error: null }),
+  ])
+  if (accountsError) throw accountsError
+  if (plansError) throw plansError
+  const accountsById = new Map((accounts ?? []).map((account) => [account.id, account]))
+  const plansById = new Map((plans ?? []).map((plan) => [plan.id, plan]))
+  return rows.map((item) => ({
+    ...item,
+    account: accountsById.get(item.account_id) ?? null,
+    plan: item.credit_plan_id ? (plansById.get(item.credit_plan_id) ?? null) : null,
+  }))
+}
+
+export async function fetchAdminPayments(): Promise<AdminPaymentRow[]> {
+  const { data: payments, error } = await supabase
+    .from('payments')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(200)
+  if (error) throw error
+  const rows = (payments ?? []) as Payment[]
+  const accountIds = [...new Set(rows.map((item) => item.account_id))]
+  const { data: accounts, error: accountsError } = accountIds.length
+    ? await supabase.from('accounts').select('id,name,slug').in('id', accountIds)
+    : { data: [], error: null }
+  if (accountsError) throw accountsError
+  const accountsById = new Map((accounts ?? []).map((account) => [account.id, account]))
+  return rows.map((item) => ({ ...item, account: accountsById.get(item.account_id) ?? null }))
 }

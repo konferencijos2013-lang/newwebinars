@@ -57,6 +57,8 @@ import { AdminRoute } from '@/features/auth/components/AdminRoute'
 import { AdminDashboardPage } from '@/features/admin/pages/AdminDashboardPage'
 import { AdminAccountsPage } from '@/features/admin/pages/AdminAccountsPage'
 import { AdminAccountDetailPage } from '@/features/admin/pages/AdminAccountDetailPage'
+import { AdminUsersPage } from '@/features/admin/pages/AdminUsersPage'
+import { AdminBillingListPage } from '@/features/admin/pages/AdminBillingListPage'
 
 export function AppRoutes() {
   return (
@@ -157,6 +159,22 @@ export function AppRoutes() {
             element={
               <AdminRoute>
                 <AdminAccountDetailPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="admin/users"
+            element={
+              <AdminRoute>
+                <AdminUsersPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="admin/billing/:view"
+            element={
+              <AdminRoute>
+                <AdminBillingListPage />
               </AdminRoute>
             }
           />

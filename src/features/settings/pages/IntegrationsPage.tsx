@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link2, Mail, MessageCircle, Server, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
@@ -62,7 +62,7 @@ function IntegrationSettings({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       setConnections(await fetchIntegrationConnections(accountId))
@@ -71,10 +71,12 @@ function IntegrationSettings({
     } finally {
       setLoading(false)
     }
-  }
-  useEffect(() => {
-    void load()
   }, [accountId])
+  useEffect(() => {
+    // Start on the next microtask so the effect only subscribes to the request;
+    // state updates happen as a result of that asynchronous request.
+    void Promise.resolve().then(load)
+  }, [load])
   const existing = (provider: IntegrationProvider) =>
     connections.find((item) => item.provider === provider) ?? null
   async function save(input: SaveInput) {

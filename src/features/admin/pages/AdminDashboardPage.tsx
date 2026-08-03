@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import { AlertCircle, Building2, CreditCard, Users } from 'lucide-react'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
@@ -53,34 +54,43 @@ export function AdminDashboardPage() {
           icon={Building2}
           label="Klientų paskyros"
           value={overview!.accounts_count}
+          to="/admin/accounts"
         />
         <Metric
           icon={Users}
           label="Sistemos vartotojai"
           value={overview!.users_count}
+          to="/admin/users"
         />
         <Metric
           icon={CreditCard}
           label="Aktyvios prenumeratos"
           value={overview!.paid_subscriptions_count}
+          to="/admin/billing/subscriptions"
         />
         <Metric
           icon={AlertCircle}
           label="Vėluojantys mokėjimai"
           value={overview!.past_due_subscriptions_count}
           danger
+          to="/admin/billing/past-due"
         />
       </div>
-      <Card>
-        <CardTitle>Gauti mokėjimai</CardTitle>
-        <CardDescription className="mt-2">
-          Sėkmingi mokėjimai, užregistruoti sistemoje. Stripe sinchronizavimo ir
-          MRR skaičiavimo etapas bus pridėtas kartu su atsiskaitymų sutvarkymu.
-        </CardDescription>
-        <p className="mt-5 text-3xl font-bold">
-          {money.format(overview!.payments_cents / 100)}
-        </p>
-      </Card>
+      <Link
+        to="/admin/billing/payments"
+        className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+        <Card className="transition-colors hover:bg-muted/40">
+          <CardTitle>Gauti mokėjimai</CardTitle>
+          <CardDescription className="mt-2">
+            Sėkmingi mokėjimai, užregistruoti sistemoje. Atidaryti mokėjimų
+            istoriją.
+          </CardDescription>
+          <p className="mt-5 text-3xl font-bold">
+            {money.format(overview!.payments_cents / 100)}
+          </p>
+        </Card>
+      </Link>
     </div>
   )
 }
@@ -90,19 +100,23 @@ function Metric({
   label,
   value,
   danger = false,
+  to,
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   value: number
   danger?: boolean
+  to: string
 }) {
   return (
-    <Card className="p-5">
+    <Link to={to} className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+      <Card className="p-5 transition-colors hover:bg-muted/40">
       <Icon
         className={danger ? 'text-destructive h-5 w-5' : 'text-primary h-5 w-5'}
       />
       <p className="mt-4 text-2xl font-bold">{value}</p>
-      <p className="text-muted-foreground mt-1 text-sm">{label}</p>
-    </Card>
+        <p className="text-muted-foreground mt-1 text-sm">{label}</p>
+      </Card>
+    </Link>
   )
 }
