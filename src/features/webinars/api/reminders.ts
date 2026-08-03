@@ -4,7 +4,7 @@ export interface ReminderRule {
   id: string
   webinar_id: string
   integration_connection_id: string | null
-  channel: 'email' | 'telegram'
+  channel: 'email' | 'telegram' | 'manychat'
   minutes_before: number
   subject: string | null
   body: string | null
@@ -31,13 +31,14 @@ export async function createReminderRule(input: {
   minutesBefore: number
   subject: string
   body: string
+  channel?: 'email' | 'manychat'
 }) {
   const { data, error } = await supabase
     .from('reminder_rules')
     .insert({
       webinar_id: input.webinarId,
       integration_connection_id: input.integrationConnectionId,
-      channel: 'email',
+      channel: input.channel ?? 'email',
       minutes_before: input.minutesBefore,
       subject: input.subject.trim() || null,
       body: input.body.trim() || null,

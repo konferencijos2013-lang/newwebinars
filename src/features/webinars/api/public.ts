@@ -78,6 +78,21 @@ export async function registerForWebinar(input: {
 // SELECT/UPDATE grant on registrations would let anyone dump or mutate
 // every attendee's row. The RPC only ever touches the single row whose
 // access_token matches, regardless of what the caller can otherwise see.
+export interface ManyChatLinkOption {
+  integration_connection_id: string
+  status: 'pending' | 'linked' | 'unsubscribed' | 'invalid' | 'blocked'
+  connect_url: string | null
+  expires_at: string | null
+}
+
+export async function getManyChatLinkOptions(accessToken: string) {
+  const { data, error } = await supabase.rpc('get_manychat_link_options', {
+    p_access_token: accessToken,
+  })
+  if (error) throw error
+  return (data ?? []) as ManyChatLinkOption[]
+}
+
 export async function fetchRegistrationByToken(accessToken: string) {
   const { data, error } = await supabase.rpc('get_registration_by_token', {
     p_access_token: accessToken,

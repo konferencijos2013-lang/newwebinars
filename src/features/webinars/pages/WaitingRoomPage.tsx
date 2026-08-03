@@ -8,6 +8,8 @@ import {
   fetchWebinarBySlug,
   fetchRegistrationByToken,
   markEnteredWaitingRoom,
+  getManyChatLinkOptions,
+  type ManyChatLinkOption,
 } from '@/features/webinars/api/public'
 import type { Webinar, Registration } from '@/shared/database.types'
 
@@ -21,6 +23,8 @@ export function WaitingRoomPage() {
   const [registration, setRegistration] = useState<Registration | null>(null)
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
   const [now, setNow] = useState(0)
+  const [manyChatLinks, setManyChatLinks] = useState<ManyChatLinkOption[]>([])
+  const [manyChatError, setManyChatError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!slug || !token) return
@@ -40,6 +44,14 @@ export function WaitingRoomPage() {
         setRegistration(r)
         setStatus('ready')
         markEnteredWaitingRoom(token).catch(() => {})
+        getManyChatLinkOptions(token)
+          .then((links) => {
+            if (isActive) setManyChatLinks(links)
+          })
+          .catch(() => {
+            if (isActive)
+              setManyChatError('Nepavyko paruošti susiejimo su žinučių kanalu.')
+          })
       })
       .catch(() => {
         if (!isActive) return
@@ -99,6 +111,33 @@ export function WaitingRoomPage() {
           </div>
         ) : (
           <p className="text-muted-foreground mt-8">{t('onDemandReady')}</p>
+        )}
+
+        {manyChatLinks.some(
+          (link) => link.status === 'pending' && link.connect_url,
+        ) && (
+          <a
+            className="border-input bg-background hover:bg-accent mt-5 inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium transition-colors"
+            href={
+              manyChatLinks.find(
+                (link) => link.status === 'pending' && link.connect_url,
+              )?.connect_url ?? '#'
+            }
+            target="_blank"
+            rel="noreferrer"
+          >
+            Gauti priminimus per ManyChat
+          </a>
+        )}
+        {manyChatLinks.some((link) => link.status === 'linked') && (
+          <p className="mt-5 text-sm text-emerald-700 dark:text-emerald-300">
+            ManyChat priminimai prijungti.
+          </p>
+        )}
+        {manyChatError && (
+          <p className="mt-4 text-sm text-amber-700 dark:text-amber-300">
+            {manyChatError}
+          </p>
         )}
 
         <Button

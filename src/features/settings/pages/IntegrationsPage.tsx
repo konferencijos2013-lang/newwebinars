@@ -5,41 +5,455 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
-import { fetchIntegrationConnections, saveIntegrationConnection, type IntegrationConnection, type IntegrationProvider } from '@/features/settings/api/integrations'
+import {
+  fetchIntegrationConnections,
+  saveIntegrationConnection,
+  type IntegrationConnection,
+  type IntegrationProvider,
+} from '@/features/settings/api/integrations'
 
 export function IntegrationsPage() {
   const accountState = useAccount()
-  if (accountState.status === 'loading') return <div className="flex h-64 items-center justify-center"><Spinner className="h-8 w-8" /></div>
+  if (accountState.status === 'loading')
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Spinner className="h-8 w-8" />
+      </div>
+    )
   if (accountState.status !== 'ready') return <Unavailable />
-  return <IntegrationSettings key={accountState.account.id} accountId={accountState.account.id} canManage={['owner', 'admin'].includes(accountState.membership.role)} />
+  return (
+    <IntegrationSettings
+      key={accountState.account.id}
+      accountId={accountState.account.id}
+      canManage={['owner', 'admin'].includes(accountState.membership.role)}
+    />
+  )
 }
 
-function Unavailable() { return <div className="mx-auto max-w-3xl"><Card className="flex flex-col items-center justify-center py-16 text-center"><Link2 className="text-muted-foreground mb-4 h-12 w-12" /><CardTitle>Integrations unavailable</CardTitle><CardDescription className="mt-2">Sign in to manage account delivery integrations.</CardDescription></Card></div> }
+function Unavailable() {
+  return (
+    <div className="mx-auto max-w-3xl">
+      <Card className="flex flex-col items-center justify-center py-16 text-center">
+        <Link2 className="text-muted-foreground mb-4 h-12 w-12" />
+        <CardTitle>Integrations unavailable</CardTitle>
+        <CardDescription className="mt-2">
+          Sign in to manage account delivery integrations.
+        </CardDescription>
+      </Card>
+    </div>
+  )
+}
 
-type SaveInput = { provider: IntegrationProvider; displayName: string; credential: string; config: Record<string, unknown> }
+type SaveInput = {
+  provider: IntegrationProvider
+  displayName: string
+  credential: string
+  config: Record<string, unknown>
+}
 
-function IntegrationSettings({ accountId, canManage }: { accountId: string; canManage: boolean }) {
+function IntegrationSettings({
+  accountId,
+  canManage,
+}: {
+  accountId: string
+  canManage: boolean
+}) {
   const [connections, setConnections] = useState<IntegrationConnection[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  async function load() { setLoading(true); try { setConnections(await fetchIntegrationConnections(accountId)) } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)) } finally { setLoading(false) } }
-  useEffect(() => { void load() }, [accountId])
-  const existing = (provider: IntegrationProvider) => connections.find((item) => item.provider === provider) ?? null
-  async function save(input: SaveInput) { setError(null); setNotice(null); try { await saveIntegrationConnection({ accountId, ...input }); setNotice(`${input.displayName} saved. Its credential is encrypted in Vault and is never shown again.`); await load() } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)) } }
-  return <div className="mx-auto max-w-3xl space-y-6">
-    <div><h1 className="text-foreground text-2xl font-bold tracking-tight">Integrations</h1><p className="text-muted-foreground mt-1 text-sm">Connect email and messaging providers for webinar reminders. Credentials are never exposed after saving.</p></div>
-    {!canManage && <p className="rounded-md bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">Only an account owner or administrator can change integrations.</p>}
-    {error && <p className="rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">{error}</p>}{notice && <p className="rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{notice}</p>}
-    {loading ? <div className="flex h-32 items-center justify-center"><Spinner /></div> : <><BrevoForm connection={existing('brevo')} disabled={!canManage} onSave={save} /><ResendForm connection={existing('resend')} disabled={!canManage} onSave={save} /><SmtpForm connection={existing('smtp')} disabled={!canManage} onSave={save} /><ManyChatForm connection={existing('manychat')} disabled={!canManage} onSave={save} /></>}
-    <Card className="bg-muted/30"><div className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 text-green-600" /><div><CardTitle className="text-base">Reliable delivery</CardTitle><CardDescription className="mt-1">Every reminder is claimed once, logged, and retried up to five times on failure. Configure a scheduled call to the delivery worker before enabling live reminders.</CardDescription></div></div></Card>
-  </div>
+  async function load() {
+    setLoading(true)
+    try {
+      setConnections(await fetchIntegrationConnections(accountId))
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason))
+    } finally {
+      setLoading(false)
+    }
+  }
+  useEffect(() => {
+    void load()
+  }, [accountId])
+  const existing = (provider: IntegrationProvider) =>
+    connections.find((item) => item.provider === provider) ?? null
+  async function save(input: SaveInput) {
+    setError(null)
+    setNotice(null)
+    try {
+      await saveIntegrationConnection({ accountId, ...input })
+      setNotice(
+        `${input.displayName} saved. Its credential is encrypted in Vault and is never shown again.`,
+      )
+      await load()
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason))
+    }
+  }
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <div>
+        <h1 className="text-foreground text-2xl font-bold tracking-tight">
+          Integrations
+        </h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Connect email and messaging providers for webinar reminders.
+          Credentials are never exposed after saving.
+        </p>
+      </div>
+      {!canManage && (
+        <p className="rounded-md bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
+          Only an account owner or administrator can change integrations.
+        </p>
+      )}
+      {error && (
+        <p className="rounded-md bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p className="rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">
+          {notice}
+        </p>
+      )}
+      {loading ? (
+        <div className="flex h-32 items-center justify-center">
+          <Spinner />
+        </div>
+      ) : (
+        <>
+          <BrevoForm
+            connection={existing('brevo')}
+            disabled={!canManage}
+            onSave={save}
+          />
+          <ResendForm
+            connection={existing('resend')}
+            disabled={!canManage}
+            onSave={save}
+          />
+          <SmtpForm
+            connection={existing('smtp')}
+            disabled={!canManage}
+            onSave={save}
+          />
+          <ManyChatForm
+            connection={existing('manychat')}
+            disabled={!canManage}
+            onSave={save}
+          />
+        </>
+      )}
+      <Card className="bg-muted/30">
+        <div className="flex gap-3">
+          <ShieldCheck className="mt-0.5 h-5 w-5 text-green-600" />
+          <div>
+            <CardTitle className="text-base">Reliable delivery</CardTitle>
+            <CardDescription className="mt-1">
+              Every reminder is claimed once, logged, and retried up to five
+              times on failure. Configure a scheduled call to the delivery
+              worker before enabling live reminders.
+            </CardDescription>
+          </div>
+        </div>
+      </Card>
+    </div>
+  )
 }
 
-function useProviderSave(provider: IntegrationProvider, displayName: string, onSave: (value: SaveInput) => Promise<void>) { const [credential, setCredential] = useState(''); const [saving, setSaving] = useState(false); async function save(config: Record<string, unknown>) { setSaving(true); try { await onSave({ provider, displayName, credential, config }); setCredential('') } finally { setSaving(false) } } return { credential, setCredential, saving, save } }
-function Status({ connection }: { connection: IntegrationConnection }) { return <p className="text-muted-foreground mt-3 text-sm">Status: <span className="text-foreground font-medium">{connection.status}</span>{connection.last_error ? ` — latest error: ${connection.last_error}` : ''}</p> }
-function ProviderCard({ icon, title, description, children }: { icon: React.ReactNode; title: string; description: string; children: React.ReactNode }) { return <Card><div className="flex items-start gap-3">{icon}<div><CardTitle className="text-base">{title}</CardTitle><CardDescription className="mt-1">{description}</CardDescription></div></div>{children}</Card> }
-function BrevoForm({ connection, disabled, onSave }: { connection: IntegrationConnection | null; disabled: boolean; onSave: (v: SaveInput) => Promise<void> }) { const [email, setEmail] = useState(String(connection?.config.from_email ?? '')); const [name, setName] = useState(String(connection?.config.from_name ?? '')); const api = useProviderSave('brevo', 'Brevo email', onSave); return <ProviderCard icon={<Mail className="text-primary mt-0.5 h-5 w-5" />} title="Brevo" description="Send webinar reminders with Brevo Transactional Email."><div className="mt-5 grid gap-3 sm:grid-cols-3"><Input disabled={disabled || api.saving} value={name} onChange={e => setName(e.target.value)} placeholder="Sender name" /><Input disabled={disabled || api.saving} value={email} onChange={e => setEmail(e.target.value)} placeholder="hello@yourdomain.com" /><Input disabled={disabled || api.saving} type="password" value={api.credential} onChange={e => api.setCredential(e.target.value)} placeholder={connection ? 'New Brevo API key' : 'Brevo API key'} /></div>{connection && <Status connection={connection} />}<Button className="mt-4" disabled={disabled || !email || !api.credential} isLoading={api.saving} onClick={() => void api.save({ from_email: email, from_name: name })}>{connection ? 'Update Brevo' : 'Connect Brevo'}</Button></ProviderCard> }
-function ResendForm({ connection, disabled, onSave }: { connection: IntegrationConnection | null; disabled: boolean; onSave: (v: SaveInput) => Promise<void> }) { const [fromEmail, setFromEmail] = useState(String(connection?.config.from_email ?? '')); const api = useProviderSave('resend', 'Resend email', onSave); return <ProviderCard icon={<Mail className="text-primary mt-0.5 h-5 w-5" />} title="Resend" description="Use Resend to send registration and webinar reminder emails."><div className="mt-5 grid gap-3 sm:grid-cols-2"><Input disabled={disabled || api.saving} value={fromEmail} onChange={e => setFromEmail(e.target.value)} placeholder="Webinar <hello@yourdomain.com>" /><Input disabled={disabled || api.saving} type="password" value={api.credential} onChange={e => api.setCredential(e.target.value)} placeholder={connection ? 'New API key' : 're_… API key'} /></div>{connection && <Status connection={connection} />}<Button className="mt-4" disabled={disabled || !fromEmail || !api.credential} isLoading={api.saving} onClick={() => void api.save({ from_email: fromEmail })}>{connection ? 'Update Resend' : 'Connect Resend'}</Button></ProviderCard> }
-function SmtpForm({ connection, disabled, onSave }: { connection: IntegrationConnection | null; disabled: boolean; onSave: (v: SaveInput) => Promise<void> }) { const config = connection?.config ?? {}; const [host, setHost] = useState(String(config.host ?? '')); const [port, setPort] = useState(String(config.port ?? '587')); const [username, setUsername] = useState(String(config.username ?? '')); const [fromEmail, setFromEmail] = useState(String(config.from_email ?? '')); const [secure, setSecure] = useState(config.secure === true); const api = useProviderSave('smtp', 'SMTP email', onSave); return <ProviderCard icon={<Server className="text-primary mt-0.5 h-5 w-5" />} title="SMTP" description="Universal option for Google Workspace, Microsoft 365, Zoho, and private mail servers."><div className="mt-5 grid gap-3 sm:grid-cols-2"><Input disabled={disabled || api.saving} value={host} onChange={e => setHost(e.target.value)} placeholder="smtp.example.com" /><Input disabled={disabled || api.saving} value={port} onChange={e => setPort(e.target.value)} inputMode="numeric" placeholder="587" /><Input disabled={disabled || api.saving} value={username} onChange={e => setUsername(e.target.value)} placeholder="SMTP username" /><Input disabled={disabled || api.saving} value={fromEmail} onChange={e => setFromEmail(e.target.value)} placeholder="Sender email" /><Input className="sm:col-span-2" disabled={disabled || api.saving} type="password" value={api.credential} onChange={e => api.setCredential(e.target.value)} placeholder={connection ? 'New SMTP password' : 'SMTP password or app password'} /></div><label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={secure} disabled={disabled || api.saving} onChange={e => setSecure(e.target.checked)} />Use implicit TLS (usually port 465)</label>{connection && <Status connection={connection} />}<Button className="mt-4" disabled={disabled || !host || !username || !fromEmail || !api.credential} isLoading={api.saving} onClick={() => void api.save({ host, port: Number(port), username, from_email: fromEmail, secure })}>{connection ? 'Update SMTP' : 'Connect SMTP'}</Button></ProviderCard> }
-function ManyChatForm({ connection, disabled, onSave }: { connection: IntegrationConnection | null; disabled: boolean; onSave: (v: SaveInput) => Promise<void> }) { const api = useProviderSave('manychat', 'ManyChat', onSave); return <ProviderCard icon={<MessageCircle className="text-primary mt-0.5 h-5 w-5" />} title="ManyChat" description="Save an API key now. Automated delivery is enabled after contact sync is added."><Input className="mt-5" disabled={disabled || api.saving} type="password" value={api.credential} onChange={e => api.setCredential(e.target.value)} placeholder={connection ? 'New API key' : 'ManyChat API key'} />{connection && <Status connection={connection} />}<Button className="mt-4" disabled={disabled || !api.credential} isLoading={api.saving} onClick={() => void api.save({})}>{connection ? 'Update ManyChat' : 'Connect ManyChat'}</Button></ProviderCard> }
+function useProviderSave(
+  provider: IntegrationProvider,
+  displayName: string,
+  onSave: (value: SaveInput) => Promise<void>,
+) {
+  const [credential, setCredential] = useState('')
+  const [saving, setSaving] = useState(false)
+  async function save(config: Record<string, unknown>) {
+    setSaving(true)
+    try {
+      await onSave({ provider, displayName, credential, config })
+      setCredential('')
+    } finally {
+      setSaving(false)
+    }
+  }
+  return { credential, setCredential, saving, save }
+}
+function Status({ connection }: { connection: IntegrationConnection }) {
+  return (
+    <p className="text-muted-foreground mt-3 text-sm">
+      Status:{' '}
+      <span className="text-foreground font-medium">{connection.status}</span>
+      {connection.last_error ? ` — latest error: ${connection.last_error}` : ''}
+    </p>
+  )
+}
+function ProviderCard({
+  icon,
+  title,
+  description,
+  children,
+}: {
+  icon: React.ReactNode
+  title: string
+  description: string
+  children: React.ReactNode
+}) {
+  return (
+    <Card>
+      <div className="flex items-start gap-3">
+        {icon}
+        <div>
+          <CardTitle className="text-base">{title}</CardTitle>
+          <CardDescription className="mt-1">{description}</CardDescription>
+        </div>
+      </div>
+      {children}
+    </Card>
+  )
+}
+function BrevoForm({
+  connection,
+  disabled,
+  onSave,
+}: {
+  connection: IntegrationConnection | null
+  disabled: boolean
+  onSave: (v: SaveInput) => Promise<void>
+}) {
+  const [email, setEmail] = useState(
+    String(connection?.config.from_email ?? ''),
+  )
+  const [name, setName] = useState(String(connection?.config.from_name ?? ''))
+  const api = useProviderSave('brevo', 'Brevo email', onSave)
+  return (
+    <ProviderCard
+      icon={<Mail className="text-primary mt-0.5 h-5 w-5" />}
+      title="Brevo"
+      description="Send webinar reminders with Brevo Transactional Email."
+    >
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <Input
+          disabled={disabled || api.saving}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Sender name"
+        />
+        <Input
+          disabled={disabled || api.saving}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="hello@yourdomain.com"
+        />
+        <Input
+          disabled={disabled || api.saving}
+          type="password"
+          value={api.credential}
+          onChange={(e) => api.setCredential(e.target.value)}
+          placeholder={connection ? 'New Brevo API key' : 'Brevo API key'}
+        />
+      </div>
+      {connection && <Status connection={connection} />}
+      <Button
+        className="mt-4"
+        disabled={disabled || !email || !api.credential}
+        isLoading={api.saving}
+        onClick={() => void api.save({ from_email: email, from_name: name })}
+      >
+        {connection ? 'Update Brevo' : 'Connect Brevo'}
+      </Button>
+    </ProviderCard>
+  )
+}
+function ResendForm({
+  connection,
+  disabled,
+  onSave,
+}: {
+  connection: IntegrationConnection | null
+  disabled: boolean
+  onSave: (v: SaveInput) => Promise<void>
+}) {
+  const [fromEmail, setFromEmail] = useState(
+    String(connection?.config.from_email ?? ''),
+  )
+  const api = useProviderSave('resend', 'Resend email', onSave)
+  return (
+    <ProviderCard
+      icon={<Mail className="text-primary mt-0.5 h-5 w-5" />}
+      title="Resend"
+      description="Use Resend to send registration and webinar reminder emails."
+    >
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <Input
+          disabled={disabled || api.saving}
+          value={fromEmail}
+          onChange={(e) => setFromEmail(e.target.value)}
+          placeholder="Webinar <hello@yourdomain.com>"
+        />
+        <Input
+          disabled={disabled || api.saving}
+          type="password"
+          value={api.credential}
+          onChange={(e) => api.setCredential(e.target.value)}
+          placeholder={connection ? 'New API key' : 're_… API key'}
+        />
+      </div>
+      {connection && <Status connection={connection} />}
+      <Button
+        className="mt-4"
+        disabled={disabled || !fromEmail || !api.credential}
+        isLoading={api.saving}
+        onClick={() => void api.save({ from_email: fromEmail })}
+      >
+        {connection ? 'Update Resend' : 'Connect Resend'}
+      </Button>
+    </ProviderCard>
+  )
+}
+function SmtpForm({
+  connection,
+  disabled,
+  onSave,
+}: {
+  connection: IntegrationConnection | null
+  disabled: boolean
+  onSave: (v: SaveInput) => Promise<void>
+}) {
+  const config = connection?.config ?? {}
+  const [host, setHost] = useState(String(config.host ?? ''))
+  const [port, setPort] = useState(String(config.port ?? '587'))
+  const [username, setUsername] = useState(String(config.username ?? ''))
+  const [fromEmail, setFromEmail] = useState(String(config.from_email ?? ''))
+  const [secure, setSecure] = useState(config.secure === true)
+  const api = useProviderSave('smtp', 'SMTP email', onSave)
+  return (
+    <ProviderCard
+      icon={<Server className="text-primary mt-0.5 h-5 w-5" />}
+      title="SMTP"
+      description="Universal option for Google Workspace, Microsoft 365, Zoho, and private mail servers."
+    >
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <Input
+          disabled={disabled || api.saving}
+          value={host}
+          onChange={(e) => setHost(e.target.value)}
+          placeholder="smtp.example.com"
+        />
+        <Input
+          disabled={disabled || api.saving}
+          value={port}
+          onChange={(e) => setPort(e.target.value)}
+          inputMode="numeric"
+          placeholder="587"
+        />
+        <Input
+          disabled={disabled || api.saving}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="SMTP username"
+        />
+        <Input
+          disabled={disabled || api.saving}
+          value={fromEmail}
+          onChange={(e) => setFromEmail(e.target.value)}
+          placeholder="Sender email"
+        />
+        <Input
+          className="sm:col-span-2"
+          disabled={disabled || api.saving}
+          type="password"
+          value={api.credential}
+          onChange={(e) => api.setCredential(e.target.value)}
+          placeholder={
+            connection ? 'New SMTP password' : 'SMTP password or app password'
+          }
+        />
+      </div>
+      <label className="mt-3 flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={secure}
+          disabled={disabled || api.saving}
+          onChange={(e) => setSecure(e.target.checked)}
+        />
+        Use implicit TLS (usually port 465)
+      </label>
+      {connection && <Status connection={connection} />}
+      <Button
+        className="mt-4"
+        disabled={
+          disabled || !host || !username || !fromEmail || !api.credential
+        }
+        isLoading={api.saving}
+        onClick={() =>
+          void api.save({
+            host,
+            port: Number(port),
+            username,
+            from_email: fromEmail,
+            secure,
+          })
+        }
+      >
+        {connection ? 'Update SMTP' : 'Connect SMTP'}
+      </Button>
+    </ProviderCard>
+  )
+}
+function ManyChatForm({
+  connection,
+  disabled,
+  onSave,
+}: {
+  connection: IntegrationConnection | null
+  disabled: boolean
+  onSave: (v: SaveInput) => Promise<void>
+}) {
+  const config = connection?.config ?? {}
+  const [linkUrlTemplate, setLinkUrlTemplate] = useState(
+    String(config.link_url_template ?? ''),
+  )
+  const api = useProviderSave('manychat', 'ManyChat', onSave)
+  return (
+    <ProviderCard
+      icon={<MessageCircle className="text-primary mt-0.5 h-5 w-5" />}
+      title="ManyChat"
+      description="Universal reminder channel for Messenger, Instagram, WhatsApp or Telegram through your configured ManyChat flow."
+    >
+      <p className="text-muted-foreground mt-4 text-sm">
+        In ManyChat create a flow which sends the `manychat_link_token` custom
+        field to the webhook. Paste that flow's share URL below, replacing the
+        token position with {'{{manychat_link_token}}'}.
+      </p>
+      <Input
+        className="mt-3"
+        disabled={disabled || api.saving}
+        value={linkUrlTemplate}
+        onChange={(e) => setLinkUrlTemplate(e.target.value)}
+        placeholder="https://manychat.com/...?...={{manychat_link_token}}"
+      />
+      <Input
+        className="mt-5"
+        disabled={disabled || api.saving}
+        type="password"
+        value={api.credential}
+        onChange={(e) => api.setCredential(e.target.value)}
+        placeholder={connection ? 'New API key' : 'ManyChat API key'}
+      />
+      {connection && <Status connection={connection} />}
+      <Button
+        className="mt-4"
+        disabled={
+          disabled ||
+          !api.credential ||
+          !linkUrlTemplate.includes('{{manychat_link_token}}')
+        }
+        isLoading={api.saving}
+        onClick={() => void api.save({ link_url_template: linkUrlTemplate })}
+      >
+        {connection ? 'Update ManyChat' : 'Connect ManyChat'}
+      </Button>
+    </ProviderCard>
+  )
+}

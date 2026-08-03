@@ -19,7 +19,9 @@ export interface IntegrationConnection {
 export async function fetchIntegrationConnections(accountId: string) {
   const { data, error } = await supabase
     .from('integration_connections')
-    .select('id,account_id,provider,display_name,status,config,last_tested_at,last_error,created_at,updated_at')
+    .select(
+      'id,account_id,provider,display_name,status,config,last_tested_at,last_error,created_at,updated_at',
+    )
     .eq('account_id', accountId)
     .order('provider')
   if (error) throw error

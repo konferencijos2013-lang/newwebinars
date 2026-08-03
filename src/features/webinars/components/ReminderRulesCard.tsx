@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Bell, Mail, Plus, Trash2 } from 'lucide-react'
+import { Bell, Mail, MessageCircle, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -20,7 +20,9 @@ import {
 
 const DEFAULT_SUBJECT = 'Primename: {{webinar_title}} prasidės netrukus'
 const DEFAULT_BODY =
-  'Sveiki, {{name}},\n\nprimename, kad webinaras „{{webinar_title}}“ prasidės netrukus.\n\nIki pasimatymo!'
+  'Sveiki, {{name}},\n\nprimename, kad webinaras „{{webinar_title}}“ prasidės netrukus.\n\nPrisijungti prie webinaro:\n{{webinar_link}}\n\nIki pasimatymo!'
+const DEFAULT_MANYCHAT_BODY =
+  'Sveiki, {{name}}! Webinaras „{{webinar_title}}“ prasidės netrukus. Prisijungti: {{webinar_link}}'
 
 function formatOffset(minutes: number) {
   if (minutes === 0) return 'Webinaro pradžios metu'
@@ -45,15 +47,22 @@ export function ReminderRulesCard({
   const [adding, setAdding] = useState(false)
   const [saving, setSaving] = useState(false)
   const [connectionId, setConnectionId] = useState('')
+  const [channel, setChannel] = useState<'email' | 'manychat'>('email')
   const [minutesBefore, setMinutesBefore] = useState('60')
   const [subject, setSubject] = useState(DEFAULT_SUBJECT)
   const [body, setBody] = useState(DEFAULT_BODY)
 
+  const manyChatConnections = connections.filter(
+    (connection) =>
+      connection.provider === 'manychat' && connection.status === 'active',
+  )
   const emailConnections = connections.filter(
     (connection) =>
       ['brevo', 'resend', 'smtp'].includes(connection.provider) &&
       connection.status === 'active',
   )
+  const availableConnections =
+    channel === 'email' ? emailConnections : manyChatConnections
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -105,6 +114,7 @@ export function ReminderRulesCard({
         minutesBefore: offset,
         subject,
         body,
+        channel,
       })
       setRules((current) =>
         [...current, rule].sort((a, b) => b.minutes_before - a.minutes_before),
@@ -155,9 +165,12 @@ export function ReminderRulesCard({
           <div>
             <CardTitle>Priminimai</CardTitle>
             <CardDescription className="mt-1">
-              El. pašto priminimai registruotiems dalyviams. Galite naudoti{' '}
-              {'{{name}}'}, {'{{email}}'} ir {'{{webinar_title}}'}, kurie bus
-              pakeisti siunčiant.
+              El. pašto arba ManyChat priminimai registruotiems dalyviams.
+              Galite naudoti {'{{name}}'}, {'{{email}}'}, {'{{webinar_title}}'},
+              {' {{webinar_link}}'} ir {'{{public_webinar_link}}'}, kurie bus
+              pakeisti siunčiant. {'{{webinar_link}}'} yra asmeninė prisijungimo
+              nuoroda, o {'{{public_webinar_link}}'} – viešas registracijos
+              puslapis.
             </CardDescription>
           </div>
         </div>
@@ -184,7 +197,33 @@ export function ReminderRulesCard({
 
       {adding && (
         <div className="mt-5 space-y-4 rounded-lg border p-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="reminder-channel">Kanalas</Label>
+              <Select
+                id="reminder-channel"
+                value={channel}
+                onChange={(event) => {
+                  const next = event.target.value as 'email' | 'manychat'
+                  setChannel(next)
+                  setConnectionId(
+                    next === 'email'
+                      ? (emailConnections[0]?.id ?? '')
+                      : (manyChatConnections[0]?.id ?? ''),
+                  )
+                  if (next === 'manychat') {
+                    setSubject('')
+                    setBody(DEFAULT_MANYCHAT_BODY)
+                  } else {
+                    setSubject(DEFAULT_SUBJECT)
+                    setBody(DEFAULT_BODY)
+                  }
+                }}
+              >
+                <option value="email">El. paštas</option>
+                <option value="manychat">ManyChat</option>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="reminder-connection">Siuntimo integracija</Label>
               <Select
@@ -193,7 +232,7 @@ export function ReminderRulesCard({
                 onChange={(event) => setConnectionId(event.target.value)}
               >
                 <option value="">Pasirinkite integraciją</option>
-                {emailConnections.map((connection) => (
+                {availableConnections.map((connection) => (
                   <option key={connection.id} value={connection.id}>
                     {connection.display_name} ({connection.provider})
                   </option>
@@ -216,14 +255,19 @@ export function ReminderRulesCard({
               </p>
             </div>
           </div>
-          {emailConnections.length === 0 && (
+          {availableConnections.length === 0 && (
             <p className="rounded-md bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
-              Nėra aktyvios Brevo, Resend ar SMTP integracijos. Pirmiausia ją
-              prijunkite puslapyje „Integracijos“.
+              {channel === 'email'
+                ? 'Nėra aktyvios Brevo, Resend ar SMTP integracijos. Pirmiausia ją prijunkite puslapyje „Integracijos“.'
+                : 'Nėra aktyvios ManyChat integracijos. Pirmiausia įrašykite API raktą ir ManyChat susiejimo nuorodos šabloną puslapyje „Integracijos“. '}
             </p>
           )}
           <div className="space-y-2">
-            <Label htmlFor="reminder-subject">Laiško tema</Label>
+            <Label htmlFor="reminder-subject">
+              {channel === 'email'
+                ? 'Laiško tema'
+                : 'Pranešimo pavadinimas (vidinis)'}
+            </Label>
             <Input
               id="reminder-subject"
               value={subject}
@@ -231,7 +275,11 @@ export function ReminderRulesCard({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="reminder-body">Laiško tekstas</Label>
+            <Label htmlFor="reminder-body">
+              {channel === 'email'
+                ? 'Laiško tekstas'
+                : 'ManyChat pranešimo tekstas'}
+            </Label>
             <Textarea
               id="reminder-body"
               rows={7}
@@ -250,10 +298,14 @@ export function ReminderRulesCard({
             <Button
               type="button"
               isLoading={saving}
-              disabled={!scheduledAt || emailConnections.length === 0}
+              disabled={!scheduledAt || availableConnections.length === 0}
               onClick={() => void addRule()}
             >
-              <Mail className="h-4 w-4" />
+              {channel === 'email' ? (
+                <Mail className="h-4 w-4" />
+              ) : (
+                <MessageCircle className="h-4 w-4" />
+              )}
               Išsaugoti priminimą
             </Button>
           </div>
