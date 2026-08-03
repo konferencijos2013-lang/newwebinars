@@ -56,8 +56,11 @@ export function AppShell() {
   const { status, user } = useUser()
 
   async function handleSignOut() {
-    const { error } = await supabase.auth.signOut()
-    if (!error) navigate('/login', { replace: true })
+    // A local sign-out is deterministic even when the global Supabase request
+    // cannot be reached. The session is removed from this browser immediately.
+    const { error } = await supabase.auth.signOut({ scope: 'local' })
+    if (error) console.error('Unable to sign out locally', error)
+    navigate('/login', { replace: true })
   }
 
   if (status === 'loading') {
@@ -145,15 +148,15 @@ export function AppShell() {
               </span>
             </div>
           </div>
-          <div className="flex items-center justify-between gap-2 px-3">
-            <div className="flex items-center gap-2">
+          <div className="space-y-2 px-3">
+            <div className="flex flex-wrap items-center gap-2">
               <LanguageSwitch />
               <ThemeToggle />
             </div>
             <button
               type="button"
               onClick={() => void handleSignOut()}
-              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
+              className="text-muted-foreground hover:bg-muted hover:text-foreground flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm"
             >
               <LogOut className="h-4 w-4" />
               {t('auth:signOut')}
