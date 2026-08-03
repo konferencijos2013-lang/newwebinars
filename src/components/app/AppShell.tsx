@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet } from 'react-router'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   BarChart3,
@@ -52,7 +52,13 @@ function SidebarNavLink({
 
 export function AppShell() {
   const { t } = useTranslation('common')
+  const navigate = useNavigate()
   const { status, user } = useUser()
+
+  async function handleSignOut() {
+    const { error } = await supabase.auth.signOut()
+    if (!error) navigate('/login', { replace: true })
+  }
 
   if (status === 'loading') {
     return (
@@ -146,7 +152,7 @@ export function AppShell() {
             </div>
             <button
               type="button"
-              onClick={() => supabase.auth.signOut()}
+              onClick={() => void handleSignOut()}
               className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
             >
               <LogOut className="h-4 w-4" />
