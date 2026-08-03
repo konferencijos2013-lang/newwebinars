@@ -100,14 +100,27 @@ serve(async (req) => {
       if (error) throw error
     }
 
+    const { data: attribution } = await supabaseAdmin
+      .from('platform_partner_attributions')
+      .select('id')
+      .eq('account_id', account_id)
+      .eq('status', 'active')
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle()
+    const metadata = {
+      account_id,
+      plan_id,
+      ...(attribution ? { affiliate_attribution_id: attribution.id } : {}),
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
       success_url,
       cancel_url,
-      metadata: { account_id, plan_id },
-      subscription_data: { metadata: { account_id, plan_id } },
+      metadata,
+      subscription_data: { metadata },
     })
     return json({ url: session.url })
   } catch (err) {

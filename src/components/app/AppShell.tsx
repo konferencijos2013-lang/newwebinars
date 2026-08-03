@@ -122,11 +122,18 @@ export function AppShell() {
             label={t('navigation.billing')}
           />
           {user?.role === 'admin' ? (
-            <SidebarNavLink
-              to="/admin"
-              icon={ShieldCheck}
-              label="Administravimas"
-            />
+            <>
+              <SidebarNavLink
+                to="/admin"
+                icon={ShieldCheck}
+                label="Administravimas"
+              />
+              <SidebarNavLink
+                to="/admin/partners"
+                icon={Users}
+                label="Partneriai"
+              />
+            </>
           ) : null}
           <SidebarNavLink
             to="/integrations"

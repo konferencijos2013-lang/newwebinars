@@ -124,6 +124,11 @@ serve(async (req) => {
             { onConflict: 'stripe_invoice_id' },
           )
         if (paymentError) throw paymentError
+        const { error: commissionError } = await db.rpc(
+          'create_affiliate_commission_for_payment',
+          { p_stripe_invoice_id: invoice.id },
+        )
+        if (commissionError) throw commissionError
         const periodStart = new Date(invoice.period_start * 1000).toISOString(),
           periodEnd = new Date(invoice.period_end * 1000).toISOString()
         await db
@@ -146,6 +151,24 @@ serve(async (req) => {
           )
           if (creditsError) throw creditsError
         }
+      }
+    }
+
+    if (event.type === 'charge.refunded') {
+      const charge = event.data.object as Stripe.Charge
+      const stripeInvoiceId =
+        typeof charge.invoice === 'string' ? charge.invoice : charge.invoice?.id
+      if (stripeInvoiceId) {
+        const { error: paymentError } = await db
+          .from('payments')
+          .update({ status: 'refunded' })
+          .eq('stripe_invoice_id', stripeInvoiceId)
+        if (paymentError) throw paymentError
+        const { error: commissionError } = await db.rpc(
+          'reverse_affiliate_commission_for_invoice',
+          { p_stripe_invoice_id: stripeInvoiceId },
+        )
+        if (commissionError) throw commissionError
       }
     }
 

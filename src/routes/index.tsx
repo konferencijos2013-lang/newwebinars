@@ -59,11 +59,16 @@ import { AdminAccountsPage } from '@/features/admin/pages/AdminAccountsPage'
 import { AdminAccountDetailPage } from '@/features/admin/pages/AdminAccountDetailPage'
 import { AdminUsersPage } from '@/features/admin/pages/AdminUsersPage'
 import { AdminBillingListPage } from '@/features/admin/pages/AdminBillingListPage'
+import { AdminPartnersPage } from '@/features/admin/pages/AdminPartnersPage'
+import { AdminPartnerDetailPage } from '@/features/admin/pages/AdminPartnerDetailPage'
+import { PartnerReferralRedirectPage } from '@/features/affiliate/pages/PartnerReferralRedirectPage'
 
 export function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public affiliate attribution must be matched before the generic :slug route. */}
+        <Route path="r/:code" element={<PartnerReferralRedirectPage />} />
         {/* Public webinar funnel pages (no marketing wrapper) */}
         <Route path="f/:slug/:path" element={<PublicFunnelPage />} />
         <Route path="w/:slug" element={<PublicWebinarPage />} />
@@ -175,6 +180,22 @@ export function AppRoutes() {
             element={
               <AdminRoute>
                 <AdminBillingListPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="admin/partners"
+            element={
+              <AdminRoute>
+                <AdminPartnersPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="admin/partners/:partnerId"
+            element={
+              <AdminRoute>
+                <AdminPartnerDetailPage />
               </AdminRoute>
             }
           />

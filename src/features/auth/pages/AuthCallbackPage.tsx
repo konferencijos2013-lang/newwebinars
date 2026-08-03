@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 
+const PARTNER_VISITOR_TOKEN_KEY = 'newwebinars_partner_visitor_token'
+
 export function AuthCallbackPage() {
   const { t } = useTranslation('auth')
   const navigate = useNavigate()
@@ -17,10 +19,29 @@ export function AuthCallbackPage() {
     let authListener: { subscription: { unsubscribe: () => void } } | null =
       null
 
-    const finish = (target: string) => {
+    const finish = async (target: string) => {
       if (resolvedRef.current) return
       resolvedRef.current = true
       if (authListener) authListener.subscription.unsubscribe()
+      const visitorToken = localStorage.getItem(PARTNER_VISITOR_TOKEN_KEY)
+      if (visitorToken) {
+        try {
+          const { data: account } = await supabase
+            .from('accounts')
+            .select('id')
+            .eq('owner_id', (await supabase.auth.getUser()).data.user?.id ?? '')
+            .order('created_at')
+            .limit(1)
+            .maybeSingle()
+          if (account)
+            await supabase.rpc('claim_platform_partner_attribution', {
+              p_account_id: account.id,
+              p_visitor_token_hash: visitorToken,
+            })
+        } catch (error) {
+          console.warn('[AuthCallback] unable to claim partner attribution', error)
+        }
+      }
       if (isActive) navigate(target, { replace: true })
     }
 

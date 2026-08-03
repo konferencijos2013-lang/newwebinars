@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { AlertCircle, Building2, CreditCard, Users } from 'lucide-react'
+import { AlertCircle, Building2, CreditCard, HandCoins, Users } from 'lucide-react'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import {
@@ -76,6 +76,12 @@ export function AdminDashboardPage() {
           to="/admin/billing/past-due"
         />
       </div>
+      <Metric
+        icon={HandCoins}
+        label="Partneriams mokėtina"
+        value={money.format(overview!.affiliate_payable_cents / 100)}
+        to="/admin/partners"
+      />
       <Link
         to="/admin/billing/payments"
         className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
@@ -104,7 +110,7 @@ function Metric({
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
-  value: number
+  value: number | string
   danger?: boolean
   to: string
 }) {
