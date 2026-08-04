@@ -292,6 +292,16 @@ export type AdminPartnerRow = {
   attribution_window_days: number
   payout_hold_days: number
   notes: string | null
+  application_status: 'pending' | 'approved' | 'rejected' | 'blocked'
+  phone: string | null
+  payout_method: 'bank' | 'paypal' | null
+  bank_account_holder: string | null
+  bank_iban: string | null
+  paypal_email: string | null
+  terms_version: string | null
+  terms_accepted_at: string | null
+  submitted_at: string | null
+  approved_at: string | null
   created_at: string
   clicks_count: number
   referred_accounts_count: number
@@ -338,7 +348,7 @@ function centsByStatus(rows: Array<{ amount_cents: number; status: string }>, st
 
 export async function fetchAdminPartners(): Promise<AdminPartnerRow[]> {
   const [{ data: partners, error: partnersError }, { data: clicks, error: clicksError }, { data: attributions, error: attributionsError }, { data: commissions, error: commissionsError }, { data: subscriptions, error: subscriptionsError }] = await Promise.all([
-    supabase.from('partners').select('id,name,email,code,is_active,commission_rate_bps,commission_months,attribution_window_days,payout_hold_days,notes,created_at').eq('type', 'affiliate').order('created_at', { ascending: false }),
+    supabase.from('partners').select('id,name,email,code,is_active,commission_rate_bps,commission_months,attribution_window_days,payout_hold_days,notes,application_status,phone,payout_method,bank_account_holder,bank_iban,paypal_email,terms_version,terms_accepted_at,submitted_at,approved_at,created_at').eq('type', 'affiliate').order('created_at', { ascending: false }),
     supabase.from('platform_partner_clicks').select('partner_id'),
     supabase.from('platform_partner_attributions').select('id,partner_id,account_id'),
     supabase.from('affiliate_commissions').select('partner_id,amount_cents,status'),
@@ -405,7 +415,20 @@ export async function fetchAdminPartnerDetail(partnerId: string): Promise<AdminP
   }
 }
 
-export async function saveAdminPartner(input: Omit<AdminPartnerRow, 'id' | 'clicks_count' | 'referred_accounts_count' | 'active_subscriptions_count' | 'accrued_cents' | 'payable_cents' | 'paid_cents' | 'created_at'> & { id?: string }) {
+export type AdminPartnerInput = {
+  id?: string
+  name: string
+  email: string | null
+  code: string
+  is_active: boolean
+  commission_rate_bps: number
+  commission_months: number
+  attribution_window_days: number
+  payout_hold_days: number
+  notes: string | null
+}
+
+export async function saveAdminPartner(input: AdminPartnerInput) {
   const { data, error } = await supabase.rpc('upsert_platform_partner', {
     p_partner_id: input.id ?? null, p_name: input.name, p_email: input.email, p_code: input.code, p_is_active: input.is_active, p_commission_rate_bps: input.commission_rate_bps, p_commission_months: input.commission_months, p_attribution_window_days: input.attribution_window_days, p_payout_hold_days: input.payout_hold_days, p_notes: input.notes,
   })
@@ -421,5 +444,16 @@ export async function createAffiliatePayout(partnerId: string, commissionIds: st
 
 export async function markAffiliatePayoutPaid(payoutId: string, reference: string) {
   const { error } = await supabase.rpc('mark_affiliate_payout_paid', { p_payout_id: payoutId, p_payment_reference: reference || null })
+  if (error) throw error
+}
+
+
+export async function approvePartnerApplication(partnerId: string) {
+  const { error } = await supabase.rpc('approve_partner_application', { p_partner_id: partnerId })
+  if (error) throw error
+}
+
+export async function setPartnerApplicationStatus(partnerId: string, status: 'rejected' | 'blocked') {
+  const { error } = await supabase.rpc('set_partner_application_status', { p_partner_id: partnerId, p_status: status })
   if (error) throw error
 }
