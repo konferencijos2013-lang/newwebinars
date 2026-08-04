@@ -81,6 +81,23 @@
     "subtitle": "Earn 30% commission for the first 12 months by referring customers",
     "commissionTitle": "30% recurring commission",
     "commissionDescription": "For every customer you refer, earn commission on their payments for the first 12 months.",
-    "cta": "Become a partner"
+    "cta": "Become a partner",
+    "formName": "Name, surname, or company name",
+    "formEmail": "Email",
+    "formPhone": "Phone number",
+    "formPayoutMethod": "Payout method",
+    "bankTransfer": "Bank transfer",
+    "bankAccountHolder": "Account holder",
+    "paypalEmail": "PayPal email",
+    "termsConsentBefore": "I agree to the ",
+    "termsLink": "Partner Program Terms",
+    "termsConsentAfter": ", including the ban on spam, bots, misleading, or other “grey-area” marketing.",
+    "submitApplication": "Submit application",
+    "termsRequired": "You must agree to the Partner Program Terms.",
+    "applicationFailed": "Unable to submit the application.",
+    "applicationSuccess": "Thank you, your application has been received. We will review it and contact you by email. Your referral link will become active only after approval.",
+    "termsTitle": "Partner Program Terms",
+    "termsBody1": "Partners may promote NewWebinars only through honest, lawful, and transparent methods. Sending unsolicited emails or messages, using bots, fake traffic, misleading advertising, impersonating NewWebinars, or promising unavailable discounts is prohibited.",
+    "termsBody2": "If these terms are breached, an application or partner account may be rejected or blocked, and unpaid commissions may be cancelled to the extent permitted by applicable law and the program terms."
   }
 }

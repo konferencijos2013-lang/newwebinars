@@ -81,6 +81,23 @@
     "subtitle": "Kviesdami klientus uždirbkite 30 % komisinių pirmuosius 12 mėnesių",
     "commissionTitle": "30 % pasikartojantys komisiniai",
     "commissionDescription": "Už kiekvieną pakviestą klientą gausite komisinius nuo jo mokėjimų pirmuosius 12 mėnesių.",
-    "cta": "Tapti partneriu"
+    "cta": "Tapti partneriu",
+    "formName": "Vardas, pavardė arba įmonės pavadinimas",
+    "formEmail": "El. paštas",
+    "formPhone": "Telefono numeris",
+    "formPayoutMethod": "Išmokėjimo būdas",
+    "bankTransfer": "Banko pavedimas",
+    "bankAccountHolder": "Sąskaitos gavėjas",
+    "paypalEmail": "PayPal el. paštas",
+    "termsConsentBefore": "Sutinku su ",
+    "termsLink": "Partnerių programos sąlygomis",
+    "termsConsentAfter": ", įskaitant draudimą siųsti spamą, naudoti botus, klaidinančią ar kitą „pilkąją“ reklamą.",
+    "submitApplication": "Pateikti paraišką",
+    "termsRequired": "Privalote sutikti su partnerių programos sąlygomis.",
+    "applicationFailed": "Nepavyko pateikti paraiškos.",
+    "applicationSuccess": "Ačiū, paraiška gauta. Ją peržiūrėsime ir susisieksime el. paštu. Partnerio nuoroda bus aktyvi tik po patvirtinimo.",
+    "termsTitle": "Partnerių programos sąlygos",
+    "termsBody1": "Partneris gali reklamuoti NewWebinars tik sąžiningais, teisėtais ir skaidriais būdais. Draudžiama siųsti nepageidaujamus laiškus ar žinutes, naudoti botus, netikrą srautą, klaidinančią reklamą, apsimesti NewWebinars vardu ar žadėti neegzistuojamas nuolaidas.",
+    "termsBody2": "Pažeidus šias sąlygas paraiška arba partnerio paskyra gali būti atmesta ar užblokuota, o neišmokėti komisiniai anuliuoti tiek, kiek leidžia taikytina teisė ir programos sąlygos."
   }
 }
