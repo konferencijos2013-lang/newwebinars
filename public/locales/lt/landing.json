@@ -62,19 +62,48 @@
     "button": "Pradėti dabar"
   },
   "pricing": {
-    "title": "Paprasta kainodara",
-    "subtitle": "Pradėkite nemokamai, augkite naudodami kreditus",
+    "title": "Paprasta ir aiški kainodara",
+    "subtitle": "Pradėkite nemokamai. Mokėdami kasmet sutaupykite 20 %.",
+    "cta": "Pradėti",
     "free": {
       "name": "Nemokamas",
-      "feature1": "1 webinaras"
+      "price": "0 € / mėn.",
+      "features": [
+        "1 webinaras",
+        "30 dalyvių viename tiesioginiame webinare",
+        "1 komandos narys"
+      ]
     },
-    "paid": {
-      "name": "Mokėkite už naudojimą",
-      "price": "Nuo 10 €",
-      "feature1": "Kreditai webinarams",
-      "feature2": "Įrašų saugykla"
+    "start": {
+      "name": "Start",
+      "price": "19 € / mėn.",
+      "features": [
+        "1 webinaras",
+        "100 dalyvių viename tiesioginiame webinare",
+        "1 komandos narys"
+      ],
+      "annual": "182,40 € / metai — sutaupykite 20 %"
     },
-    "cta": "Pradėti"
+    "grow": {
+      "name": "Grow",
+      "price": "39 € / mėn.",
+      "features": [
+        "3 webinarai",
+        "500 dalyvių viename tiesioginiame webinare",
+        "3 komandos nariai"
+      ],
+      "annual": "374,40 € / metai — sutaupykite 20 %"
+    },
+    "scale": {
+      "name": "Scale",
+      "price": "79 € / mėn.",
+      "features": [
+        "10 webinarų",
+        "2 000 dalyvių viename tiesioginiame webinare",
+        "10 komandos narių"
+      ],
+      "annual": "758,40 € / metai — sutaupykite 20 %"
+    }
   },
   "partners": {
     "title": "Tapkite NewWebinars partneriu",

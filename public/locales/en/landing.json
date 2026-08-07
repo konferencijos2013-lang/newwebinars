@@ -62,19 +62,48 @@
     "button": "Get started"
   },
   "pricing": {
-    "title": "Simple pricing",
-    "subtitle": "Start free, scale with credits",
+    "title": "Simple, predictable pricing",
+    "subtitle": "Start free. Save 20% with annual billing.",
+    "cta": "Get started",
     "free": {
       "name": "Free",
-      "feature1": "1 webinar"
+      "price": "€0/month",
+      "features": [
+        "1 webinar",
+        "30 participants per live webinar",
+        "1 team member"
+      ]
     },
-    "paid": {
-      "name": "Pay-as-you-go",
-      "price": "From €10",
-      "feature1": "Credits for webinars",
-      "feature2": "Recordings storage"
+    "start": {
+      "name": "Start",
+      "price": "€19/month",
+      "features": [
+        "1 webinar",
+        "100 participants per live webinar",
+        "1 team member"
+      ],
+      "annual": "€182.40/year — save 20%"
     },
-    "cta": "Get started"
+    "grow": {
+      "name": "Grow",
+      "price": "€39/month",
+      "features": [
+        "3 webinars",
+        "500 participants per live webinar",
+        "3 team members"
+      ],
+      "annual": "€374.40/year — save 20%"
+    },
+    "scale": {
+      "name": "Scale",
+      "price": "€79/month",
+      "features": [
+        "10 webinars",
+        "2,000 participants per live webinar",
+        "10 team members"
+      ],
+      "annual": "€758.40/year — save 20%"
+    }
   },
   "partners": {
     "title": "Partner with NewWebinars",

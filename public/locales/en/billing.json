@@ -10,5 +10,20 @@
   "recentUsage": "Recent usage",
   "emptyTitle": "No invoices yet",
   "emptyDescription": "Subscribe to a plan or make a payment to see invoices here.",
-  "errorLoading": "Failed to load billing data"
+  "errorLoading": "Failed to load billing data",
+  "freePlan": "Free",
+  "interval": {
+    "month": "month",
+    "year": "year"
+  },
+  "features": {
+    "max_webinars": "{{value}} webinars",
+    "max_participants_per_webinar": "{{value}} participants per live webinar",
+    "max_team_members": "{{value}} team members",
+    "live_webinar_minute": "{{value}} live minutes/month",
+    "automated_webinar_minute": "{{value}} automated minutes/month",
+    "registration": "{{value}} registrations/month",
+    "recording_storage_gb_month": "{{value}} GB recording storage/month",
+    "ai_token": "{{value}} AI tokens/month"
+  }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CreditCard, Zap, Receipt, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -21,8 +21,22 @@ import type {
   Payment,
 } from '@/shared/database.types'
 
+const displayLimitKeys = [
+  'max_webinars',
+  'max_participants_per_webinar',
+  'max_team_members',
+] as const
+
+const displayCreditKeys = [
+  'live_webinar_minute',
+  'automated_webinar_minute',
+  'registration',
+  'recording_storage_gb_month',
+  'ai_token',
+] as const
+
 export function BillingPage() {
-  const { t } = useTranslation('billing')
+  const { t, i18n } = useTranslation('billing')
   const account = useAccount()
   const [plans, setPlans] = useState<CreditPlan[]>([])
   const [credits, setCredits] = useState<AccountCredit[]>([])
@@ -73,6 +87,33 @@ export function BillingPage() {
     }
   }, [account.status, account.account?.id])
 
+  const currentPlan = useMemo(
+    () =>
+      plans.find((plan) => plan.id === subscription?.credit_plan_id) ??
+      plans.find((plan) => plan.is_default) ??
+      null,
+    [plans, subscription],
+  )
+
+  const visiblePlans = useMemo(() => {
+    const selectedPlanId = currentPlan?.id
+    return plans.filter(
+      (plan) =>
+        plan.is_default ||
+        plan.id === selectedPlanId ||
+        (plan.price_cents > 0 && Boolean(plan.stripe_price_id)),
+    )
+  }, [currentPlan?.id, plans])
+
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(i18n.resolvedLanguage ?? i18n.language, {
+        style: 'currency',
+        currency: 'EUR',
+      }),
+    [i18n.language, i18n.resolvedLanguage],
+  )
+
   async function handleSubscribe(planId: string) {
     if (account.status !== 'ready') return
     setCheckoutLoading(planId)
@@ -86,7 +127,24 @@ export function BillingPage() {
   }
 
   function formatCurrency(cents: number) {
-    return `$${(cents / 100).toFixed(2)}`
+    return currencyFormatter.format(cents / 100)
+  }
+
+  function planFeatures(plan: CreditPlan) {
+    const limits = plan.limits as Record<string, number>
+    const credits = plan.monthly_credits as Record<string, number>
+    return [
+      ...displayLimitKeys.flatMap((key) =>
+        limits[key] === undefined
+          ? []
+          : [t(`features.${key}`, { value: limits[key] })],
+      ),
+      ...displayCreditKeys.flatMap((key) =>
+        credits[key] === undefined
+          ? []
+          : [t(`features.${key}`, { value: credits[key] })],
+      ),
+    ]
   }
 
   if (account.status === 'loading' || status === 'loading') {
@@ -134,10 +192,7 @@ export function BillingPage() {
             <CreditCard className="h-4 w-4" /> {t('plan')}
           </CardTitle>
           <CardDescription className="mt-2 text-2xl font-semibold">
-            {subscription
-              ? subscription.status.charAt(0).toUpperCase() +
-                subscription.status.slice(1)
-              : 'Free'}
+            {currentPlan?.name ?? t('freePlan')}
           </CardDescription>
         </Card>
         <Card>
@@ -154,36 +209,39 @@ export function BillingPage() {
         <h2 className="text-foreground mb-3 text-lg font-semibold">
           {t('plans')}
         </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {plans.map((plan) => (
-            <Card
-              key={plan.id}
-              className={plan.is_default ? 'border-primary' : ''}
-            >
-              <CardTitle>{plan.name}</CardTitle>
-              <CardDescription className="mt-2">
-                {formatCurrency(plan.price_cents)}/{plan.interval}
-              </CardDescription>
-              <ul className="text-muted-foreground mt-4 space-y-1 text-sm">
-                {Object.entries(
-                  plan.monthly_credits as Record<string, number>,
-                ).map(([key, value]) => (
-                  <li key={key}>
-                    {value} {key.replace(/_/g, ' ')}
-                  </li>
-                ))}
-              </ul>
-              <Button
-                className="mt-4 w-full"
-                variant={plan.is_default ? 'outline' : 'default'}
-                isLoading={checkoutLoading === plan.id}
-                disabled={checkoutLoading === plan.id || plan.is_default}
-                onClick={() => handleSubscribe(plan.id)}
-              >
-                {plan.is_default ? t('currentPlan') : t('subscribe')}
-              </Button>
-            </Card>
-          ))}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visiblePlans.map((plan) => {
+            const isCurrent = plan.id === currentPlan?.id
+            const canPurchase =
+              plan.price_cents > 0 && Boolean(plan.stripe_price_id)
+            return (
+              <Card key={plan.id} className={isCurrent ? 'border-primary' : ''}>
+                <CardTitle>{plan.name}</CardTitle>
+                <CardDescription className="mt-2">
+                  {formatCurrency(plan.price_cents)}/
+                  {t(`interval.${plan.interval}`)}
+                </CardDescription>
+                <ul className="text-muted-foreground mt-4 space-y-1 text-sm">
+                  {planFeatures(plan).map((feature) => (
+                    <li key={feature}>{feature}</li>
+                  ))}
+                </ul>
+                <Button
+                  className="mt-4 w-full"
+                  variant={isCurrent || plan.is_default ? 'outline' : 'default'}
+                  isLoading={checkoutLoading === plan.id}
+                  disabled={
+                    !canPurchase || isCurrent || checkoutLoading === plan.id
+                  }
+                  onClick={() => handleSubscribe(plan.id)}
+                >
+                  {isCurrent || plan.is_default
+                    ? t('currentPlan')
+                    : t('subscribe')}
+                </Button>
+              </Card>
+            )
+          })}
         </div>
       </div>
 
@@ -203,7 +261,9 @@ export function BillingPage() {
                     {event.credit_type.replace(/_/g, ' ')}
                   </span>
                   <span className="text-muted-foreground text-xs">
-                    {new Date(event.created_at).toLocaleDateString()}
+                    {new Date(event.created_at).toLocaleDateString(
+                      i18n.resolvedLanguage ?? i18n.language,
+                    )}
                   </span>
                 </div>
               ))}

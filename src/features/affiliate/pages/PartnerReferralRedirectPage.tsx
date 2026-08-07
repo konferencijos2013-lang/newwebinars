@@ -20,7 +20,7 @@ export function PartnerReferralRedirectPage() {
     const candidate = params.get('to')
     const destination = candidate && candidate.startsWith('/') && !candidate.startsWith('//')
       ? candidate
-      : '/pricing'
+      : '/'
     const recordClick = async () => {
       const visitorToken =
         localStorage.getItem(PARTNER_VISITOR_TOKEN_KEY) ??

@@ -10,5 +10,20 @@
   "recentUsage": "Neseniai naudota",
   "emptyTitle": "Dar nėra sąskaitų",
   "emptyDescription": "Prenumeruokite planą arba atlikite mokėjimą, kad matytumėte sąskaitas.",
-  "errorLoading": "Nepavyko įkelti atsiskaitymų duomenų"
+  "errorLoading": "Nepavyko įkelti atsiskaitymų duomenų",
+  "freePlan": "Nemokamas",
+  "interval": {
+    "month": "mėn.",
+    "year": "metai"
+  },
+  "features": {
+    "max_webinars": "{{value}} webinarai",
+    "max_participants_per_webinar": "{{value}} dalyvių viename tiesioginiame webinare",
+    "max_team_members": "{{value}} komandos nariai",
+    "live_webinar_minute": "{{value}} tiesioginių transliacijų min. / mėn.",
+    "automated_webinar_minute": "{{value}} automatizuotų webinarų min. / mėn.",
+    "registration": "{{value}} registracijų / mėn.",
+    "recording_storage_gb_month": "{{value}} GB įrašų saugyklos / mėn.",
+    "ai_token": "{{value}} DI žetonų / mėn."
+  }
 }

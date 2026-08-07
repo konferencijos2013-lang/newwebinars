@@ -57,12 +57,13 @@ export async function fetchSubscription(accountId: string) {
     .from('subscriptions')
     .select('*')
     .eq('account_id', accountId)
+    .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
   if (error) throw error
-  return data as Subscription
+  return data as Subscription | null
 }
 
 export async function fetchPayments(accountId: string) {

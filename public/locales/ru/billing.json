@@ -10,5 +10,20 @@
   "recentUsage": "Недавнее использование",
   "emptyTitle": "Счетов пока нет",
   "emptyDescription": "Подпишитесь на план или совершите платёж, чтобы увидеть счета.",
-  "errorLoading": "Не удалось загрузить данные биллинга"
+  "errorLoading": "Не удалось загрузить данные биллинга",
+  "freePlan": "Бесплатный",
+  "interval": {
+    "month": "месяц",
+    "year": "год"
+  },
+  "features": {
+    "max_webinars": "{{value}} вебинаров",
+    "max_participants_per_webinar": "{{value}} участников на прямой вебинар",
+    "max_team_members": "{{value}} участников команды",
+    "live_webinar_minute": "{{value}} минут прямых вебинаров/месяц",
+    "automated_webinar_minute": "{{value}} минут автоматизированных вебинаров/месяц",
+    "registration": "{{value}} регистраций/месяц",
+    "recording_storage_gb_month": "{{value}} ГБ хранения записей/месяц",
+    "ai_token": "{{value}} ИИ-токенов/месяц"
+  }
 }
