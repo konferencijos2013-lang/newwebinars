@@ -54,6 +54,7 @@ import { AiChatPage } from '@/features/ai/pages/AiChatPage'
 import { AiPromptsPage } from '@/features/ai/pages/AiPromptsPage'
 import { AiPromptFormPage } from '@/features/ai/pages/AiPromptFormPage'
 import { AdminRoute } from '@/features/auth/components/AdminRoute'
+import { SupportReadOnlyRoute } from '@/features/support/SupportReadOnlyRoute'
 import { AdminDashboardPage } from '@/features/admin/pages/AdminDashboardPage'
 import { AdminAccountsPage } from '@/features/admin/pages/AdminAccountsPage'
 import { AdminAccountDetailPage } from '@/features/admin/pages/AdminAccountDetailPage'
@@ -87,6 +88,24 @@ export function AppRoutes() {
           <Route path="login" element={<LoginPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />
           <Route path="*" element={<NotFoundPage />} />
+        </Route>
+
+        <Route
+          path="support/accounts/:accountId/*"
+          element={
+            <ProtectedRoute>
+              <SupportReadOnlyRoute>
+                <AppShell />
+              </SupportReadOnlyRoute>
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="webinars" element={<WebinarsPage />} />
+          <Route path="webinars/:id" element={<WebinarDetailPage />} />
+          <Route path="funnels" element={<FunnelsPage />} />
+          <Route path="recordings" element={<RecordingsPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
         </Route>
 
         {/* Authenticated SaaS app */}

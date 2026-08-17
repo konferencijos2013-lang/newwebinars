@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useMatch } from 'react-router'
 import { supabase } from '@/lib/supabase'
 import type { Account, AccountMember } from '@/shared/database.types'
 
@@ -9,6 +10,8 @@ type AccountState =
   | { status: 'error'; account: null; membership: null; error: Error }
 
 export function useAccount() {
+  const supportMatch = useMatch('/support/accounts/:accountId/*')
+  const supportAccountId = supportMatch?.params.accountId
   const [state, setState] = useState<AccountState>({
     status: 'loading',
     account: null,
@@ -19,6 +22,30 @@ export function useAccount() {
     let isActive = true
 
     async function load() {
+      if (supportAccountId) {
+        const { data, error } = await supabase
+          .from('accounts')
+          .select('*')
+          .eq('id', supportAccountId)
+          .single()
+        if (!isActive) return
+        if (error) {
+          setState({ status: 'error', account: null, membership: null, error })
+          return
+        }
+        setState({
+          status: 'ready',
+          account: data as Account,
+          membership: {
+            account_id: supportAccountId,
+            user_id: '',
+            role: 'viewer',
+            joined_at: '',
+          },
+        })
+        return
+      }
+
       const { data: sessionData } = await supabase.auth.getSession()
       const userId = sessionData.session?.user.id
       if (!userId) {
@@ -62,7 +89,7 @@ export function useAccount() {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [supportAccountId])
 
   return state
 }

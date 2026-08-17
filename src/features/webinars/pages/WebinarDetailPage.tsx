@@ -22,12 +22,15 @@ import {
   publishWebinar,
   deleteWebinar,
 } from '@/features/webinars/api/webinars'
+import { supportPath, useSupportView } from '@/features/support/useSupportView'
 import type { Webinar, WebinarSchedule } from '@/shared/database.types'
 
 export function WebinarDetailPage() {
   const { t } = useTranslation('webinars')
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
+  const supportView = useSupportView()
+  const path = (to: string) => supportPath(supportView?.basePath ?? null, to)
 
   const [webinar, setWebinar] = useState<Webinar | null>(null)
   const [schedules, setSchedules] = useState<WebinarSchedule[]>([])
@@ -71,7 +74,7 @@ export function WebinarDetailPage() {
     if (!window.confirm(t('deleteConfirm'))) return
     try {
       await deleteWebinar(webinar.id)
-      navigate('/webinars')
+      navigate(path('/webinars'))
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     }
@@ -96,7 +99,7 @@ export function WebinarDetailPage() {
           <Button
             className="mt-4"
             variant="outline"
-            onClick={() => navigate('/webinars')}
+            onClick={() => navigate(path('/webinars'))}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t('cancel')}
@@ -119,7 +122,7 @@ export function WebinarDetailPage() {
         variant="ghost"
         size="sm"
         className="mb-4"
-        onClick={() => navigate('/webinars')}
+        onClick={() => navigate(path('/webinars'))}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
         {t('cancel')}
@@ -134,43 +137,45 @@ export function WebinarDetailPage() {
             {t('slug')}: {webinar.slug}
           </p>
         </div>
-        <div className="flex shrink-0 gap-2">
-          {webinar.status !== 'published' && (
-            <Button size="sm" onClick={handlePublish}>
-              {t('publish')}
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/webinars/${webinar.id}/edit`)}
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            {t('save')}
-          </Button>
-          {webinar.type === 'live' && (
+        {!supportView ? (
+          <div className="flex shrink-0 gap-2">
+            {webinar.status !== 'published' && (
+              <Button size="sm" onClick={handlePublish}>
+                {t('publish')}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/webinars/${webinar.id}/host`)}
+              onClick={() => navigate(`/webinars/${webinar.id}/edit`)}
             >
-              <Radio className="mr-2 h-4 w-4" />
-              {t('hostStream')}
+              <Edit className="mr-2 h-4 w-4" />
+              {t('save')}
             </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/webinars/${webinar.id}/chat-script`)}
-          >
-            <MessageSquare className="mr-2 h-4 w-4" />
-            {t('chatScenario')}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleDelete}>
-            <Trash className="mr-2 h-4 w-4" />
-            {t('delete')}
-          </Button>
-        </div>
+            {webinar.type === 'live' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/webinars/${webinar.id}/host`)}
+              >
+                <Radio className="mr-2 h-4 w-4" />
+                {t('hostStream')}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/webinars/${webinar.id}/chat-script`)}
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              {t('chatScenario')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleDelete}>
+              <Trash className="mr-2 h-4 w-4" />
+              {t('delete')}
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {error ? (
@@ -223,14 +228,16 @@ export function WebinarDetailPage() {
               ? t('scheduleOnDemand')
               : `${schedules.length} schedule(s)`}
           </CardDescription>
-          <Button
-            className="mt-4"
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/webinars/${webinar.id}/schedules`)}
-          >
-            {t('addSchedule')}
-          </Button>
+          {!supportView ? (
+            <Button
+              className="mt-4"
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/webinars/${webinar.id}/schedules`)}
+            >
+              {t('addSchedule')}
+            </Button>
+          ) : null}
         </Card>
       </div>
     </div>

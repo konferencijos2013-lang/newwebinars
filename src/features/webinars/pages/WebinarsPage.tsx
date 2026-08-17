@@ -7,12 +7,15 @@ import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
 import { fetchWebinars } from '@/features/webinars/api/webinars'
+import { supportPath, useSupportView } from '@/features/support/useSupportView'
 import type { Webinar } from '@/shared/database.types'
 
 export function WebinarsPage() {
   const { t } = useTranslation('webinars')
   const navigate = useNavigate()
   const account = useAccount()
+  const supportView = useSupportView()
+  const path = (to: string) => supportPath(supportView?.basePath ?? null, to)
   const [webinars, setWebinars] = useState<Webinar[]>([])
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
   const [error, setError] = useState<string | null>(null)
@@ -97,10 +100,12 @@ export function WebinarsPage() {
           </h1>
           <p className="text-muted-foreground text-sm">{t('subtitle')}</p>
         </div>
-        <Button onClick={() => navigate('/webinars/new')}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('create')}
-        </Button>
+        {!supportView ? (
+          <Button onClick={() => navigate(path('/webinars/new'))}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('create')}
+          </Button>
+        ) : null}
       </div>
 
       {webinars.length === 0 ? (
@@ -110,10 +115,15 @@ export function WebinarsPage() {
           <CardDescription className="mt-2 max-w-sm">
             {t('emptyDescription')}
           </CardDescription>
-          <Button className="mt-6" onClick={() => navigate('/webinars/new')}>
-            <Plus className="mr-2 h-4 w-4" />
-            {t('create')}
-          </Button>
+          {!supportView ? (
+            <Button
+              className="mt-6"
+              onClick={() => navigate(path('/webinars/new'))}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {t('create')}
+            </Button>
+          ) : null}
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -121,7 +131,7 @@ export function WebinarsPage() {
             <Card
               key={webinar.id}
               className="hover:border-primary/50 cursor-pointer transition-colors"
-              onClick={() => navigate(`/webinars/${webinar.id}`)}
+              onClick={() => navigate(path(`/webinars/${webinar.id}`))}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>

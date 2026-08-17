@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { AlertCircle, Building2, CreditCard, HandCoins, Users } from 'lucide-react'
+import {
+  AlertCircle,
+  Building2,
+  CreditCard,
+  HandCoins,
+  Users,
+} from 'lucide-react'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import {
@@ -84,9 +90,9 @@ export function AdminDashboardPage() {
       />
       <Link
         to="/admin/billing/payments"
-        className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+        className="focus:ring-primary block rounded-lg focus:ring-2 focus:outline-none"
       >
-        <Card className="transition-colors hover:bg-muted/40">
+        <Card className="hover:bg-muted/40 transition-colors">
           <CardTitle>Gauti mokėjimai</CardTitle>
           <CardDescription className="mt-2">
             Sėkmingi mokėjimai, užregistruoti sistemoje. Atidaryti mokėjimų
@@ -115,12 +121,17 @@ function Metric({
   to: string
 }) {
   return (
-    <Link to={to} className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-      <Card className="p-5 transition-colors hover:bg-muted/40">
-      <Icon
-        className={danger ? 'text-destructive h-5 w-5' : 'text-primary h-5 w-5'}
-      />
-      <p className="mt-4 text-2xl font-bold">{value}</p>
+    <Link
+      to={to}
+      className="focus:ring-primary block rounded-lg focus:ring-2 focus:outline-none"
+    >
+      <Card className="hover:bg-muted/40 p-5 transition-colors">
+        <Icon
+          className={
+            danger ? 'text-destructive h-5 w-5' : 'text-primary h-5 w-5'
+          }
+        />
+        <p className="mt-4 text-2xl font-bold">{value}</p>
         <p className="text-muted-foreground mt-1 text-sm">{label}</p>
       </Card>
     </Link>

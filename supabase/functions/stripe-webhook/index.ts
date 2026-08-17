@@ -30,13 +30,11 @@ serve(async (req) => {
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
   )
-  const { error: ledgerError } = await db
-    .from('stripe_webhook_events')
-    .insert({
-      stripe_event_id: event.id,
-      event_type: event.type,
-      payload: { api_version: event.api_version },
-    })
+  const { error: ledgerError } = await db.from('stripe_webhook_events').insert({
+    stripe_event_id: event.id,
+    event_type: event.type,
+    payload: { api_version: event.api_version },
+  })
   if (ledgerError?.code === '23505')
     return reply({ received: true, duplicate: true })
   if (ledgerError) return reply({ error: 'Unable to record webhook' }, 500)
@@ -102,27 +100,25 @@ serve(async (req) => {
           .eq('stripe_subscription_id', stripeSubscriptionId)
           .single()
         if (error) throw error
-        const { error: paymentError } = await db
-          .from('payments')
-          .upsert(
-            {
-              account_id: subscription.account_id,
-              subscription_id: subscription.id,
-              stripe_payment_intent_id:
-                typeof invoice.payment_intent === 'string'
-                  ? invoice.payment_intent
-                  : (invoice.payment_intent?.id ?? null),
-              stripe_invoice_id: invoice.id,
-              amount_cents: invoice.amount_paid,
-              currency: invoice.currency,
-              status: 'succeeded',
-              paid_at: new Date(
-                (invoice.status_transitions.paid_at ??
-                  Math.floor(Date.now() / 1000)) * 1000,
-              ).toISOString(),
-            },
-            { onConflict: 'stripe_invoice_id' },
-          )
+        const { error: paymentError } = await db.from('payments').upsert(
+          {
+            account_id: subscription.account_id,
+            subscription_id: subscription.id,
+            stripe_payment_intent_id:
+              typeof invoice.payment_intent === 'string'
+                ? invoice.payment_intent
+                : (invoice.payment_intent?.id ?? null),
+            stripe_invoice_id: invoice.id,
+            amount_cents: invoice.amount_paid,
+            currency: invoice.currency,
+            status: 'succeeded',
+            paid_at: new Date(
+              (invoice.status_transitions.paid_at ??
+                Math.floor(Date.now() / 1000)) * 1000,
+            ).toISOString(),
+          },
+          { onConflict: 'stripe_invoice_id' },
+        )
         if (paymentError) throw paymentError
         const { error: commissionError } = await db.rpc(
           'create_affiliate_commission_for_payment',

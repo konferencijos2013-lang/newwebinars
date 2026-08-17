@@ -130,6 +130,12 @@ export function AdminAccountsPage() {
                     >
                       Atidaryti
                     </Link>
+                    <Link
+                      className="text-primary ml-4 text-sm font-medium hover:underline"
+                      to={`/support/accounts/${account.id}/dashboard`}
+                    >
+                      Stebėti
+                    </Link>
                   </td>
                 </tr>
               ))}

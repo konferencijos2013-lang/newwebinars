@@ -61,13 +61,11 @@ serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
   )
   if (eventId) {
-    const { error } = await db
-      .from('manychat_webhook_events')
-      .insert({
-        integration_connection_id: connectionId,
-        event_id: eventId,
-        payload,
-      })
+    const { error } = await db.from('manychat_webhook_events').insert({
+      integration_connection_id: connectionId,
+      event_id: eventId,
+      payload,
+    })
     if (error?.code === '23505')
       return json({ received: true, duplicate: true })
     if (error) return json({ error: 'Unable to record webhook' }, 500)

@@ -87,16 +87,14 @@ serve(async (req) => {
         metadata: { account_id },
       })
       customerId = customer.id
-      const { error } = await supabaseAdmin
-        .from('billing_customers')
-        .upsert(
-          {
-            account_id,
-            stripe_customer_id: customerId,
-            email: auth.user.email,
-          },
-          { onConflict: 'account_id' },
-        )
+      const { error } = await supabaseAdmin.from('billing_customers').upsert(
+        {
+          account_id,
+          stripe_customer_id: customerId,
+          email: auth.user.email,
+        },
+        { onConflict: 'account_id' },
+      )
       if (error) throw error
     }
 

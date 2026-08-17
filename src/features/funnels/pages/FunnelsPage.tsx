@@ -7,12 +7,15 @@ import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
 import { deleteFunnel, fetchFunnels } from '@/features/funnels/api/funnels'
+import { supportPath, useSupportView } from '@/features/support/useSupportView'
 import type { Funnel as FunnelType } from '@/shared/database.types'
 
 export function FunnelsPage() {
   const { t } = useTranslation('funnels')
   const navigate = useNavigate()
   const account = useAccount()
+  const supportView = useSupportView()
+  const path = (to: string) => supportPath(supportView?.basePath ?? null, to)
   const [funnels, setFunnels] = useState<FunnelType[]>([])
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
   const [error, setError] = useState<string | null>(null)
@@ -76,10 +79,12 @@ export function FunnelsPage() {
           </h1>
           <p className="text-muted-foreground text-sm">{t('subtitle')}</p>
         </div>
-        <Button onClick={() => navigate('/funnels/new')}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('create')}
-        </Button>
+        {!supportView ? (
+          <Button onClick={() => navigate('/funnels/new')}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('create')}
+          </Button>
+        ) : null}
       </div>
 
       {funnels.length === 0 ? (
@@ -89,10 +94,12 @@ export function FunnelsPage() {
           <CardDescription className="mt-2 max-w-sm">
             {t('emptyDescription')}
           </CardDescription>
-          <Button className="mt-6" onClick={() => navigate('/funnels/new')}>
-            <Plus className="mr-2 h-4 w-4" />
-            {t('create')}
-          </Button>
+          {!supportView ? (
+            <Button className="mt-6" onClick={() => navigate('/funnels/new')}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t('create')}
+            </Button>
+          ) : null}
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -100,7 +107,7 @@ export function FunnelsPage() {
             <Card
               key={funnel.id}
               className="hover:border-primary/50 cursor-pointer transition-colors"
-              onClick={() => navigate(`/funnels/${funnel.id}`)}
+              onClick={() => navigate(path(`/funnels/${funnel.id}`))}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -109,21 +116,25 @@ export function FunnelsPage() {
                     /{funnel.slug}
                   </p>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive h-8 w-8 px-0"
-                    aria-label={t('delete')}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      void handleDelete(funnel)
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                {!supportView ? (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive h-8 w-8 px-0"
+                      aria-label={t('delete')}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        void handleDelete(funnel)
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <ArrowRight className="text-muted-foreground h-4 w-4" />
+                  </div>
+                ) : (
                   <ArrowRight className="text-muted-foreground h-4 w-4" />
-                </div>
+                )}
               </div>
               <div className="mt-4 flex items-center gap-2">
                 <span

@@ -39,7 +39,10 @@ export function AuthCallbackPage() {
               p_visitor_token_hash: visitorToken,
             })
         } catch (error) {
-          console.warn('[AuthCallback] unable to claim partner attribution', error)
+          console.warn(
+            '[AuthCallback] unable to claim partner attribution',
+            error,
+          )
         }
       }
       if (isActive) navigate(target, { replace: true })

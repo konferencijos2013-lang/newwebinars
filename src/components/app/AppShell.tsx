@@ -1,4 +1,6 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router'
+import { Eye, X } from 'lucide-react'
+import { supportPath, useSupportView } from '@/features/support/useSupportView'
 import { useTranslation } from 'react-i18next'
 import {
   BarChart3,
@@ -54,6 +56,8 @@ export function AppShell() {
   const { t } = useTranslation('common')
   const navigate = useNavigate()
   const { status, user } = useUser()
+  const supportView = useSupportView()
+  const path = (to: string) => supportPath(supportView?.basePath ?? null, to)
 
   async function handleSignOut() {
     // A local sign-out is deterministic even when the global Supabase request
@@ -76,7 +80,7 @@ export function AppShell() {
       <aside className="border-border bg-card flex w-64 flex-col border-r">
         <div className="flex h-14 items-center border-b px-4">
           <Link
-            to="/dashboard"
+            to={path('/dashboard')}
             className="text-foreground hover:text-primary text-lg font-semibold"
           >
             {t('appName')}
@@ -85,43 +89,53 @@ export function AppShell() {
 
         <nav className="flex-1 space-y-1 p-3">
           <SidebarNavLink
-            to="/dashboard"
+            to={path('/dashboard')}
             icon={Home}
             label={t('navigation.dashboard')}
             end
           />
           <SidebarNavLink
-            to="/webinars"
+            to={path('/webinars')}
             icon={Video}
             label={t('navigation.webinars')}
           />
           <SidebarNavLink
-            to="/funnels"
+            to={path('/funnels')}
             icon={LayoutTemplate}
             label={t('navigation.funnels')}
           />
           <SidebarNavLink
-            to="/recordings"
+            to={path('/recordings')}
             icon={Film}
             label={t('navigation.recordings')}
           />
-          <SidebarNavLink to="/ai" icon={Bot} label={t('navigation.ai')} />
+          {!supportView ? (
+            <SidebarNavLink
+              to={path('/ai')}
+              icon={Bot}
+              label={t('navigation.ai')}
+            />
+          ) : null}
           <SidebarNavLink
-            to="/analytics"
+            to={path('/analytics')}
             icon={BarChart3}
             label={t('navigation.analytics')}
           />
-          <SidebarNavLink
-            to="/affiliate"
-            icon={Users}
-            label={t('navigation.affiliate')}
-          />
-          <SidebarNavLink
-            to="/billing"
-            icon={BarChart3}
-            label={t('navigation.billing')}
-          />
-          {user?.role === 'admin' ? (
+          {!supportView ? (
+            <SidebarNavLink
+              to={path('/affiliate')}
+              icon={Users}
+              label={t('navigation.affiliate')}
+            />
+          ) : null}
+          {!supportView ? (
+            <SidebarNavLink
+              to={path('/billing')}
+              icon={BarChart3}
+              label={t('navigation.billing')}
+            />
+          ) : null}
+          {!supportView && user?.role === 'admin' ? (
             <>
               <SidebarNavLink
                 to="/admin"
@@ -135,16 +149,20 @@ export function AppShell() {
               />
             </>
           ) : null}
-          <SidebarNavLink
-            to="/integrations"
-            icon={Link2}
-            label="Integracijos"
-          />
-          <SidebarNavLink
-            to="/settings"
-            icon={Settings}
-            label={t('navigation.settings')}
-          />
+          {!supportView ? (
+            <SidebarNavLink
+              to={path('/integrations')}
+              icon={Link2}
+              label="Integracijos"
+            />
+          ) : null}
+          {!supportView ? (
+            <SidebarNavLink
+              to={path('/settings')}
+              icon={Settings}
+              label={t('navigation.settings')}
+            />
+          ) : null}
         </nav>
 
         <div className="border-t p-3">
@@ -173,6 +191,22 @@ export function AppShell() {
       </aside>
 
       <main className="flex-1 overflow-auto p-6">
+        {supportView ? (
+          <div className="mb-6 flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Eye className="h-4 w-4" /> Pagalbos peržiūra — tik skaitymas
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                navigate(`/admin/accounts/${supportView.accountId}`)
+              }
+              className="flex items-center gap-1 text-sm underline"
+            >
+              <X className="h-4 w-4" /> Baigti peržiūrą
+            </button>
+          </div>
+        ) : null}
         <Outlet />
       </main>
     </div>

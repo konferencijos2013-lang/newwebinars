@@ -11,11 +11,13 @@ import {
   deleteRecording,
   archiveRecording,
 } from '@/features/recordings/api/recordings'
+import { useSupportView } from '@/features/support/useSupportView'
 import type { Recording, AccountStorageUsage } from '@/shared/database.types'
 
 export function RecordingsPage() {
   const { t } = useTranslation('recordings')
   const account = useAccount()
+  const supportView = useSupportView()
   const [recordings, setRecordings] = useState<Recording[]>([])
   const [usage, setUsage] = useState<AccountStorageUsage | null>(null)
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
@@ -98,7 +100,7 @@ export function RecordingsPage() {
           </h1>
           <p className="text-muted-foreground text-sm">{t('subtitle')}</p>
         </div>
-        <Button disabled>{t('upload')}</Button>
+        {!supportView ? <Button disabled>{t('upload')}</Button> : null}
       </div>
 
       {usage && (
@@ -167,7 +169,7 @@ export function RecordingsPage() {
                 >
                   {t('play')}
                 </Button>
-                {recording.status === 'ready' && (
+                {!supportView && recording.status === 'ready' ? (
                   <Button
                     variant="outline"
                     size="sm"
@@ -175,14 +177,16 @@ export function RecordingsPage() {
                   >
                     {t('archive')}
                   </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDelete(recording.id)}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
+                ) : null}
+                {!supportView ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(recording.id)}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                ) : null}
               </div>
             </Card>
           ))}

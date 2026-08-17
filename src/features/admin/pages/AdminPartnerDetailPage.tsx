@@ -3,37 +3,497 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { ArrowLeft, Check, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
-import { approvePartnerApplication, createAffiliatePayout, fetchAdminPartnerDetail, markAffiliatePayoutPaid, saveAdminPartner, setPartnerApplicationStatus, type AdminPartnerDetail } from '@/features/admin/api/admin'
+import {
+  approvePartnerApplication,
+  createAffiliatePayout,
+  fetchAdminPartnerDetail,
+  markAffiliatePayoutPaid,
+  saveAdminPartner,
+  setPartnerApplicationStatus,
+  type AdminPartnerDetail,
+} from '@/features/admin/api/admin'
 
-const money = new Intl.NumberFormat('lt-LT', { style: 'currency', currency: 'EUR' })
-const date = (value: string | null) => value ? new Intl.DateTimeFormat('lt-LT', { dateStyle: 'medium' }).format(new Date(value)) : '—'
+const money = new Intl.NumberFormat('lt-LT', {
+  style: 'currency',
+  currency: 'EUR',
+})
+const date = (value: string | null) =>
+  value
+    ? new Intl.DateTimeFormat('lt-LT', { dateStyle: 'medium' }).format(
+        new Date(value),
+      )
+    : '—'
 
 export function AdminPartnerDetailPage() {
   const { partnerId } = useParams()
   const navigate = useNavigate()
   const isNew = partnerId === 'new'
   const [partner, setPartner] = useState<AdminPartnerDetail | null>(null)
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(isNew ? 'ready' : 'loading')
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(
+    isNew ? 'ready' : 'loading',
+  )
   const [saving, setSaving] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
-  const [form, setForm] = useState({ name: '', email: '', code: '', is_active: true, commission_rate_bps: 3000, commission_months: 12, attribution_window_days: 90, payout_hold_days: 30, notes: '' })
-  const load = useCallback(() => { if (!partnerId || isNew) return; setStatus('loading'); fetchAdminPartnerDetail(partnerId).then((data) => { setPartner(data); setForm({ name: data.name, email: data.email ?? '', code: data.code, is_active: data.is_active, commission_rate_bps: data.commission_rate_bps, commission_months: data.commission_months, attribution_window_days: data.attribution_window_days, payout_hold_days: data.payout_hold_days, notes: data.notes ?? '' }); setStatus('ready') }).catch(() => setStatus('error')) }, [partnerId, isNew])
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    code: '',
+    is_active: true,
+    commission_rate_bps: 3000,
+    commission_months: 12,
+    attribution_window_days: 90,
+    payout_hold_days: 30,
+    notes: '',
+  })
+  const load = useCallback(() => {
+    if (!partnerId || isNew) return
+    setStatus('loading')
+    fetchAdminPartnerDetail(partnerId)
+      .then((data) => {
+        setPartner(data)
+        setForm({
+          name: data.name,
+          email: data.email ?? '',
+          code: data.code,
+          is_active: data.is_active,
+          commission_rate_bps: data.commission_rate_bps,
+          commission_months: data.commission_months,
+          attribution_window_days: data.attribution_window_days,
+          payout_hold_days: data.payout_hold_days,
+          notes: data.notes ?? '',
+        })
+        setStatus('ready')
+      })
+      .catch(() => setStatus('error'))
+  }, [partnerId, isNew])
   useEffect(() => {
     if (!partnerId || isNew) return
     queueMicrotask(load)
   }, [partnerId, isNew, load])
-  const available = useMemo(() => partner?.commissions.filter((item) => item.status === 'available' && item.amount_cents > 0) ?? [], [partner])
-  const referralUrl = (destination: '/' | '/pricing') => `${window.location.origin}/r/${form.code}?to=${encodeURIComponent(destination)}`
-  const copy = async (destination: '/' | '/pricing') => { await navigator.clipboard.writeText(referralUrl(destination)); setNotice(destination === '/' ? 'Nuoroda į pagrindinį puslapį nukopijuota.' : 'Nuoroda į kainodarą nukopijuota.') }
-  const save = async (event: React.FormEvent) => { event.preventDefault(); setSaving(true); setNotice(null); try { const id = await saveAdminPartner({ ...form, email: form.email || null, notes: form.notes || null, ...(isNew ? {} : { id: partnerId }) }); setNotice('Partneris išsaugotas.'); if (isNew) navigate(`/admin/partners/${id}`, { replace: true }); else load() } catch (error) { setNotice(error instanceof Error ? error.message : 'Nepavyko išsaugoti') } finally { setSaving(false) } }
-  const createPayout = async () => { if (!partner || !available.length) return; try { await createAffiliatePayout(partner.id, available.map((item) => item.id), '', ''); setNotice('Išmokos juodraštis sukurtas. Pažymėkite jį apmokėtu po banko pavedimo.'); load() } catch (error) { setNotice(error instanceof Error ? error.message : 'Nepavyko sukurti išmokos') } }
-  const markPaid = async (id: string) => { try { await markAffiliatePayoutPaid(id, ''); setNotice('Išmoka pažymėta apmokėta.'); load() } catch (error) { setNotice(error instanceof Error ? error.message : 'Nepavyko pažymėti išmokos') } }
-  const approve = async () => { if (!partner) return; try { await approvePartnerApplication(partner.id); setNotice('Partneris patvirtintas ir jo nuoroda aktyvuota.'); load() } catch (error) { setNotice(error instanceof Error ? error.message : 'Nepavyko patvirtinti partnerio') } }
-  const changeApplicationStatus = async (nextStatus: 'rejected' | 'blocked') => { if (!partner) return; try { await setPartnerApplicationStatus(partner.id, nextStatus); setNotice(nextStatus === 'blocked' ? 'Partneris užblokuotas.' : 'Paraiška atmesta.'); load() } catch (error) { setNotice(error instanceof Error ? error.message : 'Nepavyko pakeisti partnerio būsenos') } }
-  if (status === 'loading') return <div className="flex h-64 items-center justify-center"><Spinner className="h-8 w-8" /></div>
-  if (status === 'error') return <div className="text-destructive">Nepavyko įkelti partnerio.</div>
-  return <div className="mx-auto max-w-7xl space-y-7"><Link to="/admin/partners" className="text-muted-foreground inline-flex items-center gap-2 text-sm hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Visi partneriai</Link><div><p className="text-primary text-sm font-semibold">Platformos valdymas</p><h1 className="mt-1 text-3xl font-bold">{isNew ? 'Naujas partneris' : partner?.name}</h1></div>{partner?.application_status === 'pending' ? <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm"><p className="font-medium">Laukiama partnerio paraiškos patvirtinimo</p><p className="text-muted-foreground mt-1">Tel.: {partner.phone ?? '—'} · Išmoka: {partner.payout_method === 'bank' ? `${partner.bank_account_holder ?? '—'} · ${partner.bank_iban ?? '—'}` : partner.paypal_email ?? '—'} · Sąlygos: {date(partner.terms_accepted_at)}</p><div className="mt-3 flex gap-2"><Button onClick={() => void approve()}><Check className="h-4 w-4" /> Patvirtinti</Button><Button variant="outline" onClick={() => void changeApplicationStatus('rejected')}>Atmesti</Button><Button variant="outline" onClick={() => void changeApplicationStatus('blocked')}>Blokuoti</Button></div></div> : null}{notice ? <div className="bg-muted rounded-md p-3 text-sm">{notice}</div> : null}<form onSubmit={save} className="grid gap-4 rounded-lg border p-5 md:grid-cols-2"><Field label="Vardas"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm" /></Field><Field label="El. paštas"><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm" /></Field>{isNew ? <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">Partnerio kodas ir nuoroda bus sugeneruoti automatiškai išsaugojus.</div> : <Field label="Partnerio kodas"><input readOnly value={form.code} className="border-input bg-muted h-9 w-full rounded-md border px-3 text-sm" /></Field>}<Field label="Komisinis, %"><input min="0" max="100" type="number" value={form.commission_rate_bps / 100} onChange={(e) => setForm({ ...form, commission_rate_bps: Number(e.target.value) * 100 })} className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm" /></Field><Field label="Komisinio laikotarpis, mėn."><input min="1" max="60" type="number" value={form.commission_months} onChange={(e) => setForm({ ...form, commission_months: Number(e.target.value) })} className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm" /></Field><Field label="Priskyrimo langas, d."><input min="1" max="365" type="number" value={form.attribution_window_days} onChange={(e) => setForm({ ...form, attribution_window_days: Number(e.target.value) })} className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm" /></Field><Field label="Išmokos sulaikymas, d."><input min="0" max="365" type="number" value={form.payout_hold_days} onChange={(e) => setForm({ ...form, payout_hold_days: Number(e.target.value) })} className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm" /></Field><label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} /> Aktyvus naujiems priskyrimams</label><Field label="Pastabos"><textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="border-input bg-background min-h-20 w-full rounded-md border px-3 py-2 text-sm" /></Field><div className="flex flex-wrap items-end gap-2"><Button type="submit" isLoading={saving}>Išsaugoti</Button>{form.code ? <><Button type="button" variant="outline" onClick={() => void copy('/')}><Copy className="h-4 w-4" /> Kopijuoti: pagrindinis</Button><Button type="button" variant="outline" onClick={() => void copy('/pricing')}><Copy className="h-4 w-4" /> Kopijuoti: kainodara</Button></> : null}</div></form>{partner ? <><section className="grid gap-4 sm:grid-cols-3"><Stat label="Paspaudimai" value={partner.clicks_count} /><Stat label="Atvesti klientai" value={partner.referred_accounts_count} /><Stat label="Mokėtina" value={money.format(partner.payable_cents / 100)} /></section><section className="space-y-3"><div className="flex justify-between"><h2 className="text-xl font-semibold">Atvesti klientai</h2></div><Table headers={['Paskyra', 'Savininkas', 'Priskirta', 'Prenumerata']}>{partner.attributions.map((row) => <tr key={row.id} className="border-t"><td className="p-3">{row.account?.name ?? 'Dar nepriskirta'}</td><td className="p-3">{row.owner?.email ?? '—'}</td><td className="p-3">{date(row.attributed_at)}</td><td className="p-3">{row.subscription?.status ?? '—'}</td></tr>)}</Table></section><section className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-xl font-semibold">Komisiniai</h2><Button disabled={!available.length} onClick={() => void createPayout()}>Sukurti išmoką ({money.format(available.reduce((sum, item) => sum + item.amount_cents, 0) / 100)})</Button></div><Table headers={['Sąskaita', 'Suma', 'Būsena', 'Galima išmokėti', 'Sukurta']}>{partner.commissions.map((row) => <tr key={row.id} className="border-t"><td className="p-3">{row.account?.name ?? '—'}</td><td className="p-3">{money.format(row.amount_cents / 100)}</td><td className="p-3">{row.status}</td><td className="p-3">{date(row.available_at)}</td><td className="p-3">{date(row.created_at)}</td></tr>)}</Table></section><section className="space-y-3"><h2 className="text-xl font-semibold">Išmokos</h2><Table headers={['Suma', 'Būsena', 'Nuoroda', 'Data', 'Veiksmas']}>{partner.payouts.map((row) => <tr key={row.id} className="border-t"><td className="p-3">{money.format(row.amount_cents / 100)}</td><td className="p-3">{row.status}</td><td className="p-3">{row.payment_reference ?? '—'}</td><td className="p-3">{date(row.paid_at ?? row.created_at)}</td><td className="p-3">{row.status === 'draft' ? <Button size="sm" onClick={() => void markPaid(row.id)}><Check className="h-3 w-3" /> Pažymėti apmokėta</Button> : null}</td></tr>)}</Table></section></> : null}</div>
+  const available = useMemo(
+    () =>
+      partner?.commissions.filter(
+        (item) => item.status === 'available' && item.amount_cents > 0,
+      ) ?? [],
+    [partner],
+  )
+  const referralUrl = (destination: '/' | '/pricing') =>
+    `${window.location.origin}/r/${form.code}?to=${encodeURIComponent(destination)}`
+  const copy = async (destination: '/' | '/pricing') => {
+    await navigator.clipboard.writeText(referralUrl(destination))
+    setNotice(
+      destination === '/'
+        ? 'Nuoroda į pagrindinį puslapį nukopijuota.'
+        : 'Nuoroda į kainodarą nukopijuota.',
+    )
+  }
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setSaving(true)
+    setNotice(null)
+    try {
+      const id = await saveAdminPartner({
+        ...form,
+        email: form.email || null,
+        notes: form.notes || null,
+        ...(isNew ? {} : { id: partnerId }),
+      })
+      setNotice('Partneris išsaugotas.')
+      if (isNew) navigate(`/admin/partners/${id}`, { replace: true })
+      else load()
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Nepavyko išsaugoti')
+    } finally {
+      setSaving(false)
+    }
+  }
+  const createPayout = async () => {
+    if (!partner || !available.length) return
+    try {
+      await createAffiliatePayout(
+        partner.id,
+        available.map((item) => item.id),
+        '',
+        '',
+      )
+      setNotice(
+        'Išmokos juodraštis sukurtas. Pažymėkite jį apmokėtu po banko pavedimo.',
+      )
+      load()
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : 'Nepavyko sukurti išmokos',
+      )
+    }
+  }
+  const markPaid = async (id: string) => {
+    try {
+      await markAffiliatePayoutPaid(id, '')
+      setNotice('Išmoka pažymėta apmokėta.')
+      load()
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : 'Nepavyko pažymėti išmokos',
+      )
+    }
+  }
+  const approve = async () => {
+    if (!partner) return
+    try {
+      await approvePartnerApplication(partner.id)
+      setNotice('Partneris patvirtintas ir jo nuoroda aktyvuota.')
+      load()
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : 'Nepavyko patvirtinti partnerio',
+      )
+    }
+  }
+  const changeApplicationStatus = async (
+    nextStatus: 'rejected' | 'blocked',
+  ) => {
+    if (!partner) return
+    try {
+      await setPartnerApplicationStatus(partner.id, nextStatus)
+      setNotice(
+        nextStatus === 'blocked'
+          ? 'Partneris užblokuotas.'
+          : 'Paraiška atmesta.',
+      )
+      load()
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : 'Nepavyko pakeisti partnerio būsenos',
+      )
+    }
+  }
+  if (status === 'loading')
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Spinner className="h-8 w-8" />
+      </div>
+    )
+  if (status === 'error')
+    return <div className="text-destructive">Nepavyko įkelti partnerio.</div>
+  return (
+    <div className="mx-auto max-w-7xl space-y-7">
+      <Link
+        to="/admin/partners"
+        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm"
+      >
+        <ArrowLeft className="h-4 w-4" /> Visi partneriai
+      </Link>
+      <div>
+        <p className="text-primary text-sm font-semibold">
+          Platformos valdymas
+        </p>
+        <h1 className="mt-1 text-3xl font-bold">
+          {isNew ? 'Naujas partneris' : partner?.name}
+        </h1>
+      </div>
+      {partner?.application_status === 'pending' ? (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
+          <p className="font-medium">
+            Laukiama partnerio paraiškos patvirtinimo
+          </p>
+          <p className="text-muted-foreground mt-1">
+            Tel.: {partner.phone ?? '—'} · Išmoka:{' '}
+            {partner.payout_method === 'bank'
+              ? `${partner.bank_account_holder ?? '—'} · ${partner.bank_iban ?? '—'}`
+              : (partner.paypal_email ?? '—')}{' '}
+            · Sąlygos: {date(partner.terms_accepted_at)}
+          </p>
+          <div className="mt-3 flex gap-2">
+            <Button onClick={() => void approve()}>
+              <Check className="h-4 w-4" /> Patvirtinti
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => void changeApplicationStatus('rejected')}
+            >
+              Atmesti
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => void changeApplicationStatus('blocked')}
+            >
+              Blokuoti
+            </Button>
+          </div>
+        </div>
+      ) : null}
+      {notice ? (
+        <div className="bg-muted rounded-md p-3 text-sm">{notice}</div>
+      ) : null}
+      <form
+        onSubmit={save}
+        className="grid gap-4 rounded-lg border p-5 md:grid-cols-2"
+      >
+        <Field label="Vardas">
+          <input
+            required
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+          />
+        </Field>
+        <Field label="El. paštas">
+          <input
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+          />
+        </Field>
+        {isNew ? (
+          <div className="bg-muted text-muted-foreground rounded-md p-3 text-sm">
+            Partnerio kodas ir nuoroda bus sugeneruoti automatiškai išsaugojus.
+          </div>
+        ) : (
+          <Field label="Partnerio kodas">
+            <input
+              readOnly
+              value={form.code}
+              className="border-input bg-muted h-9 w-full rounded-md border px-3 text-sm"
+            />
+          </Field>
+        )}
+        <Field label="Komisinis, %">
+          <input
+            min="0"
+            max="100"
+            type="number"
+            value={form.commission_rate_bps / 100}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                commission_rate_bps: Number(e.target.value) * 100,
+              })
+            }
+            className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+          />
+        </Field>
+        <Field label="Komisinio laikotarpis, mėn.">
+          <input
+            min="1"
+            max="60"
+            type="number"
+            value={form.commission_months}
+            onChange={(e) =>
+              setForm({ ...form, commission_months: Number(e.target.value) })
+            }
+            className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+          />
+        </Field>
+        <Field label="Priskyrimo langas, d.">
+          <input
+            min="1"
+            max="365"
+            type="number"
+            value={form.attribution_window_days}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                attribution_window_days: Number(e.target.value),
+              })
+            }
+            className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+          />
+        </Field>
+        <Field label="Išmokos sulaikymas, d.">
+          <input
+            min="0"
+            max="365"
+            type="number"
+            value={form.payout_hold_days}
+            onChange={(e) =>
+              setForm({ ...form, payout_hold_days: Number(e.target.value) })
+            }
+            className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+          />
+        </Field>
+        <label className="flex items-center gap-2 self-end pb-2 text-sm">
+          <input
+            type="checkbox"
+            checked={form.is_active}
+            onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+          />{' '}
+          Aktyvus naujiems priskyrimams
+        </label>
+        <Field label="Pastabos">
+          <textarea
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            className="border-input bg-background min-h-20 w-full rounded-md border px-3 py-2 text-sm"
+          />
+        </Field>
+        <div className="flex flex-wrap items-end gap-2">
+          <Button type="submit" isLoading={saving}>
+            Išsaugoti
+          </Button>
+          {form.code ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void copy('/')}
+              >
+                <Copy className="h-4 w-4" /> Kopijuoti: pagrindinis
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void copy('/pricing')}
+              >
+                <Copy className="h-4 w-4" /> Kopijuoti: kainodara
+              </Button>
+            </>
+          ) : null}
+        </div>
+      </form>
+      {partner ? (
+        <>
+          <section className="grid gap-4 sm:grid-cols-3">
+            <Stat label="Paspaudimai" value={partner.clicks_count} />
+            <Stat
+              label="Atvesti klientai"
+              value={partner.referred_accounts_count}
+            />
+            <Stat
+              label="Mokėtina"
+              value={money.format(partner.payable_cents / 100)}
+            />
+          </section>
+          <section className="space-y-3">
+            <div className="flex justify-between">
+              <h2 className="text-xl font-semibold">Atvesti klientai</h2>
+            </div>
+            <Table
+              headers={['Paskyra', 'Savininkas', 'Priskirta', 'Prenumerata']}
+            >
+              {partner.attributions.map((row) => (
+                <tr key={row.id} className="border-t">
+                  <td className="p-3">
+                    {row.account?.name ?? 'Dar nepriskirta'}
+                  </td>
+                  <td className="p-3">{row.owner?.email ?? '—'}</td>
+                  <td className="p-3">{date(row.attributed_at)}</td>
+                  <td className="p-3">{row.subscription?.status ?? '—'}</td>
+                </tr>
+              ))}
+            </Table>
+          </section>
+          <section className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-xl font-semibold">Komisiniai</h2>
+              <Button
+                disabled={!available.length}
+                onClick={() => void createPayout()}
+              >
+                Sukurti išmoką (
+                {money.format(
+                  available.reduce((sum, item) => sum + item.amount_cents, 0) /
+                    100,
+                )}
+                )
+              </Button>
+            </div>
+            <Table
+              headers={[
+                'Sąskaita',
+                'Suma',
+                'Būsena',
+                'Galima išmokėti',
+                'Sukurta',
+              ]}
+            >
+              {partner.commissions.map((row) => (
+                <tr key={row.id} className="border-t">
+                  <td className="p-3">{row.account?.name ?? '—'}</td>
+                  <td className="p-3">
+                    {money.format(row.amount_cents / 100)}
+                  </td>
+                  <td className="p-3">{row.status}</td>
+                  <td className="p-3">{date(row.available_at)}</td>
+                  <td className="p-3">{date(row.created_at)}</td>
+                </tr>
+              ))}
+            </Table>
+          </section>
+          <section className="space-y-3">
+            <h2 className="text-xl font-semibold">Išmokos</h2>
+            <Table headers={['Suma', 'Būsena', 'Nuoroda', 'Data', 'Veiksmas']}>
+              {partner.payouts.map((row) => (
+                <tr key={row.id} className="border-t">
+                  <td className="p-3">
+                    {money.format(row.amount_cents / 100)}
+                  </td>
+                  <td className="p-3">{row.status}</td>
+                  <td className="p-3">{row.payment_reference ?? '—'}</td>
+                  <td className="p-3">{date(row.paid_at ?? row.created_at)}</td>
+                  <td className="p-3">
+                    {row.status === 'draft' ? (
+                      <Button size="sm" onClick={() => void markPaid(row.id)}>
+                        <Check className="h-3 w-3" /> Pažymėti apmokėta
+                      </Button>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </Table>
+          </section>
+        </>
+      ) : null}
+    </div>
+  )
 }
-function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="grid gap-1 text-sm"><span className="text-muted-foreground">{label}</span>{children}</label> }
-function Stat({ label, value }: { label: string; value: string | number }) { return <div className="rounded-lg border p-4"><p className="text-muted-foreground text-sm">{label}</p><p className="mt-2 text-2xl font-bold">{value}</p></div> }
-function Table({ headers, children }: { headers: string[]; children: React.ReactNode }) { return <div className="overflow-x-auto rounded-lg border"><table className="w-full min-w-[650px] text-sm"><thead className="bg-muted/50 text-left text-muted-foreground"><tr>{headers.map((header) => <th key={header} className="p-3 font-medium">{header}</th>)}</tr></thead><tbody>{children}</tbody></table></div> }
+function Field({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <label className="grid gap-1 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      {children}
+    </label>
+  )
+}
+function Stat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-lg border p-4">
+      <p className="text-muted-foreground text-sm">{label}</p>
+      <p className="mt-2 text-2xl font-bold">{value}</p>
+    </div>
+  )
+}
+function Table({
+  headers,
+  children,
+}: {
+  headers: string[]
+  children: React.ReactNode
+}) {
+  return (
+    <div className="overflow-x-auto rounded-lg border">
+      <table className="w-full min-w-[650px] text-sm">
+        <thead className="bg-muted/50 text-muted-foreground text-left">
+          <tr>
+            {headers.map((header) => (
+              <th key={header} className="p-3 font-medium">
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>{children}</tbody>
+      </table>
+    </div>
+  )
+}

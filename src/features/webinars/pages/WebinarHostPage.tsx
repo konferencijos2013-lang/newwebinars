@@ -49,15 +49,16 @@ export function WebinarHostPage() {
 
     // Reset state on the next microtask before loading the selected webinar.
     // This prevents stale data from a prior route from remaining on screen.
-    void Promise.resolve().then(() => {
-      setStatus('loading')
-      setError(null)
-      setWebinar(null)
-      setStreamUrl(null)
-      setStreamKey(null)
-      setPlaybackUrl(null)
-      return fetchWebinar(id)
-    })
+    void Promise.resolve()
+      .then(() => {
+        setStatus('loading')
+        setError(null)
+        setWebinar(null)
+        setStreamUrl(null)
+        setStreamKey(null)
+        setPlaybackUrl(null)
+        return fetchWebinar(id)
+      })
       .then((w) => {
         if (!isActive) return
         setWebinar(w)

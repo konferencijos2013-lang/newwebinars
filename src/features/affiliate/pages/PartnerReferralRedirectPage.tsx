@@ -18,9 +18,10 @@ export function PartnerReferralRedirectPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const candidate = params.get('to')
-    const destination = candidate && candidate.startsWith('/') && !candidate.startsWith('//')
-      ? candidate
-      : '/'
+    const destination =
+      candidate && candidate.startsWith('/') && !candidate.startsWith('//')
+        ? candidate
+        : '/'
     const recordClick = async () => {
       const visitorToken =
         localStorage.getItem(PARTNER_VISITOR_TOKEN_KEY) ??
@@ -30,10 +31,10 @@ export function PartnerReferralRedirectPage() {
       await supabase.rpc('record_platform_partner_click', {
         p_code: code,
         p_visitor_token_hash: visitorToken,
-      p_landing_path: destination,
-      p_referrer_url: document.referrer || null,
-      p_utm_source: params.get('utm_source'),
-      p_utm_medium: params.get('utm_medium'),
+        p_landing_path: destination,
+        p_referrer_url: document.referrer || null,
+        p_utm_source: params.get('utm_source'),
+        p_utm_medium: params.get('utm_medium'),
         p_utm_campaign: params.get('utm_campaign'),
       })
       window.location.replace(destination)
@@ -41,5 +42,9 @@ export function PartnerReferralRedirectPage() {
     void recordClick()
   }, [code])
 
-  return <div className="flex min-h-svh items-center justify-center text-sm text-muted-foreground">Nukreipiama…</div>
+  return (
+    <div className="text-muted-foreground flex min-h-svh items-center justify-center text-sm">
+      Nukreipiama…
+    </div>
+  )
 }

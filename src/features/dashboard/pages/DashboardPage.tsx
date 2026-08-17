@@ -5,11 +5,14 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { useUser } from '@/features/auth/hooks/useUser'
+import { supportPath, useSupportView } from '@/features/support/useSupportView'
 
 export function DashboardPage() {
   const { t } = useTranslation('common')
   const navigate = useNavigate()
   const { status, user } = useUser()
+  const supportView = useSupportView()
+  const path = (to: string) => supportPath(supportView?.basePath ?? null, to)
 
   if (status === 'loading') {
     return (
@@ -39,7 +42,10 @@ export function DashboardPage() {
           <CardDescription className="mt-2">
             {t('dashboard.webinarsDescription', 'Create and manage webinars')}
           </CardDescription>
-          <Button className="mt-4 w-full" onClick={() => navigate('/webinars')}>
+          <Button
+            className="mt-4 w-full"
+            onClick={() => navigate(path('/webinars'))}
+          >
             {t('dashboard.open', 'Open')}
           </Button>
         </Card>
@@ -58,7 +64,7 @@ export function DashboardPage() {
           <Button
             className="mt-4 w-full"
             variant="outline"
-            onClick={() => navigate('/funnels')}
+            onClick={() => navigate(path('/funnels'))}
           >
             {t('dashboard.open', 'Open')}
           </Button>
@@ -78,7 +84,7 @@ export function DashboardPage() {
           <Button
             className="mt-4 w-full"
             variant="outline"
-            onClick={() => navigate('/recordings')}
+            onClick={() => navigate(path('/recordings'))}
           >
             {t('dashboard.open', 'Open')}
           </Button>
@@ -95,31 +101,33 @@ export function DashboardPage() {
           <Button
             className="mt-4 w-full"
             variant="outline"
-            onClick={() => navigate('/analytics')}
+            onClick={() => navigate(path('/analytics'))}
           >
             {t('dashboard.open', 'Open')}
           </Button>
         </Card>
 
-        <Card>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="text-primary h-5 w-5" />
-            {t('dashboard.createTitle', 'Create webinar')}
-          </CardTitle>
-          <CardDescription className="mt-2">
-            {t(
-              'dashboard.createDescription',
-              'Start a new live or automated webinar',
-            )}
-          </CardDescription>
-          <Button
-            className="mt-4 w-full"
-            onClick={() => navigate('/webinars/new')}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {t('dashboard.createButton', 'Create')}
-          </Button>
-        </Card>
+        {!supportView ? (
+          <Card>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="text-primary h-5 w-5" />
+              {t('dashboard.createTitle', 'Create webinar')}
+            </CardTitle>
+            <CardDescription className="mt-2">
+              {t(
+                'dashboard.createDescription',
+                'Start a new live or automated webinar',
+              )}
+            </CardDescription>
+            <Button
+              className="mt-4 w-full"
+              onClick={() => navigate('/webinars/new')}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {t('dashboard.createButton', 'Create')}
+            </Button>
+          </Card>
+        ) : null}
       </div>
     </div>
   )
