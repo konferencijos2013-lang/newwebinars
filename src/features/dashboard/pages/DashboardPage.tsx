@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { useUser } from '@/features/auth/hooks/useUser'
+import { useAccount } from '@/features/auth/hooks/useAccount'
 import { supportPath, useSupportView } from '@/features/support/useSupportView'
 
 export function DashboardPage() {
   const { t } = useTranslation('common')
   const navigate = useNavigate()
   const { status, user } = useUser()
+  const accountState = useAccount()
   const supportView = useSupportView()
   const path = (to: string) => supportPath(supportView?.basePath ?? null, to)
 
@@ -29,7 +31,9 @@ export function DashboardPage() {
           {t('dashboard.title', 'Dashboard')}
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          {user?.email ?? t('navigation.user', 'User')}
+          {supportView
+            ? (accountState.account?.name ?? 'Stebima paskyra')
+            : (user?.email ?? t('navigation.user', 'User'))}
         </p>
       </div>
 

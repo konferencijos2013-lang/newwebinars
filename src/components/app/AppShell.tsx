@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useUser } from '@/features/auth/hooks/useUser'
+import { useAccount } from '@/features/auth/hooks/useAccount'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { LanguageSwitch } from '@/components/LanguageSwitch'
 import { Spinner } from '@/components/ui/Spinner'
@@ -56,8 +57,12 @@ export function AppShell() {
   const { t } = useTranslation('common')
   const navigate = useNavigate()
   const { status, user } = useUser()
+  const accountState = useAccount()
   const supportView = useSupportView()
   const path = (to: string) => supportPath(supportView?.basePath ?? null, to)
+  const supportAccountLabel = supportView
+    ? (accountState.account?.name ?? 'Stebima paskyra')
+    : null
 
   async function handleSignOut() {
     // A local sign-out is deterministic even when the global Supabase request
@@ -169,7 +174,7 @@ export function AppShell() {
           <div className="mb-3 flex items-center gap-3 px-3">
             <div className="flex flex-col overflow-hidden">
               <span className="truncate text-sm font-medium">
-                {user?.email ?? t('navigation.user')}
+                {supportAccountLabel ?? user?.email ?? t('navigation.user')}
               </span>
             </div>
           </div>
@@ -194,7 +199,9 @@ export function AppShell() {
         {supportView ? (
           <div className="mb-6 flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <Eye className="h-4 w-4" /> Pagalbos peržiūra — tik skaitymas
+              <Eye className="h-4 w-4" />
+              Pagalbos peržiūra: {supportAccountLabel ?? 'stebima paskyra'} —
+              tik skaitymas
             </div>
             <button
               type="button"
