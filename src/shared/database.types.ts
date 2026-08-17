@@ -169,6 +169,7 @@ export interface WebinarOffer {
 export interface Registration {
   id: string
   webinar_id: string
+  session_id: string | null
   user_id: string | null
   access_token: string
   email: string

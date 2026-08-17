@@ -46,6 +46,7 @@ export function WebinarRoomPage() {
   const [isMuted, setIsMuted] = useState(true)
   const scriptsRef = useRef<WebinarChatScript[]>([])
   const itemsRef = useRef<ChatDisplayItem[]>([])
+  const messageItemsRef = useRef<ChatDisplayItem[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -105,6 +106,7 @@ export function WebinarRoomPage() {
           ...m,
           kind: 'message' as const,
         }))
+        messageItemsRef.current = initialItems
         itemsRef.current = initialItems
         setItems(initialItems)
         setStatus('ready')
@@ -118,11 +120,6 @@ export function WebinarRoomPage() {
       isActive = false
     }
   }, [slug, token, isHostPreview, hasAccessParams])
-
-  useEffect(() => {
-    const id = setInterval(() => setElapsed((e) => e + 1), 1000)
-    return () => clearInterval(id)
-  }, [])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -210,18 +207,30 @@ export function WebinarRoomPage() {
   const isStreamViewable = Boolean(webinar?.cf_playback_hls_url)
   useHlsVideo(videoRef, isStreamViewable ? webinar?.cf_playback_hls_url : null)
 
+  // Script messages are derived from the real playback position. This keeps an
+  // evergreen chat in sync after pauses and seeking, instead of advancing with
+  // wall-clock time while the video is stopped.
   useEffect(() => {
-    const newScripts = scriptsRef.current
-      .filter((s) => s.trigger_seconds <= elapsed)
-      .filter(
-        (s) =>
-          !itemsRef.current.some((i) => i.kind === 'script' && i.id === s.id),
-      )
-    if (newScripts.length === 0) return
-    const added = newScripts.map((s) => ({ ...s, kind: 'script' as const }))
-    itemsRef.current = [...itemsRef.current, ...added]
-    setItems(itemsRef.current)
+    const scriptedItems = scriptsRef.current
+      .filter((script) => script.trigger_seconds <= elapsed)
+      .map((script) => ({ ...script, kind: 'script' as const }))
+    const nextItems = [...messageItemsRef.current, ...scriptedItems]
+    if (
+      nextItems.length === itemsRef.current.length &&
+      nextItems.every((item, index) => item.id === itemsRef.current[index]?.id)
+    ) {
+      return
+    }
+    itemsRef.current = nextItems
+    setItems(nextItems)
   }, [elapsed])
+
+  function syncPlaybackTime() {
+    const currentTime = videoRef.current?.currentTime
+    if (typeof currentTime === 'number' && Number.isFinite(currentTime)) {
+      setElapsed(Math.max(0, Math.floor(currentTime)))
+    }
+  }
 
   // Matches http(s)://, www., and bare domains like example.com/path.
   const URL_REGEX =
@@ -244,21 +253,32 @@ export function WebinarRoomPage() {
         registration?.full_name ?? (isHostPreview ? t('host') : t('anonymous')),
       message: text,
     })
-    itemsRef.current = [
-      ...itemsRef.current,
+    messageItemsRef.current = [
+      ...messageItemsRef.current,
       { ...sent, kind: 'message' as const },
     ]
-    setItems(itemsRef.current)
+    const nextItems = [
+      ...messageItemsRef.current,
+      ...scriptsRef.current
+        .filter((script) => script.trigger_seconds <= elapsed)
+        .map((script) => ({ ...script, kind: 'script' as const })),
+    ]
+    itemsRef.current = nextItems
+    setItems(nextItems)
     setNewMessage('')
   }
 
   async function handleDeleteMessage(messageId: string) {
     try {
       await deleteChatMessage(messageId)
-      itemsRef.current = itemsRef.current.filter(
+      messageItemsRef.current = messageItemsRef.current.filter(
         (item) => !(item.kind === 'message' && item.id === messageId),
       )
-      setItems(itemsRef.current)
+      const nextItems = itemsRef.current.filter(
+        (item) => !(item.kind === 'message' && item.id === messageId),
+      )
+      itemsRef.current = nextItems
+      setItems(nextItems)
     } catch {
       // Ignore transient errors; message may already be gone.
     }
@@ -312,6 +332,9 @@ export function WebinarRoomPage() {
             muted={isMuted}
             playsInline
             className="h-full w-full"
+            onLoadedMetadata={syncPlaybackTime}
+            onTimeUpdate={syncPlaybackTime}
+            onSeeked={syncPlaybackTime}
           />
           {isStreamViewable && isMuted && (
             <button

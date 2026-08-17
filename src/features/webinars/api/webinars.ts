@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase'
-import type { Webinar, WebinarSchedule } from '@/shared/database.types'
+import type {
+  Webinar,
+  WebinarSchedule,
+  WebinarScheduleType,
+  WebinarSession,
+} from '@/shared/database.types'
 
 export type CreateWebinarInput = {
   account_id: string
@@ -52,6 +57,63 @@ export async function fetchWebinarSchedules(webinarId: string) {
 
   if (error) throw error
   return (data ?? []) as WebinarSchedule[]
+}
+
+export type CreateWebinarScheduleInput = {
+  webinar_id: string
+  schedule_type: WebinarScheduleType
+  starts_at?: string | null
+  ends_at?: string | null
+  recurrence_rule?: string | null
+  timezone?: string
+  is_active?: boolean
+}
+
+export async function fetchWebinarSessions(webinarId: string) {
+  const { data, error } = await supabase
+    .from('webinar_sessions')
+    .select('*')
+    .eq('webinar_id', webinarId)
+    .order('starts_at', { ascending: true })
+
+  if (error) throw error
+  return (data ?? []) as WebinarSession[]
+}
+
+export async function createWebinarSchedule(input: CreateWebinarScheduleInput) {
+  const { data, error } = await supabase
+    .from('webinar_schedules')
+    .insert(input)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as WebinarSchedule
+}
+
+export async function deleteWebinarSchedule(id: string) {
+  const { error } = await supabase
+    .from('webinar_schedules')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function createWebinarSession(input: {
+  webinar_id: string
+  starts_at: string
+  ends_at: string | null
+  title?: string | null
+  capacity?: number | null
+}) {
+  const { data, error } = await supabase
+    .from('webinar_sessions')
+    .insert({ ...input, is_default: false })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as WebinarSession
 }
 
 export async function createWebinar(input: CreateWebinarInput) {

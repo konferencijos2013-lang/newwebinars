@@ -35,6 +35,7 @@ import { WebinarDetailPage } from '@/features/webinars/pages/WebinarDetailPage'
 import { WebinarEditPage } from '@/features/webinars/pages/WebinarEditPage'
 import { WebinarHostPage } from '@/features/webinars/pages/WebinarHostPage'
 import { ChatScriptEditorPage } from '@/features/webinars/pages/ChatScriptEditorPage'
+import { WebinarSchedulesPage } from '@/features/webinars/pages/WebinarSchedulesPage'
 import { FunnelsPage } from '@/features/funnels/pages/FunnelsPage'
 import { FunnelCreatePage } from '@/features/funnels/pages/FunnelCreatePage'
 import { FunnelEditorPage } from '@/features/funnels/pages/FunnelEditorPage'
@@ -103,6 +104,10 @@ export function AppRoutes() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="webinars" element={<WebinarsPage />} />
           <Route path="webinars/:id" element={<WebinarDetailPage />} />
+          <Route
+            path="webinars/:id/schedules"
+            element={<WebinarSchedulesPage />}
+          />
           <Route path="funnels" element={<FunnelsPage />} />
           <Route path="recordings" element={<RecordingsPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
@@ -121,6 +126,10 @@ export function AppRoutes() {
           <Route path="webinars/new" element={<WebinarCreatePage />} />
           <Route path="webinars/:id" element={<WebinarDetailPage />} />
           <Route path="webinars/:id/edit" element={<WebinarEditPage />} />
+          <Route
+            path="webinars/:id/schedules"
+            element={<WebinarSchedulesPage />}
+          />
           <Route path="webinars/:id/host" element={<WebinarHostPage />} />
           <Route
             path="webinars/:id/chat-script"
