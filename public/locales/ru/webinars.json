@@ -80,5 +80,18 @@
   "viewerLink": "Ссылка для зрителей",
   "viewerLinkDescription": "Поделитесь этой ссылкой со своей аудиторией.",
   "copyViewerLink": "Копировать ссылку для зрителей",
-  "chatScenario": "Сценарий чата"
+  "chatScenario": "Сценарий чата",
+  "openModeration": "Открыть чат модерации",
+  "moderationWindow": "Модерация чата",
+  "closeModeration": "Закрыть окно",
+  "deleteMessage": "Удалить сообщение",
+  "muteParticipant": "Отключить чат",
+  "unmuteParticipant": "Разрешить чат",
+  "removeParticipant": "Удалить с вебинара",
+  "restoreParticipant": "Вернуть на вебинар",
+  "noChatMessages": "Сообщений участников пока нет.",
+  "moderationAccessDenied": "У вас нет прав для модерации этого вебинара.",
+  "moderationFailed": "Не удалось выполнить действие модерации.",
+  "back": "Назад",
+  "messageHidden": "Сообщение скрыто"
 }

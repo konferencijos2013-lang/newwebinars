@@ -188,6 +188,10 @@ export interface Registration {
   saw_offer_at: string | null
   saw_offer_clicked_at: string | null
   offer_clicked_at: string | null
+  chat_blocked_at: string | null
+  chat_blocked_by: string | null
+  removed_from_webinar_at: string | null
+  removed_from_webinar_by: string | null
   utm_source: string | null
   utm_medium: string | null
   utm_campaign: string | null
@@ -210,6 +214,8 @@ export interface ChatMessage {
   message: string
   message_type: MessageType
   sent_at: string
+  deleted_at: string | null
+  deleted_by: string | null
 }
 
 export interface WebinarChatScript {

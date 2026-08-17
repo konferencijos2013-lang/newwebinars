@@ -25,5 +25,6 @@
   "openRoomPreview": "Open room preview",
   "linksNotAllowed": "Only the administrator can send links.",
   "deleteMessage": "Delete message",
-  "unmute": "Unmute"
+  "unmute": "Unmute",
+  "chatUnavailable": "Your message could not be sent. You may be muted or removed from the webinar."
 }

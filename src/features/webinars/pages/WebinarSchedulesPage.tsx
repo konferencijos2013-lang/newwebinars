@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { ArrowLeft, CalendarClock, Repeat, Trash2 } from 'lucide-react'
@@ -83,7 +83,7 @@ export function WebinarSchedulesPage() {
     [sessions],
   )
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!id) return
     setIsLoading(true)
     try {
@@ -101,11 +101,11 @@ export function WebinarSchedulesPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [id])
 
   useEffect(() => {
-    void load()
-  }, [id])
+    void Promise.resolve().then(() => load())
+  }, [load])
 
   const toggleDay = (day: string) => {
     setDays((current) =>

@@ -138,19 +138,14 @@ export async function fetchChatMessages(webinarId: string) {
 
 export async function sendChatMessage(input: {
   webinar_id: string
-  registration_id?: string | null
-  sender_name: string
+  access_token: string
   message: string
 }) {
-  const { data, error } = await supabase
-    .from('chat_messages')
-    .insert({
-      ...input,
-      message_type: 'chat',
-      sent_at: new Date().toISOString(),
-    })
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('send_webinar_chat_message', {
+    p_webinar_id: input.webinar_id,
+    p_access_token: input.access_token,
+    p_message: input.message,
+  })
 
   if (error) throw error
   return data as ChatMessage
@@ -169,10 +164,9 @@ export async function fetchChatScripts(webinarId: string) {
 }
 
 export async function deleteChatMessage(messageId: string) {
-  const { error } = await supabase
-    .from('chat_messages')
-    .delete()
-    .eq('id', messageId)
+  const { error } = await supabase.rpc('soft_delete_chat_message', {
+    p_message_id: messageId,
+  })
 
   if (error) throw error
 }

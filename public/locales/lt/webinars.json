@@ -80,5 +80,18 @@
   "viewerLink": "Žiūrovų nuoroda",
   "viewerLinkDescription": "Pasidalinkite šia nuoroda su auditorija.",
   "copyViewerLink": "Kopijuoti žiūrovų nuorodą",
-  "chatScenario": "Čato scenarijus"
+  "chatScenario": "Čato scenarijus",
+  "openModeration": "Atidaryti moderavimo čatą",
+  "moderationWindow": "Čato moderavimas",
+  "closeModeration": "Uždaryti langą",
+  "deleteMessage": "Ištrinti žinutę",
+  "muteParticipant": "Nutildyti čate",
+  "unmuteParticipant": "Atblokuoti čatą",
+  "removeParticipant": "Pašalinti iš webinaro",
+  "restoreParticipant": "Grąžinti į webinarą",
+  "noChatMessages": "Čia dar nėra tikrų dalyvių žinučių.",
+  "moderationAccessDenied": "Neturite teisės moderuoti šio webinaro.",
+  "moderationFailed": "Nepavyko atlikti moderavimo veiksmo.",
+  "back": "Grįžti",
+  "messageHidden": "Žinutė paslėpta"
 }

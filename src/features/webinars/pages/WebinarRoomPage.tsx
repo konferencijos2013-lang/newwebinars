@@ -47,6 +47,7 @@ export function WebinarRoomPage() {
   const scriptsRef = useRef<WebinarChatScript[]>([])
   const itemsRef = useRef<ChatDisplayItem[]>([])
   const messageItemsRef = useRef<ChatDisplayItem[]>([])
+  const elapsedRef = useRef(0)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -132,6 +133,48 @@ export function WebinarRoomPage() {
     })
     return () => {
       void supabase.removeChannel?.(channel)
+    }
+  }, [webinar?.id])
+
+  // Receive new and soft-deleted messages immediately, so a moderator action
+  // does not remain visible until the attendee refreshes the room.
+  useEffect(() => {
+    if (!webinar?.id) return
+    const channel = supabase
+      .channel(`public-chat-${webinar.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `webinar_id=eq.${webinar.id}`,
+        },
+        () => {
+          fetchChatMessages(webinar.id)
+            .then((history) => {
+              const nextMessages = history.map((message) => ({
+                ...message,
+                kind: 'message' as const,
+              }))
+              messageItemsRef.current = nextMessages
+              const nextItems = [
+                ...nextMessages,
+                ...scriptsRef.current
+                  .filter(
+                    (script) => script.trigger_seconds <= elapsedRef.current,
+                  )
+                  .map((script) => ({ ...script, kind: 'script' as const })),
+              ]
+              itemsRef.current = nextItems
+              setItems(nextItems)
+            })
+            .catch(() => {})
+        },
+      )
+      .subscribe()
+    return () => {
+      void supabase.removeChannel(channel)
     }
   }, [webinar?.id])
 
@@ -225,6 +268,10 @@ export function WebinarRoomPage() {
     setItems(nextItems)
   }, [elapsed])
 
+  useEffect(() => {
+    elapsedRef.current = elapsed
+  }, [elapsed])
+
   function syncPlaybackTime() {
     const currentTime = videoRef.current?.currentTime
     if (typeof currentTime === 'number' && Number.isFinite(currentTime)) {
@@ -239,20 +286,23 @@ export function WebinarRoomPage() {
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
     setChatError(null)
-    if (!webinar || !newMessage.trim() || !(registration || isHostPreview))
-      return
+    if (!webinar || !newMessage.trim() || !registration) return
     const text = newMessage.trim()
     if (!isAdmin && URL_REGEX.test(text)) {
       setChatError(t('linksNotAllowed'))
       return
     }
-    const sent = await sendChatMessage({
-      webinar_id: webinar.id,
-      registration_id: registration?.id ?? null,
-      sender_name:
-        registration?.full_name ?? (isHostPreview ? t('host') : t('anonymous')),
-      message: text,
-    })
+    let sent: ChatMessage
+    try {
+      sent = await sendChatMessage({
+        webinar_id: webinar.id,
+        access_token: registration.access_token,
+        message: text,
+      })
+    } catch (err) {
+      setChatError(err instanceof Error ? err.message : t('chatUnavailable'))
+      return
+    }
     messageItemsRef.current = [
       ...messageItemsRef.current,
       { ...sent, kind: 'message' as const },
@@ -407,7 +457,7 @@ export function WebinarRoomPage() {
             ))}
             <div ref={chatEndRef} />
           </div>
-          {(registration || isHostPreview) && (
+          {registration && (
             <form onSubmit={handleSend} className="border-t p-3">
               {chatError && (
                 <p className="text-destructive mb-2 text-xs">{chatError}</p>

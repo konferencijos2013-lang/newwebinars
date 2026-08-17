@@ -90,27 +90,36 @@ export type Database = {
       }
       chat_messages: {
         Row: {
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           message: string
           message_type: string
           sender_id: string | null
           sender_name: string
+          registration_id: string | null
           sent_at: string
           webinar_id: string
         }
         Insert: {
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           message: string
           message_type?: string
+          registration_id?: string | null
           sender_id?: string | null
           sender_name: string
           sent_at?: string
           webinar_id: string
         }
         Update: {
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           message?: string
           message_type?: string
+          registration_id?: string | null
           sender_id?: string | null
           sender_name?: string
           sent_at?: string
@@ -278,6 +287,8 @@ export type Database = {
         Row: {
           access_token: string
           cancelled_at: string | null
+          chat_blocked_at: string | null
+          chat_blocked_by: string | null
           company: string | null
           confirmed_at: string | null
           created_at: string
@@ -291,6 +302,8 @@ export type Database = {
           phone: string | null
           referral_code: string | null
           referrer_url: string | null
+          removed_from_webinar_at: string | null
+          removed_from_webinar_by: string | null
           registered_at: string
           saw_offer_at: string | null
           status: string

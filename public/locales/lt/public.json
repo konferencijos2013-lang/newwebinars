@@ -25,5 +25,6 @@
   "openRoomPreview": "Atidaryti kambario peržiūrą",
   "linksNotAllowed": "Nuorodas gali siųsti tik administratorius.",
   "deleteMessage": "Ištrinti žinutę",
-  "unmute": "Įjungti garsą"
+  "unmute": "Įjungti garsą",
+  "chatUnavailable": "Nepavyko išsiųsti žinutės. Galbūt esate nutildytas arba pašalintas iš webinaro."
 }

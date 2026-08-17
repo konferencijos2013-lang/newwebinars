@@ -80,5 +80,18 @@
   "viewerLink": "Viewer link",
   "viewerLinkDescription": "Share this link with your audience.",
   "copyViewerLink": "Copy viewer link",
-  "chatScenario": "Chat scenario"
+  "chatScenario": "Chat scenario",
+  "openModeration": "Open moderation chat",
+  "moderationWindow": "Chat moderation",
+  "closeModeration": "Close window",
+  "deleteMessage": "Delete message",
+  "muteParticipant": "Mute in chat",
+  "unmuteParticipant": "Unmute chat",
+  "removeParticipant": "Remove from webinar",
+  "restoreParticipant": "Restore to webinar",
+  "noChatMessages": "There are no participant messages yet.",
+  "moderationAccessDenied": "You are not allowed to moderate this webinar.",
+  "moderationFailed": "The moderation action could not be completed.",
+  "back": "Go back",
+  "messageHidden": "Message hidden"
 }

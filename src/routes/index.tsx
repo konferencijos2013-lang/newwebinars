@@ -34,6 +34,7 @@ import { WebinarCreatePage } from '@/features/webinars/pages/WebinarCreatePage'
 import { WebinarDetailPage } from '@/features/webinars/pages/WebinarDetailPage'
 import { WebinarEditPage } from '@/features/webinars/pages/WebinarEditPage'
 import { WebinarHostPage } from '@/features/webinars/pages/WebinarHostPage'
+import { WebinarModerationPage } from '@/features/webinars/pages/WebinarModerationPage'
 import { ChatScriptEditorPage } from '@/features/webinars/pages/ChatScriptEditorPage'
 import { WebinarSchedulesPage } from '@/features/webinars/pages/WebinarSchedulesPage'
 import { FunnelsPage } from '@/features/funnels/pages/FunnelsPage'
@@ -112,6 +113,15 @@ export function AppRoutes() {
           <Route path="recordings" element={<RecordingsPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
         </Route>
+
+        <Route
+          path="webinars/:id/moderation"
+          element={
+            <ProtectedRoute>
+              <WebinarModerationPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Authenticated SaaS app */}
         <Route

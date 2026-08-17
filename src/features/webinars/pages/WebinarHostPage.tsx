@@ -12,6 +12,7 @@ import {
   ExternalLink,
   AlertCircle,
   VolumeX,
+  MessageSquare,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
@@ -379,6 +380,19 @@ export function WebinarHostPage() {
             >
               <ExternalLink className="mr-2 h-4 w-4" />
               {t('openViewerRoom')}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                window.open(
+                  `/webinars/${id}/moderation`,
+                  'webinar-moderation',
+                  'popup=yes,width=980,height=760',
+                )
+              }
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              {t('openModeration')}
             </Button>
           </div>
         </Card>
