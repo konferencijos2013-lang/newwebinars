@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Card } from '@/components/ui/Card'
 import { useAccount } from '@/features/auth/hooks/useAccount'
 import { createWebinar } from '@/features/webinars/api/webinars'
+import { slugify } from '@/shared/utils/slug'
 
 export function WebinarCreatePage() {
   const { t } = useTranslation('webinars')
@@ -56,8 +57,7 @@ export function WebinarCreatePage() {
     if (account.status !== 'ready') return
 
     try {
-      const generatedSlug =
-        slug.trim() || title.toLowerCase().replace(/\s+/g, '-')
+      const generatedSlug = slugify(slug || title)
 
       await createWebinar({
         account_id: account.account.id,
@@ -112,7 +112,7 @@ export function WebinarCreatePage() {
               <Input
                 id="slug"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(e) => setSlug(slugify(e.target.value))}
                 placeholder={t('slugPlaceholder')}
               />
             </div>

@@ -168,10 +168,13 @@ export function WebinarRoomPage() {
           table: 'webinar_cta_live_state',
           filter: `webinar_id=eq.${webinar.id}`,
         },
-        () => {
-          getLiveCtaState(webinar.id)
-            .then((state) => setLiveCtaVisible(Boolean(state?.is_visible)))
-            .catch(() => {})
+        (payload) => {
+          // Use the row delivered by Realtime instead of issuing a second
+          // RLS-protected query. This updates an already open room immediately.
+          setLiveCtaVisible(
+            payload.eventType !== 'DELETE' &&
+              Boolean((payload.new as { is_visible?: boolean }).is_visible),
+          )
         },
       )
       .subscribe()

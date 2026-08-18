@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { fetchWebinar, updateWebinar } from '@/features/webinars/api/webinars'
 import { ReminderRulesCard } from '@/features/webinars/components/ReminderRulesCard'
 import type { Webinar } from '@/shared/database.types'
+import { slugify } from '@/shared/utils/slug'
 
 export function WebinarEditPage() {
   const { t } = useTranslation('webinars')
@@ -79,7 +80,7 @@ export function WebinarEditPage() {
     try {
       await updateWebinar(webinar.id, {
         title: title.trim(),
-        slug: slug.trim(),
+        slug: slugify(slug),
         description: description.trim() || null,
         scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
         duration_minutes: durationMinutes ? Number(durationMinutes) : null,
@@ -154,7 +155,7 @@ export function WebinarEditPage() {
               <Input
                 id="slug"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(e) => setSlug(slugify(e.target.value))}
               />
             </div>
             <div className="space-y-2">
