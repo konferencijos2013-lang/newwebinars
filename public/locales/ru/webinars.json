@@ -93,5 +93,9 @@
   "moderationAccessDenied": "У вас нет прав для модерации этого вебинара.",
   "moderationFailed": "Не удалось выполнить действие модерации.",
   "back": "Назад",
-  "messageHidden": "Сообщение скрыто"
+  "messageHidden": "Сообщение скрыто",
+  "participantLink": "Ссылка для участников",
+  "participantLinkDescription": "Отправьте эту ссылку регистрации участникам вебинара.",
+  "copyParticipantLink": "Копировать ссылку",
+  "openParticipantLink": "Открыть ссылку"
 }

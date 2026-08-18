@@ -93,5 +93,9 @@
   "moderationAccessDenied": "You are not allowed to moderate this webinar.",
   "moderationFailed": "The moderation action could not be completed.",
   "back": "Go back",
-  "messageHidden": "Message hidden"
+  "messageHidden": "Message hidden",
+  "participantLink": "Participant link",
+  "participantLinkDescription": "Share this registration link with webinar participants.",
+  "copyParticipantLink": "Copy link",
+  "openParticipantLink": "Open link"
 }

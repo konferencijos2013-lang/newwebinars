@@ -563,6 +563,60 @@ export type Database = {
           },
         ]
       }
+      webinar_cta_live_state: {
+        Row: {
+          webinar_id: string
+          is_visible: boolean
+          changed_at: string
+          changed_by: string | null
+        }
+        Insert: {
+          webinar_id: string
+          is_visible?: boolean
+          changed_at?: string
+          changed_by?: string | null
+        }
+        Update: {
+          webinar_id?: string
+          is_visible?: boolean
+          changed_at?: string
+          changed_by?: string | null
+        }
+        Relationships: []
+      }
+      webinar_cta_script_events: {
+        Row: {
+          id: string
+          webinar_id: string
+          trigger_seconds: number
+          action: string
+          sort_order: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          webinar_id: string
+          trigger_seconds: number
+          action: string
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          webinar_id?: string
+          trigger_seconds?: number
+          action?: string
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       webinar_offers: {
         Row: {
           active: boolean
@@ -683,6 +737,7 @@ export type Database = {
           max_participants: number | null
           meeting_url: string | null
           offer_enabled: boolean
+          chat_script_offset_seconds: number
           presenter_id: string | null
           presenter_name: string | null
           recording_url: string | null

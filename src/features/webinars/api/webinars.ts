@@ -20,6 +20,7 @@ export type CreateWebinarInput = {
   waiting_room_enabled?: boolean
   early_entry_minutes?: number
   status?: Webinar['status']
+  chat_script_offset_seconds?: number
 }
 
 export async function fetchWebinars(accountId: string) {

@@ -5,8 +5,10 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
+  Copy,
   Edit,
   Globe,
+  ExternalLink,
   Lock,
   Radio,
   MessageSquare,
@@ -36,6 +38,7 @@ export function WebinarDetailPage() {
   const [schedules, setSchedules] = useState<WebinarSchedule[]>([])
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
   const [error, setError] = useState<string | null>(null)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -67,6 +70,15 @@ export function WebinarDetailPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     }
+  }
+
+  const viewerUrl = `${window.location.origin}/w/${webinar?.slug ?? ''}`
+
+  function copyViewerLink() {
+    void navigator.clipboard.writeText(viewerUrl).then(() => {
+      setLinkCopied(true)
+      window.setTimeout(() => setLinkCopied(false), 2000)
+    })
   }
 
   async function handleDelete() {
@@ -218,6 +230,29 @@ export function WebinarDetailPage() {
                 {t(`access${webinar.access_mode.replace(/_/g, '')}` as const)}
               </span>
             </div>
+          </div>
+        </Card>
+
+        <Card>
+          <CardTitle className="text-base">{t('participantLink')}</CardTitle>
+          <CardDescription className="mt-1">
+            {t('participantLinkDescription')}
+          </CardDescription>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={copyViewerLink}>
+              <Copy className="mr-2 h-4 w-4" />
+              {linkCopied ? t('copied') : t('copyParticipantLink')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                window.open(viewerUrl, '_blank', 'noopener,noreferrer')
+              }
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              {t('openParticipantLink')}
+            </Button>
           </div>
         </Card>
 

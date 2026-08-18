@@ -13,6 +13,16 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { Textarea } from '@/components/ui/Textarea'
 import {
+  createCtaEvent,
+  deleteCtaEvent,
+  fetchCtaEventsForEditor,
+  fetchOffer,
+  saveOffer,
+  updateCtaEvent,
+  type CtaEvent,
+} from '@/features/webinars/api/offers'
+import { updateWebinar } from '@/features/webinars/api/webinars'
+import {
   bulkInsertChatScripts,
   createChatScript,
   deleteChatScript,
@@ -57,6 +67,13 @@ export function ChatScriptEditorPage() {
   const { id } = useParams<{ id: string }>()
   const [webinar, setWebinar] = useState<Webinar | null>(null)
   const [scripts, setScripts] = useState<WebinarChatScript[]>([])
+  const [ctaEvents, setCtaEvents] = useState<CtaEvent[]>([])
+  const [offerTitle, setOfferTitle] = useState('')
+  const [offerButtonText, setOfferButtonText] = useState('')
+  const [offerUrl, setOfferUrl] = useState('')
+  const [offerActive, setOfferActive] = useState(true)
+  const [newCtaTime, setNewCtaTime] = useState(0)
+  const [newCtaAction, setNewCtaAction] = useState<'show' | 'hide'>('show')
   const [newLine, setNewLine] = useState<ScriptDraft>(emptyDraft)
   const [loading, setLoading] = useState(true)
   const [working, setWorking] = useState<'import' | 'generate' | 'add' | null>(
@@ -71,12 +88,20 @@ export function ChatScriptEditorPage() {
 
   const reload = useCallback(async () => {
     if (!id) return
-    const [nextWebinar, nextScripts] = await Promise.all([
-      fetchWebinar(id),
-      fetchChatScriptsForEditor(id),
-    ])
+    const [nextWebinar, nextScripts, nextCtaEvents, nextOffer] =
+      await Promise.all([
+        fetchWebinar(id),
+        fetchChatScriptsForEditor(id),
+        fetchCtaEventsForEditor(id),
+        fetchOffer(id),
+      ])
     setWebinar(nextWebinar)
     setScripts(nextScripts)
+    setCtaEvents(nextCtaEvents)
+    setOfferTitle(nextOffer?.title ?? '')
+    setOfferButtonText(nextOffer?.button_text ?? '')
+    setOfferUrl(nextOffer?.target_url ?? '')
+    setOfferActive(nextOffer?.active ?? true)
   }, [id])
 
   useEffect(() => {
@@ -189,6 +214,50 @@ export function ChatScriptEditorPage() {
     }
   }
 
+  async function saveCtaSettings() {
+    if (
+      !id ||
+      !offerTitle.trim() ||
+      !offerButtonText.trim() ||
+      !offerUrl.trim()
+    )
+      return
+    setError(null)
+    try {
+      const updated = await Promise.all([
+        saveOffer({
+          webinar_id: id,
+          title: offerTitle.trim(),
+          description: null,
+          button_text: offerButtonText.trim(),
+          target_url: offerUrl.trim(),
+          active: offerActive,
+        }),
+        updateWebinar(id, {
+          chat_script_offset_seconds: webinar?.chat_script_offset_seconds ?? 0,
+        }),
+      ])
+      setOfferActive(updated[0].active)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason))
+    }
+  }
+
+  async function addCtaEvent() {
+    if (!id) return
+    try {
+      const event = await createCtaEvent({
+        webinar_id: id,
+        trigger_seconds: newCtaTime,
+        action: newCtaAction,
+        sort_order: ctaEvents.length,
+      })
+      setCtaEvents((rows) => [...rows, event])
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason))
+    }
+  }
+
   if (loading)
     return (
       <div className="flex h-64 items-center justify-center">
@@ -234,6 +303,158 @@ export function ChatScriptEditorPage() {
           {error}
         </p>
       )}
+
+      <Card className="mb-6">
+        <CardTitle className="text-base">Pardavimo mygtukas</CardTitle>
+        <CardDescription className="mt-1">
+          Vienas mygtukas rodomas po webinaro video. Evergreen laiko veiksmai
+          valdo jo matomumą.
+        </CardDescription>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <Input
+            placeholder="Pasiūlymo pavadinimas"
+            value={offerTitle}
+            onChange={(e) => setOfferTitle(e.target.value)}
+          />
+          <Input
+            placeholder="Mygtuko tekstas"
+            value={offerButtonText}
+            onChange={(e) => setOfferButtonText(e.target.value)}
+          />
+          <Input
+            type="url"
+            placeholder="https://produkto-puslapis.lt"
+            value={offerUrl}
+            onChange={(e) => setOfferUrl(e.target.value)}
+          />
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={offerActive}
+              onChange={(e) => setOfferActive(e.target.checked)}
+            />{' '}
+            Įjungtas
+          </label>
+          <Button size="sm" onClick={() => void saveCtaSettings()}>
+            Išsaugoti mygtuką
+          </Button>
+        </div>
+      </Card>
+
+      <Card className="mb-6">
+        <CardTitle className="text-base">
+          Čato scenarijaus laiko poslinkis
+        </CardTitle>
+        <CardDescription className="mt-1">
+          Teigiamas skaičius vėlina visą čatą ir pasiūlymo veiksmus, neigiamas —
+          paankstina.
+        </CardDescription>
+        <div className="mt-4 flex gap-3">
+          <Input
+            type="number"
+            value={webinar?.chat_script_offset_seconds ?? 0}
+            onChange={(e) =>
+              setWebinar((current) =>
+                current
+                  ? {
+                      ...current,
+                      chat_script_offset_seconds: Number(e.target.value) || 0,
+                    }
+                  : current,
+              )
+            }
+          />
+          <Button
+            onClick={() =>
+              id &&
+              webinar &&
+              void updateWebinar(id, {
+                chat_script_offset_seconds: webinar.chat_script_offset_seconds,
+              })
+            }
+          >
+            Išsaugoti poslinkį
+          </Button>
+        </div>
+      </Card>
+
+      <Card className="mb-6">
+        <CardTitle className="text-base">
+          Pardavimo mygtuko laiko veiksmai
+        </CardTitle>
+        <CardDescription className="mt-1">
+          Šie veiksmai evergreen webinarui taikomi kartu su bendru scenarijaus
+          laiko poslinkiu.
+        </CardDescription>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Input
+            className="w-36"
+            type="number"
+            min="0"
+            value={newCtaTime}
+            onChange={(e) => setNewCtaTime(Math.max(0, Number(e.target.value)))}
+          />
+          <select
+            className="border-border bg-background h-9 rounded-md border px-3 text-sm"
+            value={newCtaAction}
+            onChange={(e) => setNewCtaAction(e.target.value as 'show' | 'hide')}
+          >
+            <option value="show">Rodyti mygtuką</option>
+            <option value="hide">Slėpti mygtuką</option>
+          </select>
+          <Button size="sm" onClick={() => void addCtaEvent()}>
+            Pridėti veiksmą
+          </Button>
+        </div>
+        <div className="mt-4 space-y-2">
+          {ctaEvents.map((event) => (
+            <div
+              className="flex items-center justify-between rounded border p-2 text-sm"
+              key={event.id}
+            >
+              <span>
+                {formatTime(event.trigger_seconds)} ·{' '}
+                {event.action === 'show' ? 'Rodyti' : 'Slėpti'}
+              </span>
+              <div className="flex gap-2">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={event.is_active}
+                    onChange={(e) => {
+                      void updateCtaEvent(event.id, {
+                        is_active: e.target.checked,
+                      }).then((updated) =>
+                        setCtaEvents((rows) =>
+                          rows.map((row) =>
+                            row.id === updated.id ? updated : row,
+                          ),
+                        ),
+                      )
+                    }}
+                  />{' '}
+                  Aktyvus
+                </label>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    void deleteCtaEvent(event.id).then(() =>
+                      setCtaEvents((rows) =>
+                        rows.filter((row) => row.id !== event.id),
+                      ),
+                    )
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 text-red-600" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       <Card className="mb-6">
         <CardTitle className="text-base">Add a message</CardTitle>

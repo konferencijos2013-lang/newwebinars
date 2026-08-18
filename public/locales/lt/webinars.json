@@ -93,5 +93,9 @@
   "moderationAccessDenied": "Neturite teisės moderuoti šio webinaro.",
   "moderationFailed": "Nepavyko atlikti moderavimo veiksmo.",
   "back": "Grįžti",
-  "messageHidden": "Žinutė paslėpta"
+  "messageHidden": "Žinutė paslėpta",
+  "participantLink": "Nuoroda dalyviams",
+  "participantLinkDescription": "Šią registracijos nuorodą siųskite webinaro dalyviams.",
+  "copyParticipantLink": "Kopijuoti nuorodą",
+  "openParticipantLink": "Atidaryti nuorodą"
 }

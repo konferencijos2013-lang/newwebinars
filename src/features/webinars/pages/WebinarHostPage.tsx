@@ -25,7 +25,12 @@ import {
   pollLiveInputStatus,
   subscribeToStreamStatus,
 } from '@/features/webinars/api/stream'
-import type { Webinar } from '@/shared/database.types'
+import {
+  fetchOffer,
+  getLiveCtaState,
+  setLiveCtaVisibility,
+} from '@/features/webinars/api/offers'
+import type { Webinar, WebinarOffer } from '@/shared/database.types'
 
 export function WebinarHostPage() {
   const { t } = useTranslation('webinars')
@@ -42,6 +47,9 @@ export function WebinarHostPage() {
   const [isEnding, setIsEnding] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [isMuted, setIsMuted] = useState(true)
+  const [offer, setOffer] = useState<WebinarOffer | null>(null)
+  const [liveCtaVisible, setLiveCtaVisible] = useState(false)
+  const [isUpdatingCta, setIsUpdatingCta] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -63,6 +71,14 @@ export function WebinarHostPage() {
       .then((w) => {
         if (!isActive) return
         setWebinar(w)
+        void Promise.all([fetchOffer(w.id), getLiveCtaState(w.id)])
+          .then(([nextOffer, state]) => {
+            if (isActive) {
+              setOffer(nextOffer)
+              setLiveCtaVisible(Boolean(state?.is_visible))
+            }
+          })
+          .catch(() => {})
         setPlaybackUrl(w.cf_playback_hls_url)
         setError(null)
         setStatus('ready')
@@ -217,6 +233,20 @@ export function WebinarHostPage() {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setIsEnding(false)
+    }
+  }
+
+  async function toggleCta() {
+    if (!webinar) return
+    setIsUpdatingCta(true)
+    setError(null)
+    try {
+      const next = await setLiveCtaVisibility(webinar.id, !liveCtaVisible)
+      setLiveCtaVisible(next.is_visible)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setIsUpdatingCta(false)
     }
   }
 
@@ -440,6 +470,26 @@ export function WebinarHostPage() {
               </div>
             </Card>
           )}
+
+          <Card>
+            <CardTitle className="text-base">Pardavimo mygtukas</CardTitle>
+            <CardDescription className="mt-1">
+              {offer?.target_url
+                ? `Dalyviams: ${offer.button_text}`
+                : 'Pirmiausia nustatykite mygtuką čato scenarijaus puslapyje.'}
+            </CardDescription>
+            <Button
+              className="mt-4 w-full"
+              variant={liveCtaVisible ? 'outline' : 'default'}
+              disabled={!offer?.target_url}
+              isLoading={isUpdatingCta}
+              onClick={() => void toggleCta()}
+            >
+              {liveCtaVisible
+                ? 'Išjungti pardavimo mygtuką'
+                : 'Įjungti pardavimo mygtuką'}
+            </Button>
+          </Card>
 
           <Card>
             <CardTitle className="text-base">{t('viewerLink')}</CardTitle>

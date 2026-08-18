@@ -125,6 +125,7 @@ export interface Webinar {
   automated_video_url: string | null
   recording_url: string | null
   offer_enabled: boolean
+  chat_script_offset_seconds: number
   access_mode: WebinarAccessMode
   password_hash: string | null
   price_cents: number | null
@@ -164,6 +165,24 @@ export interface WebinarOffer {
   active: boolean
   created_at: string
   updated_at: string
+}
+
+export interface WebinarCtaScriptEvent {
+  id: string
+  webinar_id: string
+  trigger_seconds: number
+  action: 'show' | 'hide'
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface WebinarCtaLiveState {
+  webinar_id: string
+  is_visible: boolean
+  changed_at: string
+  changed_by: string | null
 }
 
 export interface Registration {
