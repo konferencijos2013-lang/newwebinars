@@ -158,6 +158,7 @@ export function WebinarRoomPage() {
 
   useEffect(() => {
     if (!webinar?.id) return
+    let isActive = true
     const channel = supabase
       .channel(`cta-live-${webinar.id}`)
       .on(
@@ -177,8 +178,18 @@ export function WebinarRoomPage() {
           )
         },
       )
-      .subscribe()
+      .subscribe((status) => {
+        // Reconcile after the channel is live: a host toggle can happen after
+        // the initial fetch but before this subscription is fully established.
+        if (status !== 'SUBSCRIBED') return
+        getLiveCtaState(webinar.id)
+          .then((state) => {
+            if (isActive) setLiveCtaVisible(Boolean(state?.is_visible))
+          })
+          .catch(() => {})
+      })
     return () => {
+      isActive = false
       void supabase.removeChannel(channel)
     }
   }, [webinar?.id])
