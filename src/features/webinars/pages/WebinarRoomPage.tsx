@@ -188,8 +188,21 @@ export function WebinarRoomPage() {
           })
           .catch(() => {})
       })
+
+    // Realtime is the immediate path. Reconcile periodically as a fallback for
+    // attendees whose connection did not receive a database broadcast.
+    const reconcile = () => {
+      getLiveCtaState(webinar.id)
+        .then((state) => {
+          if (isActive) setLiveCtaVisible(Boolean(state?.is_visible))
+        })
+        .catch(() => {})
+    }
+    const interval = window.setInterval(reconcile, 3_000)
+
     return () => {
       isActive = false
+      window.clearInterval(interval)
       void supabase.removeChannel(channel)
     }
   }, [webinar?.id])
