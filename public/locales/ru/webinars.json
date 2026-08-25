@@ -97,5 +97,18 @@
   "participantLink": "Ссылка для участников",
   "participantLinkDescription": "Отправьте эту ссылку регистрации участникам вебинара.",
   "copyParticipantLink": "Копировать ссылку",
-  "openParticipantLink": "Открыть ссылку"
+  "openParticipantLink": "Открыть ссылку",
+  "streamStatusYoutube": "YouTube Live",
+  "streamProvider": "Провайдер трансляции",
+  "streamProviderDescription": "Настройки Cloudflare создаются здесь. Для YouTube Live сначала создайте трансляцию в YouTube Studio и вставьте её публичную ссылку.",
+  "streamProviderCloudflare": "Cloudflare Stream",
+  "streamProviderYoutube": "YouTube Live",
+  "youtubeLiveUrl": "Ссылка YouTube Live",
+  "youtubeLiveUrlHelp": "Поддерживаются ссылки youtube.com/watch, youtube.com/live, youtube.com/embed и youtu.be. Встраивается только идентификатор видео.",
+  "saveStreamProvider": "Сохранить настройки трансляции",
+  "youtubeUrlInvalid": "Введите корректную публичную ссылку на видео YouTube Live.",
+  "openYoutubeStudio": "Открыть YouTube Studio",
+  "publishForYoutube": "Опубликовать вебинар",
+  "youtubePreviewTitle": "Предпросмотр YouTube Live",
+  "youtubePreviewMissingUrl": "Вставьте и сохраните публичную ссылку YouTube Live, чтобы увидеть предпросмотр."
 }

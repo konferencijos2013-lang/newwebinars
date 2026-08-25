@@ -17,8 +17,14 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { Label } from '@/components/ui/Label'
+import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
-import { fetchWebinar, publishWebinar } from '@/features/webinars/api/webinars'
+import {
+  fetchWebinar,
+  publishWebinar,
+  updateWebinar,
+} from '@/features/webinars/api/webinars'
 import {
   createLiveInput,
   endLiveInput,
@@ -30,7 +36,15 @@ import {
   getLiveCtaState,
   setLiveCtaVisibility,
 } from '@/features/webinars/api/offers'
-import type { Webinar, WebinarOffer } from '@/shared/database.types'
+import type {
+  StreamProvider,
+  Webinar,
+  WebinarOffer,
+} from '@/shared/database.types'
+import {
+  getYouTubeEmbedUrl,
+  getYouTubeVideoId,
+} from '@/features/webinars/utils/youtube'
 
 export function WebinarHostPage() {
   const { t } = useTranslation('webinars')
@@ -50,6 +64,10 @@ export function WebinarHostPage() {
   const [offer, setOffer] = useState<WebinarOffer | null>(null)
   const [liveCtaVisible, setLiveCtaVisible] = useState(false)
   const [isUpdatingCta, setIsUpdatingCta] = useState(false)
+  const [streamProvider, setStreamProvider] =
+    useState<StreamProvider>('cloudflare')
+  const [youtubeLiveUrl, setYoutubeLiveUrl] = useState('')
+  const [isSavingProvider, setIsSavingProvider] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -80,6 +98,8 @@ export function WebinarHostPage() {
           })
           .catch(() => {})
         setPlaybackUrl(w.cf_playback_hls_url)
+        setStreamProvider(w.stream_provider)
+        setYoutubeLiveUrl(w.youtube_live_url ?? '')
         setError(null)
         setStatus('ready')
       })
@@ -95,7 +115,7 @@ export function WebinarHostPage() {
   }, [id])
 
   useEffect(() => {
-    if (!id) return
+    if (!id || streamProvider !== 'cloudflare') return
 
     const channel = subscribeToStreamStatus(id, (next) => {
       setWebinar((prev) => (prev ? { ...prev, cf_stream_status: next } : prev))
@@ -104,7 +124,7 @@ export function WebinarHostPage() {
     return () => {
       void supabase.removeChannel?.(channel)
     }
-  }, [id])
+  }, [id, streamProvider])
 
   // Cloudflare only pushes live_input.connected/disconnected through a
   // separate Notifications policy, so poll directly through
@@ -112,7 +132,7 @@ export function WebinarHostPage() {
   // status + playback URLs into the webinar row, so the preview appears as soon
   // as the encoder connects.
   useEffect(() => {
-    if (!id) return
+    if (!id || streamProvider !== 'cloudflare') return
     let isActive = true
 
     const poll = () => {
@@ -142,7 +162,7 @@ export function WebinarHostPage() {
       isActive = false
       clearInterval(intervalId)
     }
-  }, [id])
+  }, [id, streamProvider])
 
   // Also keep the full webinar row in sync periodically so other fields (e.g.
   // stream_key shown in the right panel) never go stale.
@@ -169,7 +189,10 @@ export function WebinarHostPage() {
     }
   }, [id])
 
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(youtubeLiveUrl)
+  const isYouTube = streamProvider === 'youtube'
   const isStreamViewable =
+    !isYouTube &&
     Boolean(playbackUrl) &&
     (webinar?.cf_stream_status === 'live' ||
       webinar?.cf_stream_status === 'connected')
@@ -236,6 +259,30 @@ export function WebinarHostPage() {
     }
   }
 
+  async function saveStreamProvider() {
+    if (!webinar) return
+    const normalizedUrl = youtubeLiveUrl.trim()
+    if (streamProvider === 'youtube' && !getYouTubeVideoId(normalizedUrl)) {
+      setError(t('youtubeUrlInvalid'))
+      return
+    }
+
+    setIsSavingProvider(true)
+    setError(null)
+    try {
+      const updated = await updateWebinar(webinar.id, {
+        stream_provider: streamProvider,
+        youtube_live_url: streamProvider === 'youtube' ? normalizedUrl : null,
+      })
+      setWebinar(updated)
+      setYoutubeLiveUrl(updated.youtube_live_url ?? '')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setIsSavingProvider(false)
+    }
+  }
+
   async function toggleCta() {
     if (!webinar) return
     setIsUpdatingCta(true)
@@ -286,8 +333,8 @@ export function WebinarHostPage() {
     )
   }
 
-  const isLive = webinar.cf_stream_status === 'live'
-  const hasInput = Boolean(webinar.cf_live_input_uid)
+  const isLive = !isYouTube && webinar.cf_stream_status === 'live'
+  const hasInput = !isYouTube && Boolean(webinar.cf_live_input_uid)
   // Public registration page — attendees must sign up here to get an
   // access token, then use the waiting room / live room. The old link
   // pointed directly at /room?preview=1, which is only meant for the
@@ -324,7 +371,9 @@ export function WebinarHostPage() {
         >
           {isLive && <Circle className="h-2 w-2 animate-pulse fill-current" />}
           <Radio className="h-4 w-4" />
-          {t(`streamStatus${webinar.cf_stream_status}`)}
+          {isYouTube
+            ? t('streamStatusYoutube')
+            : t(`streamStatus${webinar.cf_stream_status}`)}
         </div>
       </div>
 
@@ -344,22 +393,34 @@ export function WebinarHostPage() {
                 {t('streamPreview')}
               </CardTitle>
               <CardDescription className="mt-1">
-                {isStreamViewable
-                  ? t('streamPreviewActive')
-                  : t('streamPreviewIdle')}
+                {isYouTube && !youtubeEmbedUrl
+                  ? t('youtubePreviewMissingUrl')
+                  : isStreamViewable
+                    ? t('streamPreviewActive')
+                    : t('streamPreviewIdle')}
               </CardDescription>
             </div>
           </div>
 
           <div className="bg-muted relative flex aspect-video items-center justify-center overflow-hidden rounded-lg">
-            <video
-              ref={videoRef}
-              controls
-              autoPlay
-              muted={isMuted}
-              playsInline
-              className="h-full w-full"
-            />
+            {isYouTube && youtubeEmbedUrl ? (
+              <iframe
+                title={t('youtubePreviewTitle')}
+                src={youtubeEmbedUrl}
+                className="h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                ref={videoRef}
+                controls
+                autoPlay
+                muted={isMuted}
+                playsInline
+                className="h-full w-full"
+              />
+            )}
             {isStreamViewable && isMuted && (
               <button
                 type="button"
@@ -377,7 +438,7 @@ export function WebinarHostPage() {
                 {t('unmute')}
               </button>
             )}
-            {!isStreamViewable && (
+            {(!isYouTube || !youtubeEmbedUrl) && !isStreamViewable && (
               <div className="bg-muted absolute inset-0 flex items-center justify-center text-center">
                 <div>
                   <Video className="text-muted-foreground mx-auto mb-2 h-12 w-12" />
@@ -390,7 +451,43 @@ export function WebinarHostPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            {!hasInput ? (
+            {isYouTube ? (
+              <>
+                {webinar.status !== 'published' && (
+                  <Button
+                    onClick={() => {
+                      setIsCreating(true)
+                      setError(null)
+                      publishWebinar(webinar.id)
+                        .then(setWebinar)
+                        .catch((err) =>
+                          setError(
+                            err instanceof Error ? err.message : String(err),
+                          ),
+                        )
+                        .finally(() => setIsCreating(false))
+                    }}
+                    isLoading={isCreating}
+                  >
+                    <Radio className="mr-2 h-4 w-4" />
+                    {t('publishForYoutube')}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    window.open(
+                      'https://studio.youtube.com/',
+                      '_blank',
+                      'noopener,noreferrer',
+                    )
+                  }
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  {t('openYoutubeStudio')}
+                </Button>
+              </>
+            ) : !hasInput ? (
               <Button onClick={handleGoLive} isLoading={isCreating}>
                 <Radio className="mr-2 h-4 w-4" />
                 {isCreating ? t('startingStream') : t('goLive')}
@@ -428,6 +525,52 @@ export function WebinarHostPage() {
         </Card>
 
         <div className="space-y-6">
+          <Card className="space-y-4">
+            <div>
+              <CardTitle className="text-base">{t('streamProvider')}</CardTitle>
+              <CardDescription className="mt-1">
+                {t('streamProviderDescription')}
+              </CardDescription>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="stream-provider">{t('streamProvider')}</Label>
+              <Select
+                id="stream-provider"
+                value={streamProvider}
+                onChange={(event) =>
+                  setStreamProvider(event.target.value as StreamProvider)
+                }
+              >
+                <option value="cloudflare">
+                  {t('streamProviderCloudflare')}
+                </option>
+                <option value="youtube">{t('streamProviderYoutube')}</option>
+              </Select>
+            </div>
+            {isYouTube && (
+              <div className="space-y-2">
+                <Label htmlFor="youtube-live-url">{t('youtubeLiveUrl')}</Label>
+                <Input
+                  id="youtube-live-url"
+                  type="url"
+                  placeholder="https://www.youtube.com/live/..."
+                  value={youtubeLiveUrl}
+                  onChange={(event) => setYoutubeLiveUrl(event.target.value)}
+                />
+                <p className="text-muted-foreground text-xs">
+                  {t('youtubeLiveUrlHelp')}
+                </p>
+              </div>
+            )}
+            <Button
+              className="w-full"
+              onClick={() => void saveStreamProvider()}
+              isLoading={isSavingProvider}
+            >
+              {t('saveStreamProvider')}
+            </Button>
+          </Card>
+
           {hasInput && streamUrl && streamKey && (
             <Card className="space-y-4">
               <CardTitle className="text-base">{t('streamSettings')}</CardTitle>

@@ -105,6 +105,7 @@ export interface Partner {
 }
 
 export type CfStreamStatus = 'idle' | 'connected' | 'live' | 'ended' | 'errored'
+export type StreamProvider = 'cloudflare' | 'youtube'
 
 export interface Webinar {
   id: string
@@ -129,6 +130,8 @@ export interface Webinar {
   access_mode: WebinarAccessMode
   password_hash: string | null
   price_cents: number | null
+  stream_provider: StreamProvider
+  youtube_live_url: string | null
   cf_live_input_uid: string | null
   cf_stream_status: CfStreamStatus
   cf_playback_hls_url: string | null

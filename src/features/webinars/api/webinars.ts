@@ -21,6 +21,8 @@ export type CreateWebinarInput = {
   early_entry_minutes?: number
   status?: Webinar['status']
   chat_script_offset_seconds?: number
+  stream_provider?: Webinar['stream_provider']
+  youtube_live_url?: string | null
 }
 
 export async function fetchWebinars(accountId: string) {

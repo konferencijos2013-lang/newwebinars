@@ -97,5 +97,18 @@
   "participantLink": "Nuoroda dalyviams",
   "participantLinkDescription": "Šią registracijos nuorodą siųskite webinaro dalyviams.",
   "copyParticipantLink": "Kopijuoti nuorodą",
-  "openParticipantLink": "Atidaryti nuorodą"
+  "openParticipantLink": "Atidaryti nuorodą",
+  "streamStatusYoutube": "YouTube Live",
+  "streamProvider": "Transliacijos tiekėjas",
+  "streamProviderDescription": "Cloudflare transliacijoms nustatymai sukuriami čia. YouTube Live pirmiausia sukurkite YouTube Studio ir įklijuokite viešą nuorodą.",
+  "streamProviderCloudflare": "Cloudflare Stream",
+  "streamProviderYoutube": "YouTube Live",
+  "youtubeLiveUrl": "YouTube Live nuoroda",
+  "youtubeLiveUrlHelp": "Priimamos youtube.com/watch, youtube.com/live, youtube.com/embed arba youtu.be nuorodos. Įterpiama tik jos vaizdo įrašo dalis.",
+  "saveStreamProvider": "Išsaugoti transliacijos nustatymus",
+  "youtubeUrlInvalid": "Įveskite galiojančią viešą YouTube Live vaizdo nuorodą.",
+  "openYoutubeStudio": "Atidaryti YouTube Studio",
+  "publishForYoutube": "Paskelbti webinarą",
+  "youtubePreviewTitle": "YouTube Live peržiūra",
+  "youtubePreviewMissingUrl": "Įklijuokite ir išsaugokite viešą YouTube Live nuorodą, kad matytumėte peržiūrą."
 }

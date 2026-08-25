@@ -16,6 +16,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { AiAssistant } from '@/features/ai/components/AiAssistant'
 import { useHlsVideo } from '@/features/webinars/hooks/useHlsVideo'
 import { subscribeToStreamStatus } from '@/features/webinars/api/stream'
+import { getYouTubeEmbedUrl } from '@/features/webinars/utils/youtube'
 import {
   fetchWebinarBySlug,
   fetchRegistrationByToken,
@@ -208,14 +209,14 @@ export function WebinarRoomPage() {
   }, [webinar?.id])
 
   useEffect(() => {
-    if (!webinar?.id) return
+    if (!webinar?.id || webinar.stream_provider !== 'cloudflare') return
     const channel = subscribeToStreamStatus(webinar.id, (next) => {
       setWebinar((prev) => (prev ? { ...prev, cf_stream_status: next } : prev))
     })
     return () => {
       void supabase.removeChannel?.(channel)
     }
-  }, [webinar?.id])
+  }, [webinar?.id, webinar?.stream_provider])
 
   // Receive new and soft-deleted messages immediately, so a moderator action
   // does not remain visible until the attendee refreshes the room.
@@ -267,7 +268,7 @@ export function WebinarRoomPage() {
   // also self-heals the row, but reading straight from Postgres is one less
   // moving part and works even if the edge function is misconfigured.
   useEffect(() => {
-    if (!webinar?.slug) return
+    if (!webinar?.slug || webinar.stream_provider !== 'cloudflare') return
     let isActive = true
 
     const poll = async () => {
@@ -296,7 +297,7 @@ export function WebinarRoomPage() {
       isActive = false
       clearInterval(intervalId)
     }
-  }, [webinar?.slug])
+  }, [webinar?.slug, webinar?.stream_provider])
 
   // Keep the full webinar row in sync periodically for non-streaming fields.
   useEffect(() => {
@@ -313,6 +314,8 @@ export function WebinarRoomPage() {
                   ...prev,
                   status: updated.status,
                   scheduled_at: updated.scheduled_at,
+                  stream_provider: updated.stream_provider,
+                  youtube_live_url: updated.youtube_live_url,
                 }
               : prev,
           )
@@ -330,8 +333,19 @@ export function WebinarRoomPage() {
   // Start playback as soon as we have a URL. hls.js will retry while the
   // manifest is still 404ing before the encoder connects, so there's no
   // need to gate on cf_stream_status being 'live' first.
+  const youtubeEmbedUrl =
+    webinar?.stream_provider === 'youtube'
+      ? getYouTubeEmbedUrl(webinar.youtube_live_url)
+      : null
   const isStreamViewable = Boolean(webinar?.cf_playback_hls_url)
-  useHlsVideo(videoRef, isStreamViewable ? webinar?.cf_playback_hls_url : null)
+  useHlsVideo(
+    videoRef,
+    youtubeEmbedUrl
+      ? null
+      : isStreamViewable
+        ? webinar?.cf_playback_hls_url
+        : null,
+  )
 
   // Script messages are derived from the real playback position. This keeps an
   // evergreen chat in sync after pauses and seeking, instead of advancing with
@@ -491,22 +505,34 @@ export function WebinarRoomPage() {
       <div className="grid flex-1 gap-4 overflow-hidden p-4 lg:grid-cols-[1fr_320px]">
         <div className="space-y-3">
           <div className="bg-muted relative flex aspect-video items-center justify-center overflow-hidden rounded-lg">
-            {/* key forces a remount when the HLS URL appears so useHlsVideo
-              re-initialises hls.js with a real source instead of staying
-              stuck on the initial null. */}
-            <video
-              key={webinar?.cf_playback_hls_url ?? 'no-stream'}
-              ref={videoRef}
-              controls
-              autoPlay
-              muted={isMuted}
-              playsInline
-              className="h-full w-full"
-              onLoadedMetadata={syncPlaybackTime}
-              onTimeUpdate={syncPlaybackTime}
-              onSeeked={syncPlaybackTime}
-            />
-            {isStreamViewable && isMuted && (
+            {youtubeEmbedUrl ? (
+              <iframe
+                title={t('youtubeLiveTitle')}
+                src={youtubeEmbedUrl}
+                className="h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            ) : (
+              <>
+                {/* key forces a remount when the HLS URL appears so useHlsVideo
+                  re-initialises hls.js with a real source instead of staying
+                  stuck on the initial null. */}
+                <video
+                  key={webinar?.cf_playback_hls_url ?? 'no-stream'}
+                  ref={videoRef}
+                  controls
+                  autoPlay
+                  muted={isMuted}
+                  playsInline
+                  className="h-full w-full"
+                  onLoadedMetadata={syncPlaybackTime}
+                  onTimeUpdate={syncPlaybackTime}
+                  onSeeked={syncPlaybackTime}
+                />
+              </>
+            )}
+            {isStreamViewable && !youtubeEmbedUrl && isMuted && (
               <button
                 type="button"
                 onClick={() => {
@@ -523,7 +549,7 @@ export function WebinarRoomPage() {
                 {t('unmute')}
               </button>
             )}
-            {!isStreamViewable && (
+            {!youtubeEmbedUrl && !isStreamViewable && (
               <div className="bg-muted absolute inset-0 flex items-center justify-center text-center">
                 <div>
                   <p className="text-muted-foreground text-lg font-medium">

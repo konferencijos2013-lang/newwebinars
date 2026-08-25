@@ -97,5 +97,18 @@
   "participantLink": "Participant link",
   "participantLinkDescription": "Share this registration link with webinar participants.",
   "copyParticipantLink": "Copy link",
-  "openParticipantLink": "Open link"
+  "openParticipantLink": "Open link",
+  "streamStatusYoutube": "YouTube Live",
+  "streamProvider": "Streaming provider",
+  "streamProviderDescription": "Cloudflare stream settings are created here. For YouTube Live, first create the stream in YouTube Studio and paste its public link.",
+  "streamProviderCloudflare": "Cloudflare Stream",
+  "streamProviderYoutube": "YouTube Live",
+  "youtubeLiveUrl": "YouTube Live URL",
+  "youtubeLiveUrlHelp": "youtube.com/watch, youtube.com/live, youtube.com/embed, and youtu.be links are accepted. Only the video ID is embedded.",
+  "saveStreamProvider": "Save streaming settings",
+  "youtubeUrlInvalid": "Enter a valid public YouTube Live video URL.",
+  "openYoutubeStudio": "Open YouTube Studio",
+  "publishForYoutube": "Publish webinar",
+  "youtubePreviewTitle": "YouTube Live preview",
+  "youtubePreviewMissingUrl": "Paste and save a public YouTube Live URL to see the preview."
 }

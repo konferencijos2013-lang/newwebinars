@@ -26,5 +26,6 @@
   "linksNotAllowed": "Nuorodas gali siųsti tik administratorius.",
   "deleteMessage": "Ištrinti žinutę",
   "unmute": "Įjungti garsą",
-  "chatUnavailable": "Nepavyko išsiųsti žinutės. Galbūt esate nutildytas arba pašalintas iš webinaro."
+  "chatUnavailable": "Nepavyko išsiųsti žinutės. Galbūt esate nutildytas arba pašalintas iš webinaro.",
+  "youtubeLiveTitle": "YouTube Live transliacija"
 }
