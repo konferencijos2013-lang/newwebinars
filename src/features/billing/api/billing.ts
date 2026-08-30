@@ -110,7 +110,6 @@ function createCheckoutAttemptId(): string {
 export async function createCheckoutSession(accountId: string, planId: string) {
   const successUrl = `${window.location.origin}/billing?success=1`
   const cancelUrl = `${window.location.origin}/billing?canceled=1`
-
   const { data, error } = await supabase.functions.invoke(
     'create-checkout-session',
     {

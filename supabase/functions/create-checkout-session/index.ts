@@ -35,14 +35,25 @@ serve(async (req) => {
     const stripeKey = requireEnv(Deno.env.get, "STRIPE_SECRET_KEY");
     const appUrl = requireEnv(Deno.env.get, "APP_URL");
     const authorization = req.headers.get("Authorization");
-    if (!authorization) return json({ error: "Authentication required" }, 401);
+    if (!authorization) {
+      return json(
+        { error: "Authentication required" },
+        401,
+      );
+    }
 
     const authClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authorization } },
     });
-    const { data: auth, error: authError } = await authClient.auth.getUser();
+    const token = authorization.replace(/^Bearer\s+/i, "");
+    const { data: auth, error: authError } = await authClient.auth.getUser(
+      token,
+    );
     if (authError || !auth.user) {
-      return json({ error: "Authentication required" }, 401);
+      return json(
+        { error: "Authentication required" },
+        401,
+      );
     }
 
     const body = await req.json();

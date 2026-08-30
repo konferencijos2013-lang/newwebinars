@@ -35,8 +35,11 @@ serve(async (req) => {
     const authClient = createClient(url, anon, {
       global: { headers: { Authorization: authorization } },
     });
-    const { data: auth } = await authClient.auth.getUser();
-    if (!auth.user) return json({ error: "Authentication required" }, 401);
+    const token = authorization.replace(/^Bearer\s+/i, "");
+    const { data: auth, error: authError } = await authClient.auth.getUser(token);
+    if (authError || !auth.user) {
+      return json({ error: "Authentication required" }, 401);
+    }
     const body = await req.json(),
       admin = createClient(url, service);
     if (!body.account_id) return json({ error: "Missing account_id" }, 400);
