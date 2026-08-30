@@ -5,7 +5,8 @@
     "ctaPrimary": "Get started free",
     "ctaSecondary": "See how it works",
     "note": "Free to start · No card required",
-    "liveLabel": "LIVE"
+    "liveLabel": "LIVE",
+    "eyebrow": "The webinar platform for growing businesses"
   },
   "features": {
     "eyebrow": "Features",
@@ -72,7 +73,8 @@
         "1 webinar",
         "30 participants per live webinar",
         "1 team member"
-      ]
+      ],
+      "description": "For your first webinar"
     },
     "start": {
       "name": "Start",
@@ -84,7 +86,8 @@
       ],
       "annual": "€182.40/year — save 20%",
       "monthPrice": "€19/month",
-      "yearPrice": "€182.40/year"
+      "yearPrice": "€182.40/year",
+      "description": "For solo creators"
     },
     "grow": {
       "name": "Grow",
@@ -96,7 +99,8 @@
       ],
       "annual": "€374.40/year — save 20%",
       "monthPrice": "€39/month",
-      "yearPrice": "€374.40/year"
+      "yearPrice": "€374.40/year",
+      "description": "For growing businesses"
     },
     "scale": {
       "name": "Scale",
@@ -108,12 +112,15 @@
       ],
       "annual": "€758.40/year — save 20%",
       "monthPrice": "€79/month",
-      "yearPrice": "€758.40/year"
+      "yearPrice": "€758.40/year",
+      "description": "For established teams"
     },
     "monthly": "Monthly",
     "yearly": "Yearly",
     "annualCreditsExplanation": "Annual plans are billed once per year and include the full annual credit allocation.",
-    "freeCta": "Create free account"
+    "freeCta": "Create free account",
+    "eyebrow": "Plans for every stage of growth",
+    "popular": "Most popular"
   },
   "partners": {
     "title": "Partner with NewWebinars",
@@ -137,6 +144,11 @@
     "applicationSuccess": "Thank you, your application has been received. We will review it and contact you by email. Your referral link will become active only after approval.",
     "termsTitle": "Partner Program Terms",
     "termsBody1": "Partners may promote NewWebinars only through honest, lawful, and transparent methods. Sending unsolicited emails or messages, using bots, fake traffic, misleading advertising, impersonating NewWebinars, or promising unavailable discounts is prohibited.",
-    "termsBody2": "If these terms are breached, an application or partner account may be rejected or blocked, and unpaid commissions may be cancelled to the extent permitted by applicable law and the program terms."
+    "termsBody2": "If these terms are breached, an application or partner account may be rejected or blocked, and unpaid commissions may be cancelled to the extent permitted by applicable law and the program terms.",
+    "eyebrow": "Partner program",
+    "statCommission": "commission",
+    "statLink": "referral link",
+    "statPeriod": "earning period",
+    "formHint": "Complete the short application below"
   }
 }

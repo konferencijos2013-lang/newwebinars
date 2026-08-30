@@ -50,5 +50,59 @@
   },
   "footer": {
     "rights": "Visos teisės saugomos."
-  }
+  },
+  "cookieConsent": {
+    "title": "Jūsų privatumo pasirinkimai",
+    "description": "Naudojame būtinus slapukus svetainės veikimui. Analitinius ir rinkodaros slapukus naudojame tik gavę jūsų sutikimą.",
+    "policyLink": "Slapukų politika",
+    "settings": "Nustatymai",
+    "rejectOptional": "Atmesti nebūtinus",
+    "acceptAll": "Priimti visus",
+    "savePreferences": "Išsaugoti pasirinkimus",
+    "changeSettings": "Keisti slapukų nustatymus",
+    "necessary": {
+      "title": "Būtini",
+      "description": "Reikalingi prisijungimui, saugumui ir pagrindinėms funkcijoms. Visada aktyvūs."
+    },
+    "analytics": {
+      "title": "Analitiniai",
+      "description": "Padeda suprasti, kaip naudojama svetainė, ir ją tobulinti."
+    },
+    "marketing": {
+      "title": "Rinkodaros",
+      "description": "Naudojami partnerių nukreipimams ir rinkodaros efektyvumui matuoti."
+    }
+  },
+  "cookiePolicy": {
+    "eyebrow": "Privatumas",
+    "title": "Slapukų politika",
+    "intro": "Šiame puslapyje paaiškinama, kokias naršyklės saugojimo technologijas naudoja NewWebinars ir kaip galite valdyti savo pasirinkimus.",
+    "sections": {
+      "what": {
+        "title": "Kas yra slapukai?",
+        "description": "Slapukai ir vietinė naršyklės saugykla yra nedideli duomenų įrašai, padedantys svetainei įsiminti sesiją ir jūsų pasirinkimus."
+      },
+      "necessary": {
+        "title": "Būtini slapukai",
+        "description": "Naudojami autentifikacijai, saugumui, kalbos, temos ir sutikimo pasirinkimams išsaugoti. Jiems sutikimas nereikalingas, nes be jų paslauga negalėtų tinkamai veikti."
+      },
+      "analytics": {
+        "title": "Analitiniai slapukai",
+        "description": "Jei sutiksite, jie gali būti naudojami apibendrintai lankomumo ir naudojimo analizei. Ši kategorija pagal nutylėjimą išjungta."
+      },
+      "marketing": {
+        "title": "Rinkodaros ir partnerių sekimas",
+        "description": "Jei sutiksite, saugomas atsitiktinis partnerio lankytojo identifikatorius, kad būtų galima priskirti rekomendaciją. Ši kategorija pagal nutylėjimą išjungta."
+      },
+      "choices": {
+        "title": "Jūsų pasirinkimai",
+        "description": "Galite priimti visus, atmesti nebūtinus arba pasirinkti kategorijas. Pasirinkimą galite bet kada pakeisti naudodami nuorodą svetainės apačioje."
+      }
+    }
+  },
+  "footerCookies": "Slapukų nustatymai",
+  "footerCookiePolicy": "Slapukų politika",
+  "redirecting": "Nukreipiama…",
+  "footerPrivacyPolicy": "Privatumo politika",
+  "footerTerms": "Naudojimo sąlygos"
 }

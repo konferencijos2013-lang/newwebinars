@@ -16,6 +16,7 @@ void i18n
       'auth',
       'webinars',
       'landing',
+      'legal',
       'funnels',
       'public',
       'recordings',

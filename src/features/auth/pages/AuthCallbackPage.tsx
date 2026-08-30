@@ -11,8 +11,10 @@ function safeReturnTo(value: string | null) {
   if (!value) return '/dashboard'
   try {
     const url = new URL(value, window.location.origin)
-    if (url.origin !== window.location.origin || url.pathname !== '/billing')
-      return '/dashboard'
+    if (url.origin !== window.location.origin) return '/dashboard'
+    if (url.pathname === '/dashboard' || url.pathname === '/webinars')
+      return url.pathname
+    if (url.pathname !== '/billing') return '/dashboard'
     const safe = new URLSearchParams()
     const plan = url.searchParams.get('plan')
     const interval = url.searchParams.get('interval')

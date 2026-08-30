@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router'
 import { supabase } from '@/lib/supabase'
+import { hasMarketingConsent } from '@/features/consent/consent'
 
 const PARTNER_VISITOR_TOKEN_KEY = 'newwebinars_partner_visitor_token'
 
@@ -14,6 +16,7 @@ async function createVisitorTokenHash() {
 
 export function PartnerReferralRedirectPage() {
   const { code = '' } = useParams()
+  const { t } = useTranslation('common')
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -23,20 +26,22 @@ export function PartnerReferralRedirectPage() {
         ? candidate
         : '/'
     const recordClick = async () => {
-      const visitorToken =
-        localStorage.getItem(PARTNER_VISITOR_TOKEN_KEY) ??
-        (await createVisitorTokenHash())
-      localStorage.setItem(PARTNER_VISITOR_TOKEN_KEY, visitorToken)
+      if (hasMarketingConsent()) {
+        const visitorToken =
+          localStorage.getItem(PARTNER_VISITOR_TOKEN_KEY) ??
+          (await createVisitorTokenHash())
+        localStorage.setItem(PARTNER_VISITOR_TOKEN_KEY, visitorToken)
 
-      await supabase.rpc('record_platform_partner_click', {
-        p_code: code,
-        p_visitor_token_hash: visitorToken,
-        p_landing_path: destination,
-        p_referrer_url: document.referrer || null,
-        p_utm_source: params.get('utm_source'),
-        p_utm_medium: params.get('utm_medium'),
-        p_utm_campaign: params.get('utm_campaign'),
-      })
+        await supabase.rpc('record_platform_partner_click', {
+          p_code: code,
+          p_visitor_token_hash: visitorToken,
+          p_landing_path: destination,
+          p_referrer_url: document.referrer || null,
+          p_utm_source: params.get('utm_source'),
+          p_utm_medium: params.get('utm_medium'),
+          p_utm_campaign: params.get('utm_campaign'),
+        })
+      }
       window.location.replace(destination)
     }
     void recordClick()
@@ -44,7 +49,7 @@ export function PartnerReferralRedirectPage() {
 
   return (
     <div className="text-muted-foreground flex min-h-svh items-center justify-center text-sm">
-      Nukreipiama…
+      {t('redirecting')}
     </div>
   )
 }

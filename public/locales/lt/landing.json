@@ -5,7 +5,8 @@
     "ctaPrimary": "Pradėti nemokamai",
     "ctaSecondary": "Kaip tai veikia",
     "note": "Nemokama pradžia · Kortelė nereikalinga",
-    "liveLabel": "TIESIOGIAI"
+    "liveLabel": "TIESIOGIAI",
+    "eyebrow": "Webinarų platforma augančiam verslui"
   },
   "features": {
     "eyebrow": "Funkcijos",
@@ -72,7 +73,8 @@
         "1 webinaras",
         "30 dalyvių viename tiesioginiame webinare",
         "1 komandos narys"
-      ]
+      ],
+      "description": "Pirmam webinarui"
     },
     "start": {
       "name": "Start",
@@ -84,7 +86,8 @@
       ],
       "annual": "182,40 € / metai — sutaupykite 20 %",
       "monthPrice": "19 € / mėn.",
-      "yearPrice": "182,40 € / metus"
+      "yearPrice": "182,40 € / metus",
+      "description": "Savarankiškiems kūrėjams"
     },
     "grow": {
       "name": "Grow",
@@ -96,7 +99,8 @@
       ],
       "annual": "374,40 € / metai — sutaupykite 20 %",
       "monthPrice": "39 € / mėn.",
-      "yearPrice": "374,40 € / metus"
+      "yearPrice": "374,40 € / metus",
+      "description": "Augančiam verslui"
     },
     "scale": {
       "name": "Scale",
@@ -108,12 +112,15 @@
       ],
       "annual": "758,40 € / metai — sutaupykite 20 %",
       "monthPrice": "79 € / mėn.",
-      "yearPrice": "758,40 € / metus"
+      "yearPrice": "758,40 € / metus",
+      "description": "Susiformavusioms komandoms"
     },
     "monthly": "Kas mėnesį",
     "yearly": "Kasmet",
     "annualCreditsExplanation": "Metiniai planai apmokami kartą per metus ir apima visą metinį kreditų kiekį.",
-    "freeCta": "Kurti nemokamą paskyrą"
+    "freeCta": "Kurti nemokamą paskyrą",
+    "eyebrow": "Planai kiekvienam augimo etapui",
+    "popular": "Populiariausias"
   },
   "partners": {
     "title": "Tapkite NewWebinars partneriu",
@@ -137,6 +144,11 @@
     "applicationSuccess": "Ačiū, paraiška gauta. Ją peržiūrėsime ir susisieksime el. paštu. Partnerio nuoroda bus aktyvi tik po patvirtinimo.",
     "termsTitle": "Partnerių programos sąlygos",
     "termsBody1": "Partneris gali reklamuoti NewWebinars tik sąžiningais, teisėtais ir skaidriais būdais. Draudžiama siųsti nepageidaujamus laiškus ar žinutes, naudoti botus, netikrą srautą, klaidinančią reklamą, apsimesti NewWebinars vardu ar žadėti neegzistuojamas nuolaidas.",
-    "termsBody2": "Pažeidus šias sąlygas paraiška arba partnerio paskyra gali būti atmesta ar užblokuota, o neišmokėti komisiniai anuliuoti tiek, kiek leidžia taikytina teisė ir programos sąlygos."
+    "termsBody2": "Pažeidus šias sąlygas paraiška arba partnerio paskyra gali būti atmesta ar užblokuota, o neišmokėti komisiniai anuliuoti tiek, kiek leidžia taikytina teisė ir programos sąlygos.",
+    "eyebrow": "Partnerių programa",
+    "statCommission": "komisinių",
+    "statLink": "partnerio nuoroda",
+    "statPeriod": "uždarbio laikotarpis",
+    "formHint": "Užpildykite trumpą paraišką žemiau"
   }
 }

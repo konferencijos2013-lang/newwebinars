@@ -1,0 +1,178 @@
+{
+  "shared": {
+    "eyebrow": "Legal information",
+    "lastUpdated": "Last updated: 2026-08-30"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "intro": "This Privacy Policy explains how NewWebinars collects, uses, and stores your personal data.",
+    "sections": [
+      {
+        "title": "1. General provisions",
+        "paragraphs": [
+          "The data controller is Virginijus Guoga, operating under Individual Activity Certificate No. 626398 (“we”). This policy applies to visitors and users of the NewWebinars platform and https://newwebinars.com.",
+          "We process personal data in accordance with the EU General Data Protection Regulation (GDPR) and the laws of the Republic of Lithuania."
+        ]
+      },
+      {
+        "title": "2. Data we collect",
+        "bullets": [
+          "Registration and account data: your name, email address, account and company information if provided. Passwords are securely handled by the authentication provider and are not visible to us.",
+          "Service data: webinars, registrations, attendee information, recordings, chats, content, and account activity.",
+          "Billing data: selected plan, subscription status, payment history, and invoice details. We do not store full payment card details.",
+          "Technical data: IP address, browser and device information, security logs, cookies, and local browser storage.",
+          "Communications: your support requests and correspondence."
+        ]
+      },
+      {
+        "title": "3. How we use data",
+        "bullets": [
+          "To provide the service, administer accounts, and authenticate users.",
+          "To operate webinars, registrations, recordings, reminders, and other selected features.",
+          "To administer subscriptions, payments, and accounting.",
+          "For technical support, security, fraud prevention, and service improvement.",
+          "To meet legal obligations and, with consent, conduct marketing or analytics activities."
+        ]
+      },
+      {
+        "title": "4. Legal bases",
+        "bullets": [
+          "Performance of a contract (GDPR Art. 6(1)(b)) where processing is necessary to provide the service.",
+          "Legal obligation (Art. 6(1)(c)) for accounting, tax, and lawful authority requests.",
+          "Legitimate interests (Art. 6(1)(f)) for platform security, abuse prevention, and improvement.",
+          "Consent (Art. 6(1)(a)) for optional cookies, analytics, and marketing when used."
+        ]
+      },
+      {
+        "title": "5. Cookies and tracking",
+        "paragraphs": [
+          "We use necessary cookies and local browser storage for authentication, security, language, theme, and privacy choices. Analytics and marketing categories are disabled by default and may be activated only with your consent.",
+          "You can change your consent at any time through “Cookie settings” in the footer. See the Cookie Policy for details."
+        ]
+      },
+      {
+        "title": "6. Recipients and service providers",
+        "paragraphs": [
+          "To the extent required to provide the service, data may be processed by Supabase (authentication and database), Stripe (payments), Cloudflare (hosting, security, and video streaming), OpenAI (AI features when selected), and email or integration providers configured by you.",
+          "These providers operate under their own privacy terms and data processing agreements. Transfers outside the EEA take place only with GDPR safeguards. We do not sell personal data."
+        ]
+      },
+      {
+        "title": "7. Retention",
+        "paragraphs": [
+          "We retain data for as long as necessary to provide the service and meet contractual and legal obligations. Account content is generally retained until account deletion; accounting records are retained for the period required by law. Backups and security logs may be removed later under technical retention cycles."
+        ]
+      },
+      {
+        "title": "8. Webinar organiser responsibilities",
+        "paragraphs": [
+          "When a NewWebinars customer collects attendee data, the customer is generally the data controller and we act as processor. The customer is responsible for lawful notices, an appropriate legal basis, and its own privacy notice."
+        ]
+      },
+      {
+        "title": "9. Your rights",
+        "bullets": [
+          "Access your data and receive a copy.",
+          "Request correction, erasure, or restriction of processing.",
+          "Receive portable data where applicable.",
+          "Object to legitimate-interest processing and withdraw consent at any time.",
+          "Lodge a complaint with the Lithuanian State Data Protection Inspectorate."
+        ]
+      },
+      {
+        "title": "10. Exercising your rights",
+        "paragraphs": [
+          "Send requests to support@scorecard.lt. We will respond without undue delay and no later than 30 calendar days, except where the law allows otherwise. We may verify your identity before fulfilling a request."
+        ]
+      },
+      {
+        "title": "11. Updates and contact",
+        "paragraphs": [
+          "We may update this policy when the service or legal requirements change. Material changes will be published in the platform or communicated by email.",
+          "Data controller: Virginijus Guoga. Individual Activity Certificate No. 626398. Email: support@scorecard.lt. Website: https://newwebinars.com."
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "intro": "These Terms govern your use of the NewWebinars online webinar platform.",
+    "sections": [
+      {
+        "title": "1. General provisions",
+        "paragraphs": [
+          "NewWebinars is operated by Virginijus Guoga under Individual Activity Certificate No. 626398 (“we”). By creating an account, ordering a plan, or using the platform, you confirm that you have read and accepted these Terms.",
+          "If you use the platform for an organisation, you confirm that you are authorised to bind that organisation."
+        ]
+      },
+      {
+        "title": "2. Service description",
+        "paragraphs": [
+          "NewWebinars enables live and automated webinars, registration and sales pages, attendee registrations, recordings, analytics, integrations, and other platform features.",
+          "Features, limits, and credits depend on the selected plan. We may reasonably change or improve the service while preserving the essential purpose of a paid service."
+        ]
+      },
+      {
+        "title": "3. Registration and account",
+        "bullets": [
+          "Provide a valid email address and accurate information.",
+          "You are responsible for login confidentiality, account users, and all account activity.",
+          "Notify us immediately of suspected unauthorised access.",
+          "We may suspend an account that breaches these Terms or law, or threatens platform security."
+        ]
+      },
+      {
+        "title": "4. Acceptable use",
+        "paragraphs": [
+          "You must not use the platform for unlawful, fraudulent, or harmful activity, spam, unsolicited communications, infringement, malware, security circumvention, or service disruption.",
+          "You are responsible for your content, attendee notices, marketing consents, and compliance with applicable law."
+        ]
+      },
+      {
+        "title": "5. Plans, payments, and subscriptions",
+        "bullets": [
+          "The platform may offer a free plan and paid monthly or annual plans. Current prices, limits, and credits appear on the pricing and billing pages.",
+          "Payments are processed by Stripe. Prices are shown before order confirmation; applicable taxes are charged where legally required.",
+          "Subscriptions renew automatically for the selected interval until cancelled through the customer portal or billing settings.",
+          "Annual-plan credits are granted upfront for the paid annual term. Unused credits have no cash value and may expire at the end of the applicable term.",
+          "After cancellation, access generally continues until the paid term ends. Fees for a started term are non-refundable unless mandatory law requires otherwise or we expressly agree.",
+          "After a failed payment, we may restrict paid features, suspend the subscription, or move the account to a free plan."
+        ]
+      },
+      {
+        "title": "6. Consumer rights",
+        "paragraphs": [
+          "If you purchase as a consumer, mandatory consumer protections apply. Where you request immediate performance of a digital service, a withdrawal right may be limited only as permitted by law. Nothing in these Terms removes rights that cannot legally be waived."
+        ]
+      },
+      {
+        "title": "7. Intellectual property and your content",
+        "paragraphs": [
+          "The software, design, marks, and our content belong to us or our licensors. You receive a limited, non-exclusive, non-transferable right to use the platform under these Terms.",
+          "Your uploaded content remains yours. You grant us the rights needed to store, process, transmit, and display it to provide the service, secure it, and follow your instructions. You confirm you hold the necessary rights."
+        ]
+      },
+      {
+        "title": "8. Availability and liability",
+        "paragraphs": [
+          "We aim for stable service but do not guarantee uninterrupted or error-free operation. Maintenance, provider outages, and events outside our control may occur.",
+          "To the extent allowed by law, we are not liable for indirect loss, lost profits, lost data, or harm caused by misuse. Our total liability for a paid service will not exceed the amount paid for that service in the previous 12 months. Limits do not apply where liability cannot legally be limited."
+        ]
+      },
+      {
+        "title": "9. Changes and termination",
+        "paragraphs": [
+          "We may update these Terms for legal, security, or service changes. Material changes will be communicated through the platform or email. If you disagree, you may cancel before they take effect.",
+          "You may stop using the service and cancel at any time. Closing an account does not remove payment or other obligations arising before closure."
+        ]
+      },
+      {
+        "title": "10. Governing law, disputes, and contact",
+        "paragraphs": [
+          "Lithuanian law applies. We will first seek to resolve disputes through negotiation. Consumers may also contact the State Consumer Rights Protection Authority or another competent body.",
+          "Operator: Virginijus Guoga. Individual Activity Certificate No. 626398. Email: support@scorecard.lt. Website: https://newwebinars.com."
+        ]
+      }
+    ]
+  }
+}

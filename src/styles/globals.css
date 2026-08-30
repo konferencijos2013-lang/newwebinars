@@ -11,50 +11,62 @@
   --color-card: var(--color-card);
   --color-card-foreground: var(--color-card-foreground);
   --color-ring: var(--color-ring);
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 6px);
 }
 
 :root {
-  --radius: 0.5rem;
-
-  --color-background: #ffffff;
-  --color-foreground: #0f172a;
-  --color-muted: #f1f5f9;
-  --color-muted-foreground: #64748b;
-  --color-border: #e2e8f0;
-  --color-primary: #4f46e5;
+  --radius: 0.875rem;
+  --color-background: #fbfcff;
+  --color-foreground: #11152b;
+  --color-muted: #f1f3fb;
+  --color-muted-foreground: #667085;
+  --color-border: #e3e7f2;
+  --color-primary: #5b4cf0;
   --color-primary-foreground: #ffffff;
   --color-card: #ffffff;
-  --color-card-foreground: #0f172a;
-  --color-ring: #4f46e5;
-
+  --color-card-foreground: #11152b;
+  --color-ring: #695cf6;
   color-scheme: light;
 }
 
 html.dark {
-  --color-background: #0b0f19;
-  --color-foreground: #f8fafc;
-  --color-muted: #1e293b;
-  --color-muted-foreground: #94a3b8;
-  --color-border: #334155;
-  --color-primary: #818cf8;
-  --color-primary-foreground: #0f172a;
-  --color-card: #111827;
-  --color-card-foreground: #f8fafc;
-  --color-ring: #818cf8;
-
+  --color-background: #090b14;
+  --color-foreground: #f6f7fb;
+  --color-muted: #171a2a;
+  --color-muted-foreground: #99a1b7;
+  --color-border: #262b40;
+  --color-primary: #8b80ff;
+  --color-primary-foreground: #090b14;
+  --color-card: #10131f;
+  --color-card-foreground: #f6f7fb;
+  --color-ring: #8b80ff;
   color-scheme: dark;
 }
 
 * {
   border-color: var(--color-border);
 }
-
+html {
+  scroll-behavior: smooth;
+}
 body {
+  min-width: 320px;
   background-color: var(--color-background);
   color: var(--color-foreground);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+::selection {
+  background: color-mix(in srgb, var(--color-primary) 24%, transparent);
 }

@@ -50,5 +50,59 @@
   },
   "footer": {
     "rights": "All rights reserved."
-  }
+  },
+  "cookieConsent": {
+    "title": "Your privacy choices",
+    "description": "We use necessary cookies for the website to work. Analytics and marketing cookies are used only with your consent.",
+    "policyLink": "Cookie Policy",
+    "settings": "Settings",
+    "rejectOptional": "Reject optional",
+    "acceptAll": "Accept all",
+    "savePreferences": "Save preferences",
+    "changeSettings": "Change cookie settings",
+    "necessary": {
+      "title": "Necessary",
+      "description": "Required for sign-in, security, and core functionality. Always active."
+    },
+    "analytics": {
+      "title": "Analytics",
+      "description": "Help us understand how the website is used and improve it."
+    },
+    "marketing": {
+      "title": "Marketing",
+      "description": "Used to measure partner referrals and marketing effectiveness."
+    }
+  },
+  "cookiePolicy": {
+    "eyebrow": "Privacy",
+    "title": "Cookie Policy",
+    "intro": "This page explains which browser storage technologies NewWebinars uses and how you can manage your choices.",
+    "sections": {
+      "what": {
+        "title": "What are cookies?",
+        "description": "Cookies and local browser storage are small data records that help the website remember your session and preferences."
+      },
+      "necessary": {
+        "title": "Necessary cookies",
+        "description": "Used for authentication, security, language, theme, and consent preferences. They do not require consent because the service cannot function properly without them."
+      },
+      "analytics": {
+        "title": "Analytics cookies",
+        "description": "With your consent, they may be used for aggregated traffic and usage analysis. This category is disabled by default."
+      },
+      "marketing": {
+        "title": "Marketing and affiliate tracking",
+        "description": "With your consent, a random affiliate visitor identifier is stored so a referral can be attributed. This category is disabled by default."
+      },
+      "choices": {
+        "title": "Your choices",
+        "description": "You can accept all, reject optional cookies, or choose individual categories. You can change your choice at any time through the link in the footer."
+      }
+    }
+  },
+  "footerCookies": "Cookie settings",
+  "footerCookiePolicy": "Cookie Policy",
+  "redirecting": "Redirecting…",
+  "footerPrivacyPolicy": "Privacy Policy",
+  "footerTerms": "Terms of Service"
 }

@@ -4,6 +4,8 @@ import { AppShell } from '@/components/app/AppShell'
 import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute'
 import { LandingPage } from '@/pages/LandingPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { CookiePolicyPage } from '@/pages/CookiePolicyPage'
+import { LegalDocumentPage } from '@/pages/LegalDocumentPage'
 import { PricingPage } from '@/pages/PricingPage'
 import { PartnersPage } from '@/pages/PartnersPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
@@ -67,6 +69,15 @@ export function AppRoutes() {
           <Route index element={<LandingPage />} />
           <Route path="pricing" element={<PricingPage />} />
           <Route path="partners" element={<PartnersPage />} />
+          <Route path="cookie-policy" element={<CookiePolicyPage />} />
+          <Route
+            path="privacy"
+            element={<LegalDocumentPage document="privacy" />}
+          />
+          <Route
+            path="terms"
+            element={<LegalDocumentPage document="terms" />}
+          />
           <Route path="login" element={<LoginPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />
           <Route path="*" element={<NotFoundPage />} />

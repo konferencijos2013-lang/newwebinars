@@ -1,0 +1,178 @@
+{
+  "shared": {
+    "eyebrow": "Teisinė informacija",
+    "lastUpdated": "Atnaujinta: 2026-08-30"
+  },
+  "privacy": {
+    "title": "Privatumo politika",
+    "intro": "Ši privatumo politika paaiškina, kaip „NewWebinars“ renka, naudoja ir saugo jūsų asmens duomenis.",
+    "sections": [
+      {
+        "title": "1. Bendrosios nuostatos",
+        "paragraphs": [
+          "Duomenų valdytojas – Virginijus Guoga, vykdantis individualią veiklą pagal pažymą Nr. 626398 (toliau – „mes“). Ši politika taikoma „NewWebinars“ platformos ir svetainės https://newwebinars.com lankytojams bei naudotojams.",
+          "Asmens duomenis tvarkome vadovaudamiesi Bendruoju duomenų apsaugos reglamentu (BDAR) ir Lietuvos Respublikos teisės aktais."
+        ]
+      },
+      {
+        "title": "2. Kokius duomenis renkame?",
+        "bullets": [
+          "Registracijos ir paskyros duomenis: vardą, el. pašto adresą, paskyros bei įmonės informaciją, jei ją pateikiate. Slaptažodžius saugiai tvarko autentifikavimo paslaugos teikėjas; mes jų nematome.",
+          "Naudojimosi paslauga duomenis: sukurtus webinarus, registracijas, dalyvių informaciją, įrašus, pokalbius, turinį ir paskyros veiksmus.",
+          "Atsiskaitymo duomenis: pasirinktą planą, prenumeratos būseną, mokėjimų istoriją ir sąskaitų duomenis. Pilnų mokėjimo kortelės duomenų nesaugome.",
+          "Techninius duomenis: IP adresą, naršyklę, įrenginio informaciją, saugumo įrašus, slapukus ir vietinės naršyklės saugyklos duomenis.",
+          "Bendravimo duomenis: jūsų užklausas ir susirašinėjimą su pagalba."
+        ]
+      },
+      {
+        "title": "3. Kaip naudojame duomenis?",
+        "bullets": [
+          "Paslaugai teikti, paskyrai administruoti ir naudotojui autentifikuoti.",
+          "Webinarams, registracijoms, įrašams, priminimams ir kitoms pasirinktoms funkcijoms vykdyti.",
+          "Prenumeratoms, mokėjimams ir apskaitai administruoti.",
+          "Techninei pagalbai, saugumui, sukčiavimo prevencijai ir paslaugos gerinimui.",
+          "Teisinėms prievolėms vykdyti ir, gavus sutikimą, rinkodaros ar analitikos veiksmams atlikti."
+        ]
+      },
+      {
+        "title": "4. Tvarkymo teisiniai pagrindai",
+        "bullets": [
+          "Sutarties vykdymas (BDAR 6 str. 1 d. b p.) – kai duomenys būtini paslaugai suteikti.",
+          "Teisinė prievolė (BDAR 6 str. 1 d. c p.) – apskaitai, mokesčiams ir teisėtiems institucijų reikalavimams.",
+          "Teisėtas interesas (BDAR 6 str. 1 d. f p.) – platformos saugumui, piktnaudžiavimo prevencijai ir veikimo gerinimui.",
+          "Sutikimas (BDAR 6 str. 1 d. a p.) – nebūtiniems slapukams, analitikai ir rinkodarai, kai jie naudojami."
+        ]
+      },
+      {
+        "title": "5. Slapukai ir sekimo technologijos",
+        "paragraphs": [
+          "Naudojame būtinus slapukus ir vietinę naršyklės saugyklą prisijungimui, saugumui, kalbai, temai ir privatumo pasirinkimams. Analitinės ir rinkodaros kategorijos pagal nutylėjimą išjungtos ir gali būti aktyvuotos tik gavus jūsų sutikimą.",
+          "Sutikimą galite bet kada pakeisti paspaudę „Slapukų nustatymai“ svetainės poraštėje. Daugiau informacijos pateikta Slapukų politikoje."
+        ]
+      },
+      {
+        "title": "6. Duomenų gavėjai ir paslaugų teikėjai",
+        "paragraphs": [
+          "Duomenis tiek, kiek būtina paslaugai teikti, gali tvarkyti mūsų pasitelkti paslaugų teikėjai: „Supabase“ (autentifikavimas ir duomenų bazė), „Stripe“ (mokėjimai), „Cloudflare“ (priegloba, saugumas ir vaizdo transliacijos), „OpenAI“ (DI funkcijos, kai jas pasirenkate), taip pat jūsų pačių sukonfigūruoti el. laiškų ar integracijų teikėjai.",
+          "Šie paslaugų teikėjai veikia pagal savo privatumo sąlygas ir duomenų tvarkymo susitarimus. Duomenys gali būti perduodami už EEE ribų tik taikant BDAR numatytas apsaugos priemones. Duomenų neparduodame."
+        ]
+      },
+      {
+        "title": "7. Duomenų saugojimas",
+        "paragraphs": [
+          "Duomenis saugome tiek, kiek reikia paslaugai teikti, sutartiniams ir teisiniams įsipareigojimams vykdyti. Paskyros turinys paprastai saugomas iki paskyros panaikinimo, o apskaitos dokumentai – teisės aktuose nustatytą laiką. Atsarginės kopijos ir saugumo žurnalai gali būti ištrinami vėliau pagal techninius saugojimo ciklus."
+        ]
+      },
+      {
+        "title": "8. Webinarų organizatorių atsakomybė",
+        "paragraphs": [
+          "Kai „NewWebinars“ klientas renka savo webinarų dalyvių duomenis, klientas paprastai yra tų duomenų valdytojas, o mes veikiame kaip duomenų tvarkytojas. Klientas atsako už teisėtą dalyvių informavimą, tinkamą teisinį pagrindą ir savo privatumo pranešimą."
+        ]
+      },
+      {
+        "title": "9. Jūsų teisės",
+        "bullets": [
+          "Susipažinti su savo duomenimis ir gauti jų kopiją.",
+          "Reikalauti ištaisyti netikslius duomenis, juos ištrinti arba apriboti jų tvarkymą.",
+          "Gauti duomenis perkeliamu formatu, kai ši teisė taikoma.",
+          "Nesutikti su tvarkymu, grindžiamu teisėtu interesu, ir bet kada atšaukti sutikimą.",
+          "Pateikti skundą Valstybinei duomenų apsaugos inspekcijai."
+        ]
+      },
+      {
+        "title": "10. Kaip pasinaudoti teisėmis?",
+        "paragraphs": [
+          "Prašymą siųskite el. paštu support@scorecard.lt. Atsakysime nepagrįstai nedelsdami ir ne vėliau kaip per 30 kalendorinių dienų, išskyrus teisės aktuose numatytus atvejus. Prieš vykdydami prašymą galime paprašyti patvirtinti tapatybę."
+        ]
+      },
+      {
+        "title": "11. Politikos pakeitimai ir kontaktai",
+        "paragraphs": [
+          "Politiką galime atnaujinti pasikeitus paslaugai ar teisiniams reikalavimams. Esminius pakeitimus paskelbsime platformoje arba pranešime el. paštu.",
+          "Duomenų valdytojas: Virginijus Guoga. Individualios veiklos pažymos Nr. 626398. El. paštas: support@scorecard.lt. Svetainė: https://newwebinars.com."
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "title": "Naudojimo sąlygos",
+    "intro": "Šios sąlygos reglamentuoja naudojimąsi „NewWebinars“ internetine webinarų platforma.",
+    "sections": [
+      {
+        "title": "1. Bendrosios nuostatos",
+        "paragraphs": [
+          "„NewWebinars“ platformą valdo Virginijus Guoga, vykdantis individualią veiklą pagal pažymą Nr. 626398 (toliau – „mes“). Sukurdami paskyrą, užsakydami planą ar naudodamiesi platforma patvirtinate, kad perskaitėte šias sąlygas ir su jomis sutinkate.",
+          "Jei platforma naudojama organizacijos vardu, patvirtinate, kad turite teisę įpareigoti tą organizaciją laikytis šių sąlygų."
+        ]
+      },
+      {
+        "title": "2. Paslaugos aprašymas",
+        "paragraphs": [
+          "„NewWebinars“ leidžia kurti ir rengti tiesioginius bei automatizuotus webinarus, registracijos ir pardavimo puslapius, rinkti registracijas, saugoti įrašus, naudoti analitiką, integracijas ir kitas platformoje pateikiamas funkcijas.",
+          "Funkcijų apimtis, naudojimo limitai ir kreditai priklauso nuo pasirinkto plano. Paslaugą galime pagrįstai keisti ar tobulinti, išlaikydami esminę mokamos paslaugos paskirtį."
+        ]
+      },
+      {
+        "title": "3. Registracija ir paskyra",
+        "bullets": [
+          "Registracijai turite pateikti galiojantį el. pašto adresą ir tikslią informaciją.",
+          "Atsakote už prisijungimo duomenų konfidencialumą, paskyros naudotojus ir visus veiksmus paskyroje.",
+          "Apie įtariamą neteisėtą prieigą turite nedelsdami pranešti mums.",
+          "Galime sustabdyti ar užblokuoti paskyrą, jei pažeidžiamos šios sąlygos, teisės aktai arba kyla grėsmė platformos saugumui."
+        ]
+      },
+      {
+        "title": "4. Leistinas naudojimas",
+        "paragraphs": [
+          "Draudžiama naudoti platformą neteisėtai, apgaulingai, kenkėjiškai veiklai, šlamštui, nepageidaujamai komunikacijai, trečiųjų asmenų teisėms pažeisti, kenkėjiškam kodui platinti, saugumo priemonėms apeiti ar paslaugai trikdyti.",
+          "Jūs atsakote už savo turinį, webinarų dalyvių informavimą, rinkodaros sutikimus ir kitų taikomų teisės aktų laikymąsi."
+        ]
+      },
+      {
+        "title": "5. Planai, mokėjimai ir prenumerata",
+        "bullets": [
+          "Platformoje gali būti nemokamas planas ir mokami mėnesiniai arba metiniai planai. Aktualios kainos, limitai ir kreditai pateikiami kainodaros bei atsiskaitymų puslapiuose.",
+          "Mokėjimus apdoroja „Stripe“. Kainos nurodomos prieš patvirtinant užsakymą; taikomi mokesčiai, jei jie privalomi pagal teisę.",
+          "Prenumerata automatiškai pratęsiama pasirinktam laikotarpiui, kol ją atšaukiate klientų portale arba paskyros atsiskaitymų skiltyje.",
+          "Metinio plano kreditai suteikiami iš karto už visą apmokėtą metinį laikotarpį. Nepanaudoti kreditai nėra keičiami į pinigus ir pasibaigus atitinkamam laikotarpiui gali nustoti galioti.",
+          "Atšaukus prenumeratą, ji paprastai lieka aktyvi iki apmokėto laikotarpio pabaigos. Jau pradėto laikotarpio įmokos negrąžinamos, išskyrus imperatyviai taikomų teisės aktų atvejus arba kai aiškiai sutariame kitaip.",
+          "Jei mokėjimas nepavyksta, galime apriboti mokamas funkcijas, sustabdyti prenumeratą arba pakeisti paskyrą į nemokamą planą."
+        ]
+      },
+      {
+        "title": "6. Vartotojų teisės",
+        "paragraphs": [
+          "Jei paslaugą įsigyjate kaip vartotojas, jums taikomos privalomos vartotojų apsaugos teisės. Kai prašote pradėti teikti skaitmeninę paslaugą iš karto, teisė atsisakyti sutarties gali būti ribojama tik įstatymų nustatyta tvarka. Nė viena šių sąlygų nuostata nepanaikina teisių, kurių pagal įstatymą atsisakyti negalima."
+        ]
+      },
+      {
+        "title": "7. Intelektinė nuosavybė ir jūsų turinys",
+        "paragraphs": [
+          "Platformos programinė įranga, dizainas, ženklai ir mūsų sukurtas turinys priklauso mums arba mūsų licencijų davėjams. Suteikiame ribotą, neišimtinę ir neperleidžiamą teisę naudotis platforma pagal šias sąlygas.",
+          "Jūsų sukurtas ar įkeltas turinys lieka jūsų. Suteikiate mums teisę jį saugoti, apdoroti, perduoti ir rodyti tik tiek, kiek būtina paslaugai teikti, saugumui užtikrinti ir jūsų nurodymams vykdyti. Patvirtinate, kad turite reikalingas teises į įkeliamą turinį."
+        ]
+      },
+      {
+        "title": "8. Paslaugos prieinamumas ir atsakomybė",
+        "paragraphs": [
+          "Stengiamės užtikrinti stabilų veikimą, tačiau negarantuojame nepertraukiamo ar visiškai be klaidų veikimo. Galimi priežiūros darbai, trečiųjų šalių sutrikimai ir nuo mūsų nepriklausančios aplinkybės.",
+          "Tiek, kiek leidžia teisė, neatsakome už netiesioginius nuostolius, negautą pelną, prarastus duomenis ar žalą, kilusią dėl netinkamo platformos naudojimo. Mūsų bendra atsakomybė, susijusi su mokama paslauga, neviršija jūsų už tą paslaugą per paskutinius 12 mėnesių sumokėtos sumos. Šie ribojimai netaikomi, kai atsakomybės negalima riboti pagal įstatymą."
+        ]
+      },
+      {
+        "title": "9. Sąlygų keitimas ir nutraukimas",
+        "paragraphs": [
+          "Sąlygas galime atnaujinti dėl teisinių, saugumo ar paslaugos pakeitimų. Apie esminius pakeitimus pranešime platformoje arba el. paštu. Jei su pakeitimais nesutinkate, galite nutraukti prenumeratą prieš jiems įsigaliojant.",
+          "Galite nustoti naudotis paslauga ir atšaukti prenumeratą bet kada. Paskyros uždarymas neatleidžia nuo iki uždarymo atsiradusių mokėjimo ar kitų prievolių."
+        ]
+      },
+      {
+        "title": "10. Taikytina teisė, ginčai ir kontaktai",
+        "paragraphs": [
+          "Sąlygoms taikoma Lietuvos Respublikos teisė. Pirmiausia ginčą sieksime išspręsti derybomis. Vartotojai taip pat gali kreiptis į Valstybinę vartotojų teisių apsaugos tarnybą arba kitą kompetentingą instituciją.",
+          "Platformos operatorius: Virginijus Guoga. Individualios veiklos pažymos Nr. 626398. El. paštas: support@scorecard.lt. Svetainė: https://newwebinars.com."
+        ]
+      }
+    ]
+  }
+}
