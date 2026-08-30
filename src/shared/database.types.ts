@@ -43,7 +43,14 @@ export type CreditType =
 export type UsageEventScope =
   'webinar' | 'recording' | 'storage' | 'ai' | 'other'
 export type SubscriptionStatus =
-  'incomplete' | 'active' | 'past_due' | 'canceled' | 'paused' | 'trialing'
+  | 'incomplete'
+  | 'incomplete_expired'
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'paused'
+  | 'trialing'
+  | 'unpaid'
 export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'refunded'
 export type AiPromptScope =
   'global' | 'webinar' | 'funnel' | 'chat_script' | 'support'
@@ -398,6 +405,7 @@ export interface AccountStorageUsage {
 
 export interface CreditPlan {
   id: string
+  code: string
   name: string
   stripe_price_id: string | null
   is_active: boolean
@@ -405,6 +413,7 @@ export interface CreditPlan {
   monthly_credits: Record<string, number>
   limits: Record<string, unknown>
   price_cents: number
+  currency: string
   interval: 'month' | 'year'
   created_at: string
   updated_at: string
@@ -449,10 +458,15 @@ export interface Subscription {
   credit_plan_id: string | null
   stripe_subscription_id: string | null
   stripe_price_id: string | null
+  stripe_customer_id: string | null
   status: SubscriptionStatus
   current_period_start: string | null
   current_period_end: string | null
   cancel_at_period_end: boolean
+  stripe_latest_event_created_at: string | null
+  ended_at: string | null
+  access_granted_at: string | null
+  is_current: boolean
   created_at: string
   updated_at: string
 }
@@ -466,6 +480,10 @@ export interface Payment {
   amount_cents: number
   currency: string
   status: PaymentStatus
+  invoice_status: string | null
+  failure_message: string | null
+  stripe_event_created_at: string | null
+  credits_granted_at: string | null
   paid_at: string | null
   created_at: string
   updated_at: string

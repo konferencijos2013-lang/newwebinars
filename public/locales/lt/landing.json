@@ -82,7 +82,9 @@
         "100 dalyvių viename tiesioginiame webinare",
         "1 komandos narys"
       ],
-      "annual": "182,40 € / metai — sutaupykite 20 %"
+      "annual": "182,40 € / metai — sutaupykite 20 %",
+      "monthPrice": "19 € / mėn.",
+      "yearPrice": "182,40 € / metus"
     },
     "grow": {
       "name": "Grow",
@@ -92,7 +94,9 @@
         "500 dalyvių viename tiesioginiame webinare",
         "3 komandos nariai"
       ],
-      "annual": "374,40 € / metai — sutaupykite 20 %"
+      "annual": "374,40 € / metai — sutaupykite 20 %",
+      "monthPrice": "39 € / mėn.",
+      "yearPrice": "374,40 € / metus"
     },
     "scale": {
       "name": "Scale",
@@ -102,8 +106,14 @@
         "2 000 dalyvių viename tiesioginiame webinare",
         "10 komandos narių"
       ],
-      "annual": "758,40 € / metai — sutaupykite 20 %"
-    }
+      "annual": "758,40 € / metai — sutaupykite 20 %",
+      "monthPrice": "79 € / mėn.",
+      "yearPrice": "758,40 € / metus"
+    },
+    "monthly": "Kas mėnesį",
+    "yearly": "Kasmet",
+    "annualCreditsExplanation": "Metiniai planai apmokami kartą per metus ir apima visą metinį kreditų kiekį.",
+    "freeCta": "Kurti nemokamą paskyrą"
   },
   "partners": {
     "title": "Tapkite NewWebinars partneriu",

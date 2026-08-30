@@ -82,7 +82,9 @@
         "100 participants per live webinar",
         "1 team member"
       ],
-      "annual": "€182.40/year — save 20%"
+      "annual": "€182.40/year — save 20%",
+      "monthPrice": "€19/month",
+      "yearPrice": "€182.40/year"
     },
     "grow": {
       "name": "Grow",
@@ -92,7 +94,9 @@
         "500 participants per live webinar",
         "3 team members"
       ],
-      "annual": "€374.40/year — save 20%"
+      "annual": "€374.40/year — save 20%",
+      "monthPrice": "€39/month",
+      "yearPrice": "€374.40/year"
     },
     "scale": {
       "name": "Scale",
@@ -102,8 +106,14 @@
         "2,000 participants per live webinar",
         "10 team members"
       ],
-      "annual": "€758.40/year — save 20%"
-    }
+      "annual": "€758.40/year — save 20%",
+      "monthPrice": "€79/month",
+      "yearPrice": "€758.40/year"
+    },
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "annualCreditsExplanation": "Annual plans are billed once per year and include the full annual credit allocation.",
+    "freeCta": "Create free account"
   },
   "partners": {
     "title": "Partner with NewWebinars",

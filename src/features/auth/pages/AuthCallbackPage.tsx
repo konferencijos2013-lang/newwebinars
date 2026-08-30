@@ -7,6 +7,24 @@ import { Spinner } from '@/components/ui/Spinner'
 
 const PARTNER_VISITOR_TOKEN_KEY = 'newwebinars_partner_visitor_token'
 
+function safeReturnTo(value: string | null) {
+  if (!value) return '/dashboard'
+  try {
+    const url = new URL(value, window.location.origin)
+    if (url.origin !== window.location.origin || url.pathname !== '/billing')
+      return '/dashboard'
+    const safe = new URLSearchParams()
+    const plan = url.searchParams.get('plan')
+    const interval = url.searchParams.get('interval')
+    if (plan && /^[a-z0-9-]+$/.test(plan)) safe.set('plan', plan)
+    if (interval === 'month' || interval === 'year')
+      safe.set('interval', interval)
+    return `/billing${safe.size ? `?${safe}` : ''}`
+  } catch {
+    return '/dashboard'
+  }
+}
+
 export function AuthCallbackPage() {
   const { t } = useTranslation('auth')
   const navigate = useNavigate()
@@ -64,6 +82,7 @@ export function AuthCallbackPage() {
     const hashParamsForError = new URLSearchParams(
       window.location.hash.slice(1),
     )
+    const returnTo = safeReturnTo(queryParams.get('returnTo'))
     const oauthError =
       queryParams.get('error_description') ||
       queryParams.get('error') ||
@@ -85,7 +104,7 @@ export function AuthCallbackPage() {
     authListener = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[AuthCallback] auth event', { event, hasSession: !!session })
       if (event === 'SIGNED_IN' && session) {
-        finish('/dashboard')
+        finish(returnTo)
       }
     }).data
 
@@ -101,7 +120,7 @@ export function AuthCallbackPage() {
             fail(exchangeError.message)
             return
           }
-          finish('/dashboard')
+          finish(returnTo)
           return
         }
 
@@ -125,7 +144,7 @@ export function AuthCallbackPage() {
             fail(setError.message)
             return
           }
-          finish('/dashboard')
+          finish(returnTo)
           return
         }
 
@@ -134,7 +153,7 @@ export function AuthCallbackPage() {
           const { data, error } = await supabase.auth.getSession()
           if (!isActive || resolvedRef.current) return
           if (data.session && !error) {
-            finish('/dashboard')
+            finish(returnTo)
             return
           }
           await new Promise((resolve) => setTimeout(resolve, 100))

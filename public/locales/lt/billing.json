@@ -20,10 +20,36 @@
     "max_webinars": "{{value}} webinarai",
     "max_participants_per_webinar": "{{value}} dalyvių viename tiesioginiame webinare",
     "max_team_members": "{{value}} komandos nariai",
-    "live_webinar_minute": "{{value}} tiesioginių transliacijų min. / mėn.",
-    "automated_webinar_minute": "{{value}} automatizuotų webinarų min. / mėn.",
-    "registration": "{{value}} registracijų / mėn.",
-    "recording_storage_gb_month": "{{value}} GB įrašų saugyklos / mėn.",
-    "ai_token": "{{value}} DI žetonų / mėn."
+    "live_webinar_minute": "{{value}} tiesioginių transliacijų min. / {{period}}",
+    "automated_webinar_minute": "{{value}} automatizuotų webinarų min. / {{period}}",
+    "registration": "{{value}} registracijų / {{period}}",
+    "recording_storage_gb_month": "{{value}} GB įrašų saugyklos / {{period}}",
+    "ai_token": "{{value}} DI žetonų / {{period}}"
+  },
+  "billingMonthly": "Kas mėnesį",
+  "billingYearly": "Kasmet",
+  "annualCreditsExplanation": "Metiniai planai apmokami kartą per metus ir apima visą metinį kreditų kiekį.",
+  "checkoutSuccess": "Mokėjimas atliktas. Prenumerata bus rodoma, kai ją patvirtins Stripe.",
+  "checkoutCanceled": "Apmokėjimas atšauktas. Pakeitimų neatlikta.",
+  "dismiss": "Uždaryti",
+  "manageSubscription": "Valdyti prenumeratą",
+  "changeInPortal": "Keisti klientų portale",
+  "ownerAdminOnly": "Atsiskaitymus gali valdyti tik paskyros savininkai ir administratoriai.",
+  "cancelAtPeriodEnd": "Planas baigsis {{date}}.",
+  "renewsAt": "Bus pratęstas {{date}}.",
+  "statusDescription": "Prenumeratos būsena iš Stripe.",
+  "status": {
+    "active": "Prenumerata aktyvi",
+    "trialing": "Bandomasis laikotarpis aktyvus",
+    "past_due": "Mokėjimas vėluoja — atnaujinkite mokėjimo būdą.",
+    "incomplete": "Mokėjimo nustatymas nebaigtas.",
+    "paused": "Prenumerata pristabdyta",
+    "canceled": "Prenumerata atšaukta",
+    "unpaid": "Prenumerata neapmokėta — atnaujinkite mokėjimo būdą.",
+    "incomplete_expired": "Mokėjimo nustatymo laikas baigėsi."
+  },
+  "creditPeriod": {
+    "monthly": "mėn.",
+    "annual": "metus"
   }
 }

@@ -20,10 +20,36 @@
     "max_webinars": "{{value}} webinars",
     "max_participants_per_webinar": "{{value}} participants per live webinar",
     "max_team_members": "{{value}} team members",
-    "live_webinar_minute": "{{value}} live minutes/month",
-    "automated_webinar_minute": "{{value}} automated minutes/month",
-    "registration": "{{value}} registrations/month",
-    "recording_storage_gb_month": "{{value}} GB recording storage/month",
-    "ai_token": "{{value}} AI tokens/month"
+    "live_webinar_minute": "{{value}} live minutes/{{period}}",
+    "automated_webinar_minute": "{{value}} automated minutes/{{period}}",
+    "registration": "{{value}} registrations/{{period}}",
+    "recording_storage_gb_month": "{{value}} GB recording storage/{{period}}",
+    "ai_token": "{{value}} AI tokens/{{period}}"
+  },
+  "billingMonthly": "Monthly",
+  "billingYearly": "Yearly",
+  "annualCreditsExplanation": "Annual plans are billed once per year and include the full annual credit allocation.",
+  "checkoutSuccess": "Payment completed. Your subscription will appear after Stripe confirms it.",
+  "checkoutCanceled": "Checkout was canceled. No changes were made.",
+  "dismiss": "Dismiss",
+  "manageSubscription": "Manage subscription",
+  "changeInPortal": "Change in customer portal",
+  "ownerAdminOnly": "Only account owners and admins can manage billing.",
+  "cancelAtPeriodEnd": "Your plan will end on {{date}}.",
+  "renewsAt": "Renews on {{date}}.",
+  "statusDescription": "Subscription status from Stripe.",
+  "status": {
+    "active": "Subscription active",
+    "trialing": "Trial active",
+    "past_due": "Payment past due — update your payment method.",
+    "incomplete": "Payment setup is incomplete.",
+    "paused": "Subscription paused",
+    "canceled": "Subscription canceled",
+    "unpaid": "Subscription unpaid — update your payment method.",
+    "incomplete_expired": "Payment setup expired."
+  },
+  "creditPeriod": {
+    "monthly": "month",
+    "annual": "year"
   }
 }

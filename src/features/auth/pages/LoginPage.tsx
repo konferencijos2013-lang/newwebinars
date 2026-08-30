@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useUser } from '@/features/auth/hooks/useUser'
@@ -13,13 +13,35 @@ function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
-function getRedirectTo() {
-  return `${window.location.origin}/auth/callback`
+function safeReturnTo(value: string | null) {
+  if (!value) return '/dashboard'
+  try {
+    const url = new URL(value, window.location.origin)
+    if (url.origin !== window.location.origin || url.pathname !== '/billing')
+      return '/dashboard'
+    const safe = new URLSearchParams()
+    const plan = url.searchParams.get('plan')
+    const interval = url.searchParams.get('interval')
+    if (plan && /^[a-z0-9-]+$/.test(plan)) safe.set('plan', plan)
+    if (interval === 'month' || interval === 'year')
+      safe.set('interval', interval)
+    return `/billing${safe.size ? `?${safe}` : ''}`
+  } catch {
+    return '/dashboard'
+  }
+}
+
+function getRedirectTo(returnTo: string) {
+  const url = new URL('/auth/callback', window.location.origin)
+  url.searchParams.set('returnTo', returnTo)
+  return url.toString()
 }
 
 export function LoginPage() {
   const { t } = useTranslation('auth')
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const returnTo = safeReturnTo(searchParams.get('returnTo'))
   const { status } = useUser()
 
   const [email, setEmail] = useState('')
@@ -31,9 +53,9 @@ export function LoginPage() {
 
   useEffect(() => {
     if (status === 'authenticated') {
-      navigate('/dashboard', { replace: true })
+      navigate(returnTo, { replace: true })
     }
-  }, [status, navigate])
+  }, [status, navigate, returnTo])
 
   if (status === 'loading') {
     return (
@@ -59,7 +81,7 @@ export function LoginPage() {
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: getRedirectTo(),
+        emailRedirectTo: getRedirectTo(returnTo),
       },
     })
 
@@ -79,13 +101,13 @@ export function LoginPage() {
     setIsLoadingGoogle(true)
 
     console.log('[LoginPage] initiating Google OAuth', {
-      redirectTo: getRedirectTo(),
+      redirectTo: getRedirectTo(returnTo),
     })
 
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: getRedirectTo(),
+        redirectTo: getRedirectTo(returnTo),
       },
     })
 

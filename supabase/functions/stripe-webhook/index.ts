@@ -1,213 +1,231 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import Stripe from 'https://esm.sh/stripe@14.4.0?target=deno'
+import { requireEnv, stripeId, unixToIso } from '../_shared/billing.ts'
 
 const reply = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json' },
   })
+const accountMetadata = (object: { metadata?: Stripe.Metadata | null }) =>
+  object.metadata?.account_id ?? null
 
 serve(async (req) => {
-  const signature = req.headers.get('stripe-signature')
-  if (!signature) return reply({ error: 'Missing signature' }, 400)
-  const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
-    apiVersion: '2023-10-16',
-    httpClient: Stripe.createFetchHttpClient(),
-  })
-  let event: Stripe.Event
+  if (req.method !== 'POST') return reply({ error: 'Method not allowed' }, 405)
+  let eventId: string | null = null
+  let processingToken: string | null = null
   try {
-    event = stripe.webhooks.constructEvent(
-      await req.text(),
-      signature,
-      Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '',
+    const stripe = new Stripe(requireEnv(Deno.env.get, 'STRIPE_SECRET_KEY'), {
+      apiVersion: '2023-10-16',
+      httpClient: Stripe.createFetchHttpClient(),
+    })
+    const signature = req.headers.get('stripe-signature')
+    if (!signature) return reply({ error: 'Missing signature' }, 400)
+    let event: Stripe.Event
+    try {
+      event = stripe.webhooks.constructEvent(
+        await req.text(),
+        signature,
+        requireEnv(Deno.env.get, 'STRIPE_WEBHOOK_SECRET'),
+      )
+    } catch {
+      return reply({ error: 'Invalid webhook signature' }, 400)
+    }
+    eventId = event.id
+    processingToken = crypto.randomUUID()
+    const db = createClient(
+      requireEnv(Deno.env.get, 'SUPABASE_URL'),
+      requireEnv(Deno.env.get, 'SUPABASE_SERVICE_ROLE_KEY'),
     )
-  } catch {
-    return reply({ error: 'Invalid webhook signature' }, 400)
-  }
-
-  const db = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-  )
-  const { error: ledgerError } = await db.from('stripe_webhook_events').insert({
-    stripe_event_id: event.id,
-    event_type: event.type,
-    payload: { api_version: event.api_version },
-  })
-  if (ledgerError?.code === '23505')
-    return reply({ received: true, duplicate: true })
-  if (ledgerError) return reply({ error: 'Unable to record webhook' }, 500)
-
-  try {
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session
-      const accountId = session.metadata?.account_id
-      const planId = session.metadata?.plan_id
-      const stripeSubscriptionId =
-        typeof session.subscription === 'string'
-          ? session.subscription
-          : session.subscription?.id
-      if (!accountId || !planId || !stripeSubscriptionId)
-        throw new Error('Checkout metadata is incomplete')
-      const subscription =
-        await stripe.subscriptions.retrieve(stripeSubscriptionId)
-      const { error } = await db.from('subscriptions').upsert(
-        {
-          account_id: accountId,
-          credit_plan_id: planId,
-          stripe_subscription_id: subscription.id,
-          stripe_price_id: subscription.items.data[0]?.price.id ?? null,
-          status: subscription.status,
-          current_period_start: new Date(
-            subscription.current_period_start * 1000,
-          ).toISOString(),
-          current_period_end: new Date(
-            subscription.current_period_end * 1000,
-          ).toISOString(),
-          cancel_at_period_end: subscription.cancel_at_period_end,
-        },
-        { onConflict: 'stripe_subscription_id' },
-      )
-      if (error) throw error
-      await db.from('accounts').update({ plan: 'paid' }).eq('id', accountId)
-      const { error: creditsError } = await db.rpc(
-        'reset_account_credits_for_plan',
-        {
-          p_account_id: accountId,
-          p_plan_id: planId,
-          p_period_started_at: new Date(
-            subscription.current_period_start * 1000,
-          ).toISOString(),
-          p_period_ends_at: new Date(
-            subscription.current_period_end * 1000,
-          ).toISOString(),
-        },
-      )
-      if (creditsError) throw creditsError
+    const eventTime = unixToIso(event.created)!
+    const { data: claimed, error: claimError } = await db.rpc(
+      'claim_stripe_webhook_event',
+      {
+        p_event_id: event.id,
+        p_event_type: event.type,
+        p_event_created_at: eventTime,
+        p_processing_token: processingToken,
+        p_payload: { api_version: event.api_version, livemode: event.livemode },
+      },
+    )
+    if (claimError) throw claimError
+    if (!claimed) {
+      const { data: ledger, error: ledgerError } = await db
+        .from('stripe_webhook_events')
+        .select('status')
+        .eq('stripe_event_id', event.id)
+        .single()
+      if (ledgerError) throw ledgerError
+      if (ledger.status === 'processing') {
+        // A concurrent worker owns this event. Ask Stripe to retry so a crashed owner
+        // cannot turn temporary overlap into permanent event loss.
+        return reply({ error: 'Webhook is already processing' }, 500)
+      }
+      return reply({ received: true, duplicate: true })
     }
 
-    if (event.type === 'invoice.payment_succeeded') {
-      const invoice = event.data.object as Stripe.Invoice
-      const stripeSubscriptionId =
-        typeof invoice.subscription === 'string'
-          ? invoice.subscription
-          : invoice.subscription?.id
-      if (stripeSubscriptionId) {
-        const { data: subscription, error } = await db
-          .from('subscriptions')
-          .select('id,account_id,credit_plan_id')
-          .eq('stripe_subscription_id', stripeSubscriptionId)
-          .single()
-        if (error) throw error
-        const { error: paymentError } = await db.from('payments').upsert(
-          {
-            account_id: subscription.account_id,
-            subscription_id: subscription.id,
-            stripe_payment_intent_id:
-              typeof invoice.payment_intent === 'string'
-                ? invoice.payment_intent
-                : (invoice.payment_intent?.id ?? null),
-            stripe_invoice_id: invoice.id,
-            amount_cents: invoice.amount_paid,
-            currency: invoice.currency,
-            status: 'succeeded',
-            paid_at: new Date(
-              (invoice.status_transitions.paid_at ??
-                Math.floor(Date.now() / 1000)) * 1000,
-            ).toISOString(),
-          },
-          { onConflict: 'stripe_invoice_id' },
-        )
-        if (paymentError) throw paymentError
-        const { error: commissionError } = await db.rpc(
-          'create_affiliate_commission_for_payment',
-          { p_stripe_invoice_id: invoice.id },
-        )
-        if (commissionError) throw commissionError
-        const periodStart = new Date(invoice.period_start * 1000).toISOString(),
-          periodEnd = new Date(invoice.period_end * 1000).toISOString()
-        await db
-          .from('subscriptions')
-          .update({
-            status: 'active',
-            current_period_start: periodStart,
-            current_period_end: periodEnd,
-          })
-          .eq('id', subscription.id)
-        if (subscription.credit_plan_id) {
-          const { error: creditsError } = await db.rpc(
-            'reset_account_credits_for_plan',
+    const planByPrice = async (priceId: string) => {
+      const { data, error } = await db
+        .from('credit_plans')
+        .select('id,code,interval')
+        .eq('stripe_price_id', priceId)
+        .single()
+      if (error || !data) {
+        throw new Error(`No trusted plan mapped to Stripe price ${priceId}`)
+      }
+      return data
+    }
+    const resolveAccount = async (
+      customerId: string | null,
+      metadataId: string | null,
+    ) => {
+      if (metadataId) return metadataId
+      if (!customerId) return null
+      const { data, error } = await db
+        .from('billing_customers')
+        .select('account_id')
+        .eq('stripe_customer_id', customerId)
+        .maybeSingle()
+      if (error) throw error
+      if (data?.account_id) return data.account_id
+      const customer = await stripe.customers.retrieve(customerId)
+      return !customer.deleted ? (customer.metadata?.account_id ?? null) : null
+    }
+    const syncSubscription = async (subscription: Stripe.Subscription) => {
+      const priceId = subscription.items.data[0]?.price.id
+      if (!priceId) throw new Error('Subscription has no price')
+      const plan = await planByPrice(priceId)
+      const customerId = stripeId(subscription.customer)
+      const accountId = await resolveAccount(
+        customerId,
+        accountMetadata(subscription),
+      )
+      if (!accountId) throw new Error('Unable to map subscription to account')
+      if (customerId) {
+        const customer = await stripe.customers.retrieve(customerId)
+        if (!customer.deleted) {
+          const { error } = await db.from('billing_customers').upsert(
             {
-              p_account_id: subscription.account_id,
-              p_plan_id: subscription.credit_plan_id,
-              p_period_started_at: periodStart,
-              p_period_ends_at: periodEnd,
+              account_id: accountId,
+              stripe_customer_id: customerId,
+              email: customer.email,
+              name: customer.name,
             },
+            { onConflict: 'account_id' },
           )
-          if (creditsError) throw creditsError
+          if (error) throw error
         }
       }
+      const { error } = await db.rpc('sync_stripe_subscription', {
+        p_account_id: accountId,
+        p_plan_id: plan.id,
+        p_subscription_id: subscription.id,
+        p_customer_id: customerId,
+        p_price_id: priceId,
+        p_status: subscription.status,
+        p_period_start: unixToIso(subscription.current_period_start),
+        p_period_end: unixToIso(subscription.current_period_end),
+        p_cancel_at_period_end: subscription.cancel_at_period_end,
+        p_event_created_at: eventTime,
+      })
+      if (error) throw error
+      return { accountId, plan, subscription }
+    }
+    const subscriptionForInvoice = async (invoice: Stripe.Invoice) => {
+      const id = stripeId(invoice.subscription)
+      if (!id) return null
+      return syncSubscription(await stripe.subscriptions.retrieve(id))
     }
 
-    if (event.type === 'charge.refunded') {
-      const charge = event.data.object as Stripe.Charge
-      const stripeInvoiceId =
-        typeof charge.invoice === 'string' ? charge.invoice : charge.invoice?.id
-      if (stripeInvoiceId) {
-        const { error: paymentError } = await db
-          .from('payments')
-          .update({ status: 'refunded' })
-          .eq('stripe_invoice_id', stripeInvoiceId)
-        if (paymentError) throw paymentError
-        const { error: commissionError } = await db.rpc(
-          'reverse_affiliate_commission_for_invoice',
-          { p_stripe_invoice_id: stripeInvoiceId },
-        )
-        if (commissionError) throw commissionError
-      }
-    }
-
-    if (event.type === 'invoice.payment_failed') {
+    let handled = true
+    if (event.type.startsWith('customer.subscription.')) {
+      await syncSubscription(event.data.object as Stripe.Subscription)
+    } else if (event.type === 'checkout.session.completed') {
+      const id = stripeId(
+        (event.data.object as Stripe.Checkout.Session).subscription,
+      )
+      if (id) await syncSubscription(await stripe.subscriptions.retrieve(id))
+      else handled = false
+    } else if (event.type === 'invoice.paid') {
       const invoice = event.data.object as Stripe.Invoice
-      const stripeSubscriptionId =
-        typeof invoice.subscription === 'string'
-          ? invoice.subscription
-          : invoice.subscription?.id
-      if (stripeSubscriptionId)
-        await db
-          .from('subscriptions')
-          .update({ status: 'past_due' })
-          .eq('stripe_subscription_id', stripeSubscriptionId)
-    }
-    if (
-      event.type === 'customer.subscription.updated' ||
-      event.type === 'customer.subscription.deleted'
-    ) {
-      const subscription = event.data.object as Stripe.Subscription
-      await db
-        .from('subscriptions')
-        .update({
-          status: subscription.status,
-          current_period_start: new Date(
-            subscription.current_period_start * 1000,
-          ).toISOString(),
-          current_period_end: new Date(
-            subscription.current_period_end * 1000,
-          ).toISOString(),
-          cancel_at_period_end: subscription.cancel_at_period_end,
+      const synced = await subscriptionForInvoice(invoice)
+      if (synced) {
+        const { error } = await db.rpc('process_paid_stripe_invoice', {
+          p_account_id: synced.accountId,
+          p_plan_id: synced.plan.id,
+          p_subscription_id: synced.subscription.id,
+          p_invoice_id: invoice.id,
+          p_payment_intent_id: stripeId(invoice.payment_intent),
+          p_amount_cents: invoice.amount_paid,
+          p_currency: invoice.currency,
+          p_invoice_status: invoice.status,
+          p_paid_at: unixToIso(
+            invoice.status_transitions.paid_at ?? event.created,
+          ),
+          p_period_start: unixToIso(invoice.period_start),
+          p_period_end: unixToIso(invoice.period_end),
+          p_event_created_at: eventTime,
         })
-        .eq('stripe_subscription_id', subscription.id)
-    }
-    return reply({ received: true })
-  } catch (err) {
-    // Do not mark a failed event as processed: Stripe can safely retry it.
-    // Payment writes are additionally idempotent by Stripe invoice ID.
-    await db
+        if (error) throw error
+      }
+    } else if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object as Stripe.Invoice
+      const synced = await subscriptionForInvoice(invoice)
+      if (synced) {
+        const { error } = await db.rpc('record_failed_stripe_invoice', {
+          p_account_id: synced.accountId,
+          p_subscription_id: synced.subscription.id,
+          p_invoice_id: invoice.id,
+          p_payment_intent_id: stripeId(invoice.payment_intent),
+          p_amount_cents: invoice.amount_due,
+          p_currency: invoice.currency,
+          p_invoice_status: invoice.status,
+          p_event_created_at: eventTime,
+        })
+        if (error) throw error
+      }
+    } else if (event.type === 'charge.refunded') {
+      const invoiceId = stripeId((event.data.object as Stripe.Charge).invoice)
+      if (invoiceId) {
+        const { error } = await db.rpc('process_stripe_refund', {
+          p_invoice_id: invoiceId,
+          p_event_created_at: eventTime,
+        })
+        if (error) throw error
+      }
+    } else handled = false
+
+    const { error: finishError } = await db
       .from('stripe_webhook_events')
-      .delete()
+      .update({
+        status: handled ? 'processed' : 'ignored',
+        processed_at: new Date().toISOString(),
+        processing_token: null,
+      })
       .eq('stripe_event_id', event.id)
-    console.error('Stripe webhook processing failed', event.id, err)
+      .eq('processing_token', processingToken)
+    if (finishError) throw finishError
+    return reply({ received: true })
+  } catch (error) {
+    console.error('Stripe webhook failed', error)
+    try {
+      const url = Deno.env.get('SUPABASE_URL')
+      const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+      if (url && key && eventId && processingToken) {
+        await createClient(url, key)
+          .from('stripe_webhook_events')
+          .update({
+            status: 'failed',
+            error_message: String(error).slice(0, 2000),
+            processing_token: null,
+          })
+          .eq('stripe_event_id', eventId)
+          .eq('processing_token', processingToken)
+      }
+    } catch {
+      /* preserve original failure */
+    }
     return reply({ error: 'Webhook processing failed' }, 500)
   }
 })

@@ -20,10 +20,36 @@
     "max_webinars": "{{value}} вебинаров",
     "max_participants_per_webinar": "{{value}} участников на прямой вебинар",
     "max_team_members": "{{value}} участников команды",
-    "live_webinar_minute": "{{value}} минут прямых вебинаров/месяц",
-    "automated_webinar_minute": "{{value}} минут автоматизированных вебинаров/месяц",
-    "registration": "{{value}} регистраций/месяц",
-    "recording_storage_gb_month": "{{value}} ГБ хранения записей/месяц",
-    "ai_token": "{{value}} ИИ-токенов/месяц"
+    "live_webinar_minute": "{{value}} минут прямых вебинаров/{{period}}",
+    "automated_webinar_minute": "{{value}} минут автоматизированных вебинаров/{{period}}",
+    "registration": "{{value}} регистраций/{{period}}",
+    "recording_storage_gb_month": "{{value}} ГБ хранения записей/{{period}}",
+    "ai_token": "{{value}} ИИ-токенов/{{period}}"
+  },
+  "billingMonthly": "Ежемесячно",
+  "billingYearly": "Ежегодно",
+  "annualCreditsExplanation": "Годовые планы оплачиваются раз в год и включают полный годовой объём кредитов.",
+  "checkoutSuccess": "Оплата завершена. Подписка появится после подтверждения Stripe.",
+  "checkoutCanceled": "Оформление отменено. Изменения не внесены.",
+  "dismiss": "Закрыть",
+  "manageSubscription": "Управлять подпиской",
+  "changeInPortal": "Изменить в портале клиента",
+  "ownerAdminOnly": "Управлять оплатой могут только владельцы и администраторы аккаунта.",
+  "cancelAtPeriodEnd": "План завершится {{date}}.",
+  "renewsAt": "Продление {{date}}.",
+  "statusDescription": "Статус подписки из Stripe.",
+  "status": {
+    "active": "Подписка активна",
+    "trialing": "Пробный период активен",
+    "past_due": "Платёж просрочен — обновите способ оплаты.",
+    "incomplete": "Настройка оплаты не завершена.",
+    "paused": "Подписка приостановлена",
+    "canceled": "Подписка отменена",
+    "unpaid": "Подписка не оплачена — обновите способ оплаты.",
+    "incomplete_expired": "Срок настройки оплаты истёк."
+  },
+  "creditPeriod": {
+    "monthly": "месяц",
+    "annual": "год"
   }
 }
