@@ -54,6 +54,12 @@ export function Footer() {
             {t('common:footer.rights')}
           </span>
           <span className="flex flex-wrap gap-x-5 gap-y-2">
+            <a
+              className="hover:text-foreground"
+              href="mailto:mail@newwebinars.com"
+            >
+              {t('common:footerContact')}
+            </a>
             <Link className="hover:text-foreground" to="/privacy">
               {t('common:footerPrivacyPolicy')}
             </Link>

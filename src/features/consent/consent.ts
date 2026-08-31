@@ -9,6 +9,7 @@ export type ConsentPreferences = {
 export const CONSENT_STORAGE_KEY = 'newwebinars_consent'
 export const CONSENT_VERSION = 1
 export const CONSENT_OPEN_EVENT = 'newwebinars:open-consent'
+export const CONSENT_CHANGED_EVENT = 'newwebinars:consent-changed'
 
 export function getConsentPreferences(): ConsentPreferences | null {
   try {
@@ -40,7 +41,7 @@ export function saveConsentPreferences(
   }
   localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(value))
   window.dispatchEvent(
-    new CustomEvent('newwebinars:consent-changed', { detail: value }),
+    new CustomEvent(CONSENT_CHANGED_EVENT, { detail: value }),
   )
   return value
 }
