@@ -525,6 +525,25 @@ function BlockEditor({
           {t('blockWidthHint')}
         </p>
       </Field>
+      <Field label={t('sectionWidth')}>
+        <select
+          className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+          value={String(
+            (block.settings as Record<string, unknown>)?.width_mode ??
+              'container',
+          )}
+          onChange={(event) =>
+            onSettingsChange({
+              ...(block.settings as Record<string, unknown>),
+              width_mode: event.target.value,
+            })
+          }
+        >
+          <option value="container">{t('widthContainer')}</option>
+          <option value="page">{t('widthPage')}</option>
+          <option value="viewport">{t('widthViewport')}</option>
+        </select>
+      </Field>
       <BackgroundEditor
         accountId={accountId}
         value={block.settings as Record<string, unknown>}
@@ -532,6 +551,56 @@ function BlockEditor({
         saving={saving}
         compact
       />
+      {block.block_type === 'webinar_hero' && (
+        <>
+          <Field label={t('heroEyebrow')}>
+            <RichTextEditor
+              multiline={false}
+              value={(content.eyebrow as string) ?? ''}
+              onChange={(eyebrow) => set({ eyebrow })}
+            />
+          </Field>
+          <Field label={t('heroTitle')}>
+            <RichTextEditor
+              value={(content.title as string) ?? ''}
+              onChange={(title) => set({ title })}
+            />
+          </Field>
+          <Field label={t('heroSubtitle')}>
+            <RichTextEditor
+              value={(content.subtitle as string) ?? ''}
+              onChange={(subtitle) => set({ subtitle })}
+            />
+          </Field>
+          <ImageBlockFields
+            accountId={accountId}
+            url={(content.imageUrl as string) ?? ''}
+            alt={(content.imageAlt as string) ?? ''}
+            onChange={(patch) =>
+              set({ imageUrl: patch.url, imageAlt: patch.alt })
+            }
+          />
+          <Field label={t('heroDateLabel')}>
+            <TextInput
+              value={(content.dateLabel as string) ?? ''}
+              onChange={(dateLabel) => set({ dateLabel })}
+              placeholder={t('heroDateHint')}
+            />
+          </Field>
+          <Field label={t('heroBadge')}>
+            <TextInput
+              value={(content.badge as string) ?? ''}
+              onChange={(badge) => set({ badge })}
+            />
+          </Field>
+          <Field label={t('formButtonText')}>
+            <TextInput
+              value={(content.buttonText as string) ?? ''}
+              onChange={(buttonText) => set({ buttonText })}
+            />
+          </Field>
+        </>
+      )}
       {block.block_type === 'hero' && (
         <>
           <Field label={t('heroTitle')}>
@@ -599,8 +668,38 @@ function BlockEditor({
           </Field>
         </>
       )}
-      {(block.block_type === 'registration_form' ||
-        block.block_type === 'order_form') && (
+      {block.block_type === 'registration_form' && (
+        <>
+          <Field label={t('formTitle')}>
+            <RichTextEditor
+              multiline={false}
+              value={(content.title as string) ?? ''}
+              onChange={(title) => set({ title })}
+            />
+          </Field>
+          <Field label={t('formButtonText')}>
+            <TextInput
+              value={(content.buttonText as string) ?? ''}
+              onChange={(buttonText) => set({ buttonText })}
+            />
+          </Field>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={content.collectName !== false}
+              onChange={(event) => set({ collectName: event.target.checked })}
+            />
+            {t('collectName')}
+          </label>
+          <Field label={t('successMessage')}>
+            <TextInput
+              value={(content.successMessage as string) ?? ''}
+              onChange={(successMessage) => set({ successMessage })}
+            />
+          </Field>
+        </>
+      )}
+      {block.block_type === 'order_form' && (
         <Field label={t('formButtonText')}>
           <TextInput
             value={(content.buttonText as string) ?? ''}
@@ -701,6 +800,22 @@ function BlockEditor({
               onChange={(url) => set({ url })}
             />
           </Field>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={
+                (block.settings as Record<string, unknown>)?.sticky_mobile ===
+                true
+              }
+              onChange={(event) =>
+                onSettingsChange({
+                  ...(block.settings as Record<string, unknown>),
+                  sticky_mobile: event.target.checked,
+                })
+              }
+            />
+            {t('stickyMobile')}
+          </label>
         </>
       )}
       {block.block_type === 'offer' && (

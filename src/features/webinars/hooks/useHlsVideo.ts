@@ -53,22 +53,9 @@ export function useHlsVideo(
           maxMaxBufferLength: 4,
           liveSyncDurationCount: 1,
           liveMaxLatencyDurationCount: 3,
-          // Log audio/video track detection so we can diagnose missing audio.
-          debug: true,
+          debug: false,
         })
-        hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
-          console.log('[hls] manifest parsed', {
-            audioTracks: data.audioTracks?.length ?? 0,
-            levels: data.levels?.length ?? 0,
-          })
-          tryPlay()
-        })
-        hls.on(Hls.Events.AUDIO_TRACK_LOADED, (_event, data) => {
-          console.log('[hls] audio track loaded', data)
-        })
-        hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, (_event, data) => {
-          console.log('[hls] audio track switched', data)
-        })
+        hls.on(Hls.Events.MANIFEST_PARSED, tryPlay)
         // The live input has just started (or the manifest briefly 404s
         // while Cloudflare spins up the first segments), so hls.js's first
         // load attempt commonly fails. Without recovery, a single fatal

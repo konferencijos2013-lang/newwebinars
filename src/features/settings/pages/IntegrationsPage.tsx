@@ -1,13 +1,23 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link2, Mail, MessageCircle, Server, ShieldCheck } from 'lucide-react'
+import {
+  Link2,
+  Mail,
+  MessageCircle,
+  Send,
+  Server,
+  ShieldCheck,
+} from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
 import {
+  configureTelegramBot,
   fetchIntegrationConnections,
+  fetchTelegramContacts,
   saveIntegrationConnection,
+  type TelegramContact,
   type IntegrationConnection,
   type IntegrationProvider,
 } from '@/features/settings/api/integrations'
@@ -138,6 +148,11 @@ function IntegrationSettings({
             connection={existing('smtp')}
             disabled={!canManage}
             onSave={save}
+          />
+          <TelegramForm
+            connection={existing('telegram')}
+            disabled={!canManage}
+            accountId={accountId}
           />
           <ManyChatForm
             connection={existing('manychat')}
@@ -455,6 +470,113 @@ function ManyChatForm({
         onClick={() => void api.save({ link_url_template: linkUrlTemplate })}
       >
         {connection ? 'Update ManyChat' : 'Connect ManyChat'}
+      </Button>
+    </ProviderCard>
+  )
+}
+
+function TelegramForm({
+  connection,
+  disabled,
+  accountId,
+}: {
+  connection: IntegrationConnection | null
+  disabled: boolean
+  accountId: string
+}) {
+  const [credential, setCredential] = useState('')
+  const [configuring, setConfiguring] = useState(false)
+  const [setupError, setSetupError] = useState<string | null>(null)
+  const [contacts, setContacts] = useState<TelegramContact[]>([])
+  useEffect(() => {
+    if (!connection) return
+    void fetchTelegramContacts(accountId)
+      .then(setContacts)
+      .catch(() => undefined)
+  }, [accountId, connection])
+
+  async function connect() {
+    setSetupError(null)
+    setConfiguring(true)
+    try {
+      const saved = await saveIntegrationConnection({
+        accountId,
+        provider: 'telegram',
+        displayName: 'Telegram Bot',
+        config: {},
+        credential,
+      })
+      await configureTelegramBot(saved.id)
+      window.location.reload()
+    } catch (reason) {
+      setSetupError(reason instanceof Error ? reason.message : String(reason))
+    } finally {
+      setConfiguring(false)
+    }
+  }
+
+  return (
+    <ProviderCard
+      icon={<Send className="text-primary mt-0.5 h-5 w-5" />}
+      title="Telegram Bot"
+      description="Collect consenting Telegram contacts and send scheduled webinar reminders directly through your bot."
+    >
+      <p className="text-muted-foreground mt-4 text-sm">
+        Create a bot with @BotFather and paste its HTTP API token. The platform
+        validates the bot and configures its webhook automatically.
+      </p>
+      <Input
+        className="mt-4"
+        disabled={disabled || configuring}
+        type="password"
+        value={credential}
+        onChange={(event) => setCredential(event.target.value)}
+        placeholder={
+          connection ? 'New BotFather token' : '123456:AA… BotFather token'
+        }
+      />
+      {connection && (
+        <>
+          <Status connection={connection} />
+          {connection.config.bot_username && (
+            <p className="text-muted-foreground mt-1 text-sm">
+              Bot: @{String(connection.config.bot_username)}
+            </p>
+          )}
+        </>
+      )}
+      {setupError && <p className="mt-3 text-sm text-red-600">{setupError}</p>}
+      {contacts.length > 0 && (
+        <div className="bg-muted/40 mt-4 rounded-lg p-3">
+          <p className="text-sm font-medium">
+            Telegram contacts ({contacts.length})
+          </p>
+          <div className="mt-2 space-y-1">
+            {contacts.slice(0, 5).map((contact) => {
+              const name = [contact.first_name, contact.last_name]
+                .filter(Boolean)
+                .join(' ')
+              return (
+                <p key={contact.id} className="text-muted-foreground text-sm">
+                  {name ||
+                    (contact.username
+                      ? `@${contact.username}`
+                      : `ID ${contact.telegram_user_id ?? contact.chat_id}`)}
+                  {name && contact.username ? ` · @${contact.username}` : ''}
+                  {contact.status !== 'active' ? ` · ${contact.status}` : ''}
+                </p>
+              )
+            })}
+          </div>
+        </div>
+      )}
+      <Button
+        className="mt-4"
+        disabled={disabled || !credential || configuring}
+        isLoading={configuring}
+        onClick={() => void connect()}
+      >
+        {connection ? 'Update Telegram Bot' : 'Connect Telegram Bot'}
       </Button>
     </ProviderCard>
   )

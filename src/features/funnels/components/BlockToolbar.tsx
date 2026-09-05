@@ -22,6 +22,7 @@ import {
 
 const BLOCK_ICONS = {
   hero: Sparkles,
+  webinar_hero: Sparkles,
   text: Type,
   image: ImageIcon,
   video: Play,

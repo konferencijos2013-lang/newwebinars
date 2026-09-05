@@ -57,7 +57,7 @@ A webinar owner can create a reusable scripted chat for automated/recorded webin
 
 - **Import latest live chat** correctly fails with “No finished live session found to import from” until a live session has started and ended. This is expected, not a UI error.
 - A scenario starts when the attendee opens the webinar room, rather than being synchronized to recorded-video playback. Playback synchronization is not implemented yet.
-- AI generation uses `gpt-4o-mini` and requires `OPENAI_API_KEY` in the Supabase Edge Function environment.
+- AI generation uses OpenRouter Luna models and requires `OPENROUTER_API_KEY` in the Supabase Edge Function environment.
 - AI generation from recordings or arbitrary uploaded audio/video is **not implemented**. It needs an upload/transcription/job pipeline and a language selection step.
 
 ## Funnel editor — latest local changes, not yet pushed

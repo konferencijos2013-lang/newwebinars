@@ -1,14 +1,41 @@
 import { useEffect, useState } from 'react'
-import { MessageCircle, Play, User, Clock, ImageIcon } from 'lucide-react'
+import DOMPurify from 'dompurify'
+import {
+  CalendarDays,
+  CheckCircle2,
+  ImageIcon,
+  MessageCircle,
+  Play,
+  User,
+} from 'lucide-react'
 import type { FunnelBlock } from '@/shared/database.types'
 import { backgroundStyle } from '@/features/funnels/pageTheme'
+import { registerForWebinar } from '@/features/webinars/api/public'
+import { trackAnalyticsEvent } from '@/features/analytics/dataLayer'
+import { safePublicUrl } from './safePublicUrl'
+
+function remainingTime(target: number, now: number) {
+  const total = Number.isFinite(target)
+    ? Math.max(0, Math.ceil((target - now) / 1_000))
+    : 0
+  return {
+    days: Math.floor(total / 86_400),
+    hours: Math.floor((total % 86_400) / 3_600),
+    minutes: Math.floor((total % 3_600) / 60),
+    seconds: total % 60,
+  }
+}
 
 function Countdown({
   content,
   blockId,
+  fallbackTarget,
+  cards = false,
 }: {
   content: Record<string, unknown>
   blockId: string
+  fallbackTarget?: string | null
+  cards?: boolean
 }) {
   const [now, setNow] = useState(() => Date.now())
   const mode = content.mode === 'visitor' ? 'visitor' : 'fixed'
@@ -31,18 +58,51 @@ function Countdown({
   const target =
     mode === 'visitor'
       ? visitorStart + durationMinutes * 60_000
-      : new Date(String(content.target ?? '')).getTime()
-  const seconds = Number.isFinite(target)
-    ? Math.max(0, Math.ceil((target - now) / 1_000))
-    : 0
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const remainingSeconds = seconds % 60
-  const value = [hours, minutes, remainingSeconds]
-    .map((part) => String(part).padStart(2, '0'))
-    .join(':')
+      : new Date(String(content.target || fallbackTarget || '')).getTime()
+  const parts = remainingTime(target, now)
 
-  return <span className="text-2xl font-bold tabular-nums">{value}</span>
+  if (!cards) {
+    const hours = parts.days * 24 + parts.hours
+    return (
+      <span className="text-2xl font-bold tabular-nums">
+        {[hours, parts.minutes, parts.seconds]
+          .map((part) => String(part).padStart(2, '0'))
+          .join(':')}
+      </span>
+    )
+  }
+
+  return (
+    <div className="flex justify-center gap-2 sm:gap-3" aria-label="Countdown">
+      {[
+        [parts.days, 'D.'],
+        [parts.hours, 'H.'],
+        [parts.minutes, 'MIN.'],
+        [parts.seconds, 'SEC.'],
+      ].map(([value, label]) => (
+        <div
+          key={label}
+          className="min-w-16 rounded-xl bg-white/95 px-3 py-2 text-center text-slate-900 shadow-sm"
+        >
+          <div className="text-2xl font-bold tabular-nums">
+            {String(value).padStart(2, '0')}
+          </div>
+          <div className="text-[10px] font-medium tracking-wider text-slate-500">
+            {label}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function sanitizeHtml(value: unknown, fallback = '') {
+  const html = typeof value === 'string' && value.trim() ? value : fallback
+  return DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select'],
+    FORBID_ATTR: ['style'],
+  })
 }
 
 function Rich({
@@ -57,23 +117,227 @@ function Rich({
   return (
     <div
       className={className}
-      dangerouslySetInnerHTML={{ __html: (html as string) || fallback }}
+      dangerouslySetInnerHTML={{ __html: sanitizeHtml(html, fallback) }}
     />
+  )
+}
+
+type WebinarContext = {
+  webinarId?: string | null
+  webinarSlug?: string | null
+  webinarScheduledAt?: string | null
+}
+
+function RegistrationForm({
+  content,
+  isPreview,
+  webinar,
+}: {
+  content: Record<string, unknown>
+  isPreview: boolean
+  webinar: WebinarContext
+}) {
+  const [email, setEmail] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [token, setToken] = useState<string | null>(null)
+  const collectName = content.collectName !== false
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault()
+    if (isPreview || !webinar.webinarId) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const registration = await registerForWebinar({
+        webinar_id: webinar.webinarId,
+        email: email.trim(),
+        full_name: collectName ? fullName.trim() || null : null,
+        referral_code: params.get('ref'),
+        referrer_url: window.location.href,
+      })
+      setToken(registration.access_token)
+      trackAnalyticsEvent('webinar_registration', {
+        registration_method: 'funnel',
+      })
+      trackAnalyticsEvent('generate_lead', {
+        lead_type: 'webinar_registration',
+      })
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : 'Registration failed. Please try again.',
+      )
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (token) {
+    const waitingRoom = webinar.webinarSlug
+      ? `/${webinar.webinarSlug}/waiting-room?token=${token}`
+      : null
+    return (
+      <div className="mx-auto max-w-md rounded-xl bg-emerald-50 p-5 text-center text-emerald-900">
+        <CheckCircle2 className="mx-auto h-8 w-8" />
+        <p className="mt-2 font-semibold">
+          {String(content.successMessage || 'Registration successful!')}
+        </p>
+        {waitingRoom && (
+          <a
+            className="mt-4 inline-block font-medium underline"
+            href={waitingRoom}
+          >
+            Open waiting room
+          </a>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={submit} className="mx-auto max-w-md space-y-3">
+      {typeof content.title === 'string' && content.title.trim() && (
+        <Rich
+          html={content.title}
+          fallback="Register for the webinar"
+          className="mb-4 text-center text-2xl font-bold"
+        />
+      )}
+      {collectName && (
+        <input
+          required
+          disabled={isPreview || !webinar.webinarId || submitting}
+          value={fullName}
+          onChange={(event) => setFullName(event.target.value)}
+          placeholder="Full name"
+          className="border-border bg-background w-full rounded-xl border px-4 py-3 text-sm"
+        />
+      )}
+      <input
+        required
+        type="email"
+        disabled={isPreview || !webinar.webinarId || submitting}
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        placeholder="Email"
+        className="border-border bg-background w-full rounded-xl border px-4 py-3 text-sm"
+      />
+      <button
+        disabled={isPreview || !webinar.webinarId || submitting}
+        className="bg-primary text-primary-foreground w-full rounded-xl px-4 py-3 font-semibold disabled:opacity-60"
+      >
+        {submitting
+          ? 'Registering…'
+          : String(content.buttonText || 'Register now')}
+      </button>
+      {!webinar.webinarId && (
+        <p className="text-muted-foreground text-center text-xs">
+          Link this funnel to a webinar to activate registration.
+        </p>
+      )}
+      {error && <p className="text-center text-sm text-red-600">{error}</p>}
+    </form>
+  )
+}
+
+function WebinarHero({
+  block,
+  content,
+  webinar,
+}: {
+  block: FunnelBlock
+  content: Record<string, unknown>
+  webinar: WebinarContext
+}) {
+  const imageUrl = safePublicUrl(content.imageUrl, '')
+  const dateLabel = String(
+    content.dateLabel ||
+      (webinar.webinarScheduledAt
+        ? new Date(webinar.webinarScheduledAt).toLocaleString()
+        : ''),
+  )
+  return (
+    <section className="px-4 py-8 text-center sm:px-8 sm:py-12">
+      <div className="mx-auto max-w-4xl">
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={String(content.imageAlt || '')}
+            className="mx-auto mb-7 max-h-[32rem] w-full max-w-2xl rounded-[2rem] object-cover shadow-sm"
+          />
+        )}
+        {typeof content.eyebrow === 'string' && content.eyebrow.trim() && (
+          <Rich
+            html={content.eyebrow}
+            fallback="Free webinar"
+            className="mb-3 text-xs font-semibold tracking-[0.22em] uppercase opacity-70"
+          />
+        )}
+        <Rich
+          html={content.title}
+          fallback="Webinar title"
+          className="text-3xl leading-tight font-bold sm:text-5xl"
+        />
+        <Rich
+          html={content.subtitle}
+          fallback="Join us for a live session"
+          className="mx-auto mt-3 max-w-2xl text-base opacity-75 sm:text-lg"
+        />
+        {(dateLabel ||
+          (typeof content.badge === 'string' && content.badge.trim())) && (
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm font-semibold">
+            {dateLabel && (
+              <span className="inline-flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" /> {dateLabel}
+              </span>
+            )}
+            {typeof content.badge === 'string' && content.badge.trim() && (
+              <span className="rounded-full bg-white/50 px-3 py-1">
+                {String(content.badge)}
+              </span>
+            )}
+          </div>
+        )}
+        {content.showCountdown !== false && (
+          <div className="mt-6">
+            <Countdown
+              content={content}
+              blockId={block.id}
+              fallbackTarget={webinar.webinarScheduledAt}
+              cards
+            />
+          </div>
+        )}
+        <a
+          href="#registration"
+          className="mt-7 inline-flex min-w-64 items-center justify-center rounded-full bg-[#78a653] px-8 py-4 font-bold text-white shadow-lg"
+        >
+          {String(content.buttonText || 'Register for free')} ↓
+        </a>
+      </div>
+    </section>
   )
 }
 
 function BlockContent({
   block,
   isPreview = false,
+  webinar,
 }: {
   block: FunnelBlock
   isPreview?: boolean
+  webinar: WebinarContext
 }) {
   const content = (block.content as Record<string, unknown>) || {}
-
   const common = isPreview ? 'p-6 rounded-lg' : 'p-4'
 
   switch (block.block_type) {
+    case 'webinar_hero':
+      return <WebinarHero block={block} content={content} webinar={webinar} />
     case 'hero':
       return (
         <div
@@ -106,14 +370,13 @@ function BlockContent({
         </div>
       )
     case 'image': {
-      const url = content.url as string
-      const alt = (content.alt as string) || ''
+      const url = safePublicUrl(content.url, '')
       return (
         <div className={common}>
           {url ? (
             <img
               src={url}
-              alt={alt}
+              alt={String(content.alt || '')}
               className="mx-auto h-auto max-w-full rounded-lg object-contain"
             />
           ) : (
@@ -134,29 +397,23 @@ function BlockContent({
       )
     case 'registration_form':
       return (
-        <div className={common}>
-          <form className="mx-auto max-w-md space-y-3">
-            <input
-              disabled
-              placeholder="Email"
-              className="border-border w-full rounded-md border px-3 py-2 text-sm"
-            />
-            <button
-              disabled
-              className="bg-primary text-primary-foreground w-full rounded-md px-4 py-2 text-sm"
-            >
-              {(content.buttonText as string) ?? 'Register'}
-            </button>
-          </form>
+        <div id="registration" className={common}>
+          <RegistrationForm
+            content={content}
+            isPreview={isPreview}
+            webinar={webinar}
+          />
         </div>
       )
     case 'countdown':
       return (
         <div className={common}>
-          <div className="flex justify-center gap-4">
-            <Clock className="text-muted-foreground h-8 w-8" />
-            <Countdown content={content} blockId={block.id} />
-          </div>
+          <Countdown
+            content={content}
+            blockId={block.id}
+            fallbackTarget={webinar.webinarScheduledAt}
+            cards={content.style === 'cards'}
+          />
         </div>
       )
     case 'benefits':
@@ -166,19 +423,31 @@ function BlockContent({
             {(
               (content.items as string[]) ?? ['Benefit one', 'Benefit two']
             ).map((item, idx) => (
-              <li key={idx} dangerouslySetInnerHTML={{ __html: item }} />
+              <li
+                key={idx}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(item) }}
+              />
             ))}
           </ul>
         </div>
       )
-    case 'speaker':
+    case 'speaker': {
+      const photo = safePublicUrl(content.imageUrl, '')
       return (
         <div className={common}>
-          <div className="flex items-center gap-3">
-            <User className="text-muted-foreground h-10 w-10" />
+          <div className="mx-auto flex max-w-xl items-center gap-4">
+            {photo ? (
+              <img
+                src={photo}
+                alt={String(content.name || '')}
+                className="h-20 w-20 rounded-full object-cover"
+              />
+            ) : (
+              <User className="text-muted-foreground h-10 w-10" />
+            )}
             <div>
               <p className="font-semibold">
-                {(content.name as string) ?? 'Speaker name'}
+                {String(content.name || 'Speaker name')}
               </p>
               <Rich
                 html={content.bio}
@@ -189,6 +458,7 @@ function BlockContent({
           </div>
         </div>
       )
+    }
     case 'chat':
       return (
         <div className={common}>
@@ -208,8 +478,8 @@ function BlockContent({
         <div className={common}>
           <div className="text-center">
             <a
-              href={(content.url as string) ?? '#'}
-              className="bg-primary text-primary-foreground inline-block rounded-md px-6 py-3 font-medium"
+              href={safePublicUrl(content.url)}
+              className="bg-primary text-primary-foreground inline-block rounded-full px-8 py-3 font-semibold"
             >
               <Rich html={content.text} fallback="Get access now" />
             </a>
@@ -226,7 +496,7 @@ function BlockContent({
               className="font-semibold"
             />
             <p className="text-muted-foreground text-sm">
-              {(content.price as string) ?? '$0.00'}
+              {String(content.price || '$0.00')}
             </p>
           </div>
         </div>
@@ -238,7 +508,7 @@ function BlockContent({
             disabled
             className="bg-primary text-primary-foreground w-full rounded-md px-4 py-2"
           >
-            {(content.buttonText as string) ?? 'Complete purchase'}
+            {String(content.buttonText || 'Complete purchase')}
           </button>
         </div>
       )
@@ -280,16 +550,32 @@ function BlockContent({
 export function BlockRenderer({
   block,
   isPreview = false,
+  webinarId,
+  webinarSlug,
+  webinarScheduledAt,
 }: {
   block: FunnelBlock
   isPreview?: boolean
+  webinarId?: string | null
+  webinarSlug?: string | null
+  webinarScheduledAt?: string | null
 }) {
+  const sticky =
+    block.block_type === 'cta' && block.settings?.sticky_mobile === true
   return (
     <div
-      className="overflow-hidden rounded-lg"
+      className={
+        sticky
+          ? 'sticky bottom-0 z-40 overflow-hidden rounded-lg md:static'
+          : 'overflow-hidden rounded-lg'
+      }
       style={backgroundStyle(block.settings as Record<string, unknown>)}
     >
-      <BlockContent block={block} isPreview={isPreview} />
+      <BlockContent
+        block={block}
+        isPreview={isPreview}
+        webinar={{ webinarId, webinarSlug, webinarScheduledAt }}
+      />
     </div>
   )
 }

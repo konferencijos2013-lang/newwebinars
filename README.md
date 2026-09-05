@@ -154,13 +154,15 @@ Edge Functions are in `supabase/functions/`:
 - `stripe-webhook` — handles Stripe webhooks.
 - `ai-chat` — sends messages to OpenAI and persists the response.
 - `process-reminder-deliveries` — claims due reminder jobs and sends them through connected delivery providers.
+- `configure-telegram-bot` — validates an account's BotFather token and registers the Telegram webhook.
+- `telegram-webhook` — securely links consenting attendees to Telegram contacts from one-time waiting-room links.
 
 ### Edge Function secrets
 
 Set secrets in Supabase Studio (**Project Settings** → **Edge Functions** → **Secrets**) or via CLI:
 
 ```bash
-supabase secrets set OPENAI_API_KEY=sk-...
+supabase secrets set OPENROUTER_API_KEY=sk-or-v1-...
 supabase secrets set STRIPE_SECRET_KEY=sk_...
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY=...
@@ -265,6 +267,18 @@ Before committing, compare each returned row against Stripe Live mode: active re
 ### Reminder worker schedule
 
 The delivery worker is deployed but intentionally will not send anything until `DELIVERY_WORKER_SECRET` is configured. Trigger it every minute from a scheduler (for example, GitHub Actions, Cloudflare Cron Trigger, or Supabase Cron with `pg_net`) using `POST https://<project-ref>.supabase.co/functions/v1/process-reminder-deliveries` and the header `x-delivery-worker-secret: <same secret>`. The worker claims each due job atomically, records every attempt, retries provider failures with exponential backoff, and recovers jobs stranded by an interrupted worker after ten minutes.
+
+### Telegram Bot reminders
+
+Telegram uses a direct Bot API integration; Messenger and WhatsApp continue to use the existing ManyChat connection.
+
+1. Create a Telegram bot with `@BotFather` and copy its HTTP API token.
+2. Deploy `configure-telegram-bot`, `telegram-webhook`, and `process-reminder-deliveries`. The webhook function must be deployed without JWT verification; `supabase/config.toml` already contains that setting.
+3. In **Settings → Integrations**, connect **Telegram Bot** with the BotFather token. The token is stored in Supabase Vault, validated with Telegram, and the webhook is configured automatically.
+4. Add a Telegram reminder rule to a webinar. The attendee sees **Gauti priminimus per Telegram** in the waiting room and must explicitly start the bot before messages can be delivered.
+5. Telegram contacts are stored per account in `telegram_contacts`. Scheduled messages use the existing reminder queue, retry, and delivery log infrastructure.
+
+A Telegram bot cannot initiate a conversation with someone who has not started it. Facebook Messenger and WhatsApp also require platform-approved opt-in and message-template rules; this project handles those channels through ManyChat rather than storing Meta credentials directly.
 
 ## Deployment
 

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
+import { useUser } from '@/features/auth/hooks/useUser'
 import {
   createThread,
   fetchMessages,
@@ -18,6 +19,7 @@ type Message = { role: 'user' | 'assistant'; content: string }
 export function AiChatPage() {
   const { t } = useTranslation('ai')
   const account = useAccount()
+  const { user } = useUser()
   const [threads, setThreads] = useState<AiThread[]>([])
   const [activeThread, setActiveThread] = useState<AiThread | null>(null)
   const [messages, setMessages] = useState<AiMessage[]>([])
@@ -46,7 +48,7 @@ export function AiChatPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!input.trim() || account.status !== 'ready') return
+    if (!input.trim() || account.status !== 'ready' || !user) return
     setSending(true)
 
     try {
@@ -54,7 +56,7 @@ export function AiChatPage() {
       if (!thread) {
         thread = await createThread({
           account_id: account.account.id,
-          user_id: account.account.owner_id,
+          user_id: user.id,
           title: input.slice(0, 80),
           scope: 'global',
         })

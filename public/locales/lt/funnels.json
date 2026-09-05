@@ -81,7 +81,8 @@
     "cta": "CTA",
     "offer": "Pasiūlymas",
     "order_form": "Užsakymo forma",
-    "faq": "DUK"
+    "faq": "DUK",
+    "webinar_hero": "Webinaro Hero"
   },
   "pageBackground": "Puslapio fonas",
   "blockBackground": "Bloko fonas",
@@ -95,5 +96,17 @@
   "gradientDirection": "Kryptis",
   "backgroundUpload": "Įkelti fono paveikslėlį",
   "backgroundImageUrl": "Fono paveikslėlio URL",
-  "backgroundOverlay": "Paveikslėlio patamsinimas"
+  "backgroundOverlay": "Paveikslėlio patamsinimas",
+  "sectionWidth": "Sekcijos plotis",
+  "widthContainer": "Konteineris",
+  "widthPage": "Visas puslapio plotis",
+  "widthViewport": "Visas ekrano plotis",
+  "heroEyebrow": "Viršutinė žyma",
+  "heroDateLabel": "Datos tekstas",
+  "heroDateHint": "Palikite tuščią, kad būtų naudojama webinaro data",
+  "heroBadge": "Ženklelis",
+  "formTitle": "Formos pavadinimas",
+  "collectName": "Rinkti vardą ir pavardę",
+  "successMessage": "Sėkmės pranešimas",
+  "stickyMobile": "Prilipęs CTA telefone"
 }

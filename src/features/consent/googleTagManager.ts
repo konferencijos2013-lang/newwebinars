@@ -69,7 +69,11 @@ export function initializeGoogleTagManager() {
     const marketing = preferences?.marketing === true
     updateGoogleConsent(analytics, marketing)
 
-    if (analytics && containerId && GTM_ID_PATTERN.test(containerId)) {
+    if (
+      (analytics || marketing) &&
+      containerId &&
+      GTM_ID_PATTERN.test(containerId)
+    ) {
       loadGoogleTagManager(containerId)
     }
   }

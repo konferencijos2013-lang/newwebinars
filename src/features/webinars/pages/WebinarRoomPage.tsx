@@ -37,6 +37,7 @@ import {
   moderateRegistration,
   type ModerationMessage,
 } from '@/features/webinars/api/moderation'
+import { trackAnalyticsEvent } from '@/features/analytics/dataLayer'
 import type {
   ChatMessage,
   Registration,
@@ -113,6 +114,10 @@ export function WebinarRoomPage() {
           }
           setRegistration(r)
           await markJoinedWebinar(token)
+          trackAnalyticsEvent('webinar_join', {
+            webinar_id: w.id,
+            room_type: 'attendee',
+          })
         } else {
           const { data: session } = await supabase.auth.getSession()
           if (!isActive || !session.session?.user) {
@@ -567,6 +572,12 @@ export function WebinarRoomPage() {
               href={offer.target_url}
               target="_blank"
               rel="noreferrer"
+              onClick={() =>
+                trackAnalyticsEvent('webinar_cta_click', {
+                  webinar_id: webinar.id,
+                  cta_type: 'offer',
+                })
+              }
               className="bg-primary text-primary-foreground block w-full rounded-lg px-5 py-3 text-center font-semibold shadow-sm transition-opacity hover:opacity-90"
             >
               {offer.button_text}

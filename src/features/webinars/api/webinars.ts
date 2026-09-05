@@ -26,15 +26,11 @@ export type CreateWebinarInput = {
 }
 
 export async function fetchWebinars(accountId: string) {
-  console.log('[fetchWebinars] accountId', accountId)
-
   const { data, error } = await supabase
     .from('webinars')
     .select('*')
     .eq('account_id', accountId)
     .order('created_at', { ascending: false })
-
-  console.log('[fetchWebinars] result', { data, error: error?.message })
 
   if (error) throw error
   return (data ?? []) as Webinar[]
@@ -120,15 +116,11 @@ export async function createWebinarSession(input: {
 }
 
 export async function createWebinar(input: CreateWebinarInput) {
-  console.log('[createWebinar] input', input)
-
   const { data, error } = await supabase
     .from('webinars')
     .insert(input)
     .select()
     .single()
-
-  console.log('[createWebinar] result', { data, error: error?.message })
 
   if (error) throw error
   return data as Webinar

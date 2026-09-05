@@ -2,9 +2,10 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router'
 import { supabase } from '@/lib/supabase'
-import { hasMarketingConsent } from '@/features/consent/consent'
-
-const PARTNER_VISITOR_TOKEN_KEY = 'newwebinars_partner_visitor_token'
+import {
+  hasMarketingConsent,
+  PARTNER_VISITOR_TOKEN_KEY,
+} from '@/features/consent/consent'
 
 async function createVisitorTokenHash() {
   const token = crypto.getRandomValues(new Uint8Array(32))

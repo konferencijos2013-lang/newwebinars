@@ -14,6 +14,7 @@ import {
   registerForWebinar,
 } from '@/features/webinars/api/public'
 import type { Webinar } from '@/shared/database.types'
+import { trackAnalyticsEvent } from '@/features/analytics/dataLayer'
 
 export function PublicWebinarPage() {
   const { t } = useTranslation('public')
@@ -74,6 +75,12 @@ export function PublicWebinarPage() {
         referral_code: searchParams.get('ref') ?? undefined,
         referrer_url:
           typeof window !== 'undefined' ? window.location.href : null,
+      })
+      trackAnalyticsEvent('webinar_registration', {
+        registration_method: 'public_webinar',
+      })
+      trackAnalyticsEvent('generate_lead', {
+        lead_type: 'webinar_registration',
       })
       setRegistrationToken(reg.access_token)
     } catch (err) {

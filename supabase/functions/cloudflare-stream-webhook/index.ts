@@ -17,6 +17,11 @@ async function verifySignature(
   const receivedSig = parts['sig1']
   if (!time || !receivedSig) return false
 
+  const timestamp = Number(time)
+  if (!Number.isFinite(timestamp)) return false
+  const ageSeconds = Math.abs(Date.now() / 1_000 - timestamp)
+  if (ageSeconds > 300) return false
+
   const key = await crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(secret),
@@ -46,7 +51,15 @@ serve(async (req) => {
     const rawBody = await req.text()
 
     const webhookSecret = Deno.env.get('CLOUDFLARE_STREAM_WEBHOOK_SECRET')
-    if (webhookSecret) {
+    if (!webhookSecret) {
+      console.error('CLOUDFLARE_STREAM_WEBHOOK_SECRET is not configured')
+      return new Response(JSON.stringify({ error: 'Webhook unavailable' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    {
       const valid = await verifySignature(
         rawBody,
         req.headers.get('Webhook-Signature'),
@@ -84,13 +97,13 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    const { data: webinar } = await supabaseAdmin
+    const { data: webinar, error: webinarError } = await supabaseAdmin
       .from('webinars')
       .select('id, account_id')
       .eq('cf_live_input_uid', inputUid)
       .single()
 
-    if (!webinar) {
+    if (webinarError || !webinar) {
       return new Response(
         JSON.stringify({ error: 'Webinar not found for input' }),
         {
@@ -190,10 +203,9 @@ serve(async (req) => {
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (err) {
+    console.error('Cloudflare Stream webhook failed', err)
     return new Response(
-      JSON.stringify({
-        error: err instanceof Error ? err.message : String(err),
-      }),
+      JSON.stringify({ error: 'Webhook processing failed' }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },

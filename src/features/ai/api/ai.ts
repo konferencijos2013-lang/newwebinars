@@ -134,15 +134,18 @@ export async function sendMessage(input: {
   scope: string
   scope_id?: string | null
   previousMessages: Array<{ role: string; content: string }>
+  generation_mode?: string
+  context_prompt?: string
 }) {
   const { content, thread_id } = input
 
   // Persist user message first.
-  await supabase.from('ai_messages').insert({
+  const { error: persistError } = await supabase.from('ai_messages').insert({
     thread_id,
     role: 'user',
     content,
   })
+  if (persistError) throw persistError
 
   const { data, error } = await supabase.functions.invoke('ai-chat', {
     body: {
@@ -150,6 +153,8 @@ export async function sendMessage(input: {
       account_id: input.account_id,
       scope: input.scope,
       scope_id: input.scope_id,
+      generation_mode: input.generation_mode,
+      context_prompt: input.context_prompt,
       messages: [...input.previousMessages, { role: 'user', content }],
     },
   })

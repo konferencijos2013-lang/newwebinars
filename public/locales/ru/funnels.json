@@ -81,7 +81,8 @@
     "cta": "CTA",
     "offer": "Предложение",
     "order_form": "Форма заказа",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "webinar_hero": "Hero вебинара"
   },
   "pageBackground": "Фон страницы",
   "blockBackground": "Фон блока",
@@ -95,5 +96,17 @@
   "gradientDirection": "Направление",
   "backgroundUpload": "Загрузить фоновое изображение",
   "backgroundImageUrl": "URL фонового изображения",
-  "backgroundOverlay": "Затемнение изображения"
+  "backgroundOverlay": "Затемнение изображения",
+  "sectionWidth": "Ширина секции",
+  "widthContainer": "Контейнер",
+  "widthPage": "На всю ширину страницы",
+  "widthViewport": "На всю ширину экрана",
+  "heroEyebrow": "Верхняя метка",
+  "heroDateLabel": "Текст даты",
+  "heroDateHint": "Оставьте пустым, чтобы использовать дату вебинара",
+  "heroBadge": "Значок",
+  "formTitle": "Заголовок формы",
+  "collectName": "Собирать имя и фамилию",
+  "successMessage": "Сообщение об успехе",
+  "stickyMobile": "Закреплённый CTA на телефоне"
 }

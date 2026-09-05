@@ -93,6 +93,21 @@ export async function getManyChatLinkOptions(accessToken: string) {
   return (data ?? []) as ManyChatLinkOption[]
 }
 
+export interface TelegramLinkOption {
+  integration_connection_id: string
+  status: 'pending' | 'linked' | 'unsubscribed' | 'invalid' | 'blocked'
+  connect_url: string | null
+  expires_at: string | null
+}
+
+export async function getTelegramLinkOptions(accessToken: string) {
+  const { data, error } = await supabase.rpc('get_telegram_link_options', {
+    p_access_token: accessToken,
+  })
+  if (error) throw error
+  return (data ?? []) as TelegramLinkOption[]
+}
+
 export async function fetchRegistrationByToken(accessToken: string) {
   const { data, error } = await supabase.rpc('get_registration_by_token', {
     p_access_token: accessToken,

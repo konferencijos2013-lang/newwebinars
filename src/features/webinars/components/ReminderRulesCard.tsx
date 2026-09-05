@@ -21,6 +21,8 @@ import {
 const DEFAULT_SUBJECT = 'Primename: {{webinar_title}} prasidės netrukus'
 const DEFAULT_BODY =
   'Sveiki, {{name}},\n\nprimename, kad webinaras „{{webinar_title}}“ prasidės netrukus.\n\nPrisijungti prie webinaro:\n{{webinar_link}}\n\nIki pasimatymo!'
+const DEFAULT_TELEGRAM_BODY =
+  'Sveiki, {{name}}! Webinaras „{{webinar_title}}“ prasidės netrukus. Prisijungti: {{webinar_link}}'
 const DEFAULT_MANYCHAT_BODY =
   'Sveiki, {{name}}! Webinaras „{{webinar_title}}“ prasidės netrukus. Prisijungti: {{webinar_link}}'
 
@@ -47,7 +49,9 @@ export function ReminderRulesCard({
   const [adding, setAdding] = useState(false)
   const [saving, setSaving] = useState(false)
   const [connectionId, setConnectionId] = useState('')
-  const [channel, setChannel] = useState<'email' | 'manychat'>('email')
+  const [channel, setChannel] = useState<'email' | 'manychat' | 'telegram'>(
+    'email',
+  )
   const [minutesBefore, setMinutesBefore] = useState('60')
   const [subject, setSubject] = useState(DEFAULT_SUBJECT)
   const [body, setBody] = useState(DEFAULT_BODY)
@@ -56,13 +60,21 @@ export function ReminderRulesCard({
     (connection) =>
       connection.provider === 'manychat' && connection.status === 'active',
   )
+  const telegramConnections = connections.filter(
+    (connection) =>
+      connection.provider === 'telegram' && connection.status === 'active',
+  )
   const emailConnections = connections.filter(
     (connection) =>
       ['brevo', 'resend', 'smtp'].includes(connection.provider) &&
       connection.status === 'active',
   )
   const availableConnections =
-    channel === 'email' ? emailConnections : manyChatConnections
+    channel === 'email'
+      ? emailConnections
+      : channel === 'telegram'
+        ? telegramConnections
+        : manyChatConnections
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -165,12 +177,12 @@ export function ReminderRulesCard({
           <div>
             <CardTitle>Priminimai</CardTitle>
             <CardDescription className="mt-1">
-              El. pašto arba ManyChat priminimai registruotiems dalyviams.
-              Galite naudoti {'{{name}}'}, {'{{email}}'}, {'{{webinar_title}}'},
-              {' {{webinar_link}}'} ir {'{{public_webinar_link}}'}, kurie bus
-              pakeisti siunčiant. {'{{webinar_link}}'} yra asmeninė prisijungimo
-              nuoroda, o {'{{public_webinar_link}}'} – viešas registracijos
-              puslapis.
+              El. pašto, Telegram arba ManyChat priminimai registruotiems
+              dalyviams. Galite naudoti {'{{name}}'}, {'{{email}}'},{' '}
+              {'{{webinar_title}}'},{' {{webinar_link}}'} ir{' '}
+              {'{{public_webinar_link}}'}, kurie bus pakeisti siunčiant.{' '}
+              {'{{webinar_link}}'} yra asmeninė prisijungimo nuoroda, o{' '}
+              {'{{public_webinar_link}}'} – viešas registracijos puslapis.
             </CardDescription>
           </div>
         </div>
@@ -204,16 +216,22 @@ export function ReminderRulesCard({
                 id="reminder-channel"
                 value={channel}
                 onChange={(event) => {
-                  const next = event.target.value as 'email' | 'manychat'
+                  const next = event.target.value as
+                    'email' | 'manychat' | 'telegram'
                   setChannel(next)
                   setConnectionId(
                     next === 'email'
                       ? (emailConnections[0]?.id ?? '')
-                      : (manyChatConnections[0]?.id ?? ''),
+                      : next === 'telegram'
+                        ? (telegramConnections[0]?.id ?? '')
+                        : (manyChatConnections[0]?.id ?? ''),
                   )
                   if (next === 'manychat') {
                     setSubject('')
                     setBody(DEFAULT_MANYCHAT_BODY)
+                  } else if (next === 'telegram') {
+                    setSubject('')
+                    setBody(DEFAULT_TELEGRAM_BODY)
                   } else {
                     setSubject(DEFAULT_SUBJECT)
                     setBody(DEFAULT_BODY)
@@ -221,6 +239,7 @@ export function ReminderRulesCard({
                 }}
               >
                 <option value="email">El. paštas</option>
+                <option value="telegram">Telegram</option>
                 <option value="manychat">ManyChat</option>
               </Select>
             </div>
@@ -259,7 +278,9 @@ export function ReminderRulesCard({
             <p className="rounded-md bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
               {channel === 'email'
                 ? 'Nėra aktyvios Brevo, Resend ar SMTP integracijos. Pirmiausia ją prijunkite puslapyje „Integracijos“.'
-                : 'Nėra aktyvios ManyChat integracijos. Pirmiausia įrašykite API raktą ir ManyChat susiejimo nuorodos šabloną puslapyje „Integracijos“. '}
+                : channel === 'telegram'
+                  ? 'Nėra aktyvaus Telegram boto. Pirmiausia prijunkite BotFather tokeną puslapyje „Integracijos“.'
+                  : 'Nėra aktyvios ManyChat integracijos. Pirmiausia įrašykite API raktą ir ManyChat susiejimo nuorodos šabloną puslapyje „Integracijos“. '}
             </p>
           )}
           <div className="space-y-2">
@@ -278,7 +299,9 @@ export function ReminderRulesCard({
             <Label htmlFor="reminder-body">
               {channel === 'email'
                 ? 'Laiško tekstas'
-                : 'ManyChat pranešimo tekstas'}
+                : channel === 'telegram'
+                  ? 'Telegram pranešimo tekstas'
+                  : 'ManyChat pranešimo tekstas'}
             </Label>
             <Textarea
               id="reminder-body"

@@ -410,3 +410,7 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # Stripe authenticates this endpoint with its signed webhook payload.
 [functions.stripe-webhook]
 verify_jwt = false
+
+# Telegram authenticates this endpoint with its Bot API secret header.
+[functions.telegram-webhook]
+verify_jwt = false

@@ -1,10 +1,3 @@
--- Make invoice upserts compatible with PostgreSQL conflict inference and use the
--- Stripe subscription billing period when granting recurring credits.
-
-drop index if exists public.payments_stripe_invoice_id_unique;
-create unique index payments_stripe_invoice_id_unique
-  on public.payments (stripe_invoice_id);
-
 create or replace function public.process_paid_stripe_invoice(
   p_account_id uuid, p_plan_id uuid, p_subscription_id text, p_invoice_id text,
   p_payment_intent_id text, p_amount_cents integer, p_currency text,
@@ -57,6 +50,5 @@ begin
   end if;
   return false;
 end $$;
-
 revoke all on function public.process_paid_stripe_invoice(uuid,uuid,text,text,text,integer,text,text,timestamptz,timestamptz,timestamptz,timestamptz) from public, anon, authenticated;
 grant execute on function public.process_paid_stripe_invoice(uuid,uuid,text,text,text,integer,text,text,timestamptz,timestamptz,timestamptz,timestamptz) to service_role;

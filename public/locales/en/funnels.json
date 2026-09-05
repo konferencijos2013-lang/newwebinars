@@ -81,7 +81,8 @@
     "cta": "CTA",
     "offer": "Offer",
     "order_form": "Order Form",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "webinar_hero": "Webinar Hero"
   },
   "pageBackground": "Page background",
   "blockBackground": "Block background",
@@ -95,5 +96,17 @@
   "gradientDirection": "Direction",
   "backgroundUpload": "Upload background image",
   "backgroundImageUrl": "Background image URL",
-  "backgroundOverlay": "Image darkening"
+  "backgroundOverlay": "Image darkening",
+  "sectionWidth": "Section width",
+  "widthContainer": "Container",
+  "widthPage": "Full page width",
+  "widthViewport": "Full screen width",
+  "heroEyebrow": "Eyebrow",
+  "heroDateLabel": "Date label",
+  "heroDateHint": "Leave empty to use webinar date",
+  "heroBadge": "Badge",
+  "formTitle": "Form title",
+  "collectName": "Collect full name",
+  "successMessage": "Success message",
+  "stickyMobile": "Sticky CTA on mobile"
 }
