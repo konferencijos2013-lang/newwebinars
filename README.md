@@ -156,6 +156,7 @@ Edge Functions are in `supabase/functions/`:
 - `process-reminder-deliveries` — claims due reminder jobs and sends them through connected delivery providers.
 - `configure-telegram-bot` — validates an account's BotFather token and registers the Telegram webhook.
 - `telegram-webhook` — securely links consenting attendees to Telegram contacts from one-time waiting-room links.
+- `send-telegram-message` — creates and processes consent-aware Telegram broadcast batches.
 
 ### Edge Function secrets
 
@@ -273,11 +274,11 @@ The delivery worker is deployed but intentionally will not send anything until `
 Telegram uses a direct Bot API integration; Messenger and WhatsApp continue to use the existing ManyChat connection.
 
 1. Create a Telegram bot with `@BotFather` and copy its HTTP API token.
-2. Deploy `configure-telegram-bot`, `telegram-webhook`, and `process-reminder-deliveries`. The webhook function must be deployed without JWT verification; `supabase/config.toml` already contains that setting.
+2. Deploy `configure-telegram-bot`, `telegram-webhook`, `send-telegram-message`, and `process-reminder-deliveries`. The webhook function must be deployed without JWT verification; `supabase/config.toml` already contains that setting.
 3. In **Settings → Integrations**, connect **Telegram Bot** with the BotFather token. The token is stored in Supabase Vault, validated with Telegram, and the webhook is configured automatically.
 4. Add a Telegram reminder rule to a webinar. The attendee sees **Gauti priminimus per Telegram** in the waiting room and must explicitly start the bot before messages can be delivered.
 5. Telegram contacts are stored per account in `telegram_contacts`. Scheduled messages use the existing reminder queue, retry, and delivery log infrastructure.
-6. Account owners and administrators can also compose a free-form message in **Settings → Integrations → Telegram Bot**, select up to 100 active opted-in contacts, and send it immediately. Broadcast summaries are stored in `telegram_broadcasts`; unsubscribed or blocked contacts cannot be selected.
+6. Account owners and administrators can compose a free-form message in **Settings → Integrations → Telegram Bot**, search and page through opted-in contacts, select individual recipients, or send to all. Large broadcasts use a durable recipient queue and show live progress plus sent, failed, and blocked totals. Broadcast summaries are stored in `telegram_broadcasts`; consent is checked again immediately before delivery, and unsubscribed or blocked contacts are not sent a message. Configure Supabase Cron to invoke `send-telegram-message` with `{"action":"work"}` once per minute using the service-role credential; self-invocation handles low-latency batches, while this scheduled recovery prevents interrupted queues from remaining stuck.
 
 A Telegram bot cannot initiate a conversation with someone who has not started it. Facebook Messenger and WhatsApp also require platform-approved opt-in and message-template rules; this project handles those channels through ManyChat rather than storing Meta credentials directly.
 
