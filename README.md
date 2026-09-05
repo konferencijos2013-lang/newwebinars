@@ -155,7 +155,7 @@ Edge Functions are in `supabase/functions/`:
 - `ai-chat` — sends messages to OpenAI and persists the response.
 - `process-reminder-deliveries` — claims due reminder jobs and sends them through connected delivery providers.
 - `configure-telegram-bot` — validates an account's BotFather token and registers the Telegram webhook.
-- `telegram-webhook` — securely links consenting attendees to Telegram contacts from one-time waiting-room links.
+- `telegram-webhook` — securely links consenting attendees and optionally answers private Telegram questions with AI using the account's configured prompt.
 - `send-telegram-message` — creates and processes consent-aware Telegram broadcast batches.
 
 ### Edge Function secrets
@@ -279,6 +279,7 @@ Telegram uses a direct Bot API integration; Messenger and WhatsApp continue to u
 4. Add a Telegram reminder rule to a webinar. The attendee sees **Gauti priminimus per Telegram** in the waiting room and must explicitly start the bot before messages can be delivered.
 5. Telegram contacts are stored per account in `telegram_contacts`. Scheduled messages use the existing reminder queue, retry, and delivery log infrastructure.
 6. Account owners and administrators can compose a free-form message in **Settings → Integrations → Telegram Bot**, search and page through opted-in contacts, select individual recipients, or send to all. A JPG, PNG, or WEBP image can optionally be attached and is delivered before the full text message. Images are kept in the private `telegram-broadcast-assets` bucket and exposed to Telegram through short-lived signed URLs. Large broadcasts use a durable recipient queue and show live progress plus sent, failed, and blocked totals. Broadcast summaries are stored in `telegram_broadcasts`; consent is checked again immediately before delivery, and unsubscribed or blocked contacts are not sent a message. Configure Supabase Cron to invoke `send-telegram-message` with `{"action":"work"}` once per minute using the service-role credential; self-invocation handles low-latency batches, while this scheduled recovery prevents interrupted queues from remaining stuck.
+7. Owners and administrators can enable **DI automatiniai atsakymai** in the same Telegram card, edit the system prompt, welcome text, and fallback text. Only private, non-command text messages are sent to OpenRouter; the assistant receives at most ten published/live webinars as factual context. Requests are limited per chat, AI usage consumes account `ai_token` credits, and audit rows store only a salted chat hash and delivery status—not message text or Telegram identifiers.
 
 A Telegram bot cannot initiate a conversation with someone who has not started it. Facebook Messenger and WhatsApp also require platform-approved opt-in and message-template rules; this project handles those channels through ManyChat rather than storing Meta credentials directly.
 

@@ -47,6 +47,24 @@ export async function saveIntegrationConnection(input: {
   return data as IntegrationConnection
 }
 
+export async function updateTelegramAiSettings(input: {
+  connectionId: string
+  enabled: boolean
+  systemPrompt: string
+  welcomeMessage: string
+  fallbackMessage: string
+}) {
+  const { data, error } = await supabase.rpc('update_telegram_ai_settings', {
+    p_connection_id: input.connectionId,
+    p_enabled: input.enabled,
+    p_system_prompt: input.systemPrompt,
+    p_welcome_message: input.welcomeMessage,
+    p_fallback_message: input.fallbackMessage,
+  })
+  if (error) throw error
+  return data as IntegrationConnection
+}
+
 export async function configureTelegramBot(connectionId: string) {
   const { data, error } = await supabase.functions.invoke(
     'configure-telegram-bot',
