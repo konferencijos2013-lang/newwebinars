@@ -172,7 +172,7 @@ export function WaitingRoomPage() {
             target="_blank"
             rel="noreferrer"
           >
-            Gauti priminimus per Telegram
+            Gauti webinarų priminimus ir naujienas per Telegram
           </a>
         )}
         {telegramLinks.some((link) => link.status === 'linked') && (

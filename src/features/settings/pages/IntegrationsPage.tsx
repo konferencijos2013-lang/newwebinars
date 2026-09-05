@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/Textarea'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
 import {
@@ -17,6 +18,7 @@ import {
   fetchIntegrationConnections,
   fetchTelegramContacts,
   saveIntegrationConnection,
+  sendTelegramMessage,
   type TelegramContact,
   type IntegrationConnection,
   type IntegrationProvider,
@@ -488,12 +490,81 @@ function TelegramForm({
   const [configuring, setConfiguring] = useState(false)
   const [setupError, setSetupError] = useState<string | null>(null)
   const [contacts, setContacts] = useState<TelegramContact[]>([])
+  const [message, setMessage] = useState('')
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([])
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
+  const [sendNotice, setSendNotice] = useState<string | null>(null)
   useEffect(() => {
     if (!connection) return
     void fetchTelegramContacts(accountId)
-      .then(setContacts)
+      .then((items) => {
+        setContacts(items)
+        setSelectedContactIds((current) =>
+          current.filter((id) =>
+            items.some((item) => item.id === id && item.status === 'active'),
+          ),
+        )
+      })
       .catch(() => undefined)
   }, [accountId, connection])
+
+  const activeContacts = contacts.filter(
+    (contact) => contact.status === 'active' && contact.broadcast_opted_in_at,
+  )
+  const allActiveSelected =
+    activeContacts.length > 0 &&
+    activeContacts.every((contact) => selectedContactIds.includes(contact.id))
+
+  function toggleContact(contactId: string) {
+    setSelectedContactIds((current) =>
+      current.includes(contactId)
+        ? current.filter((id) => id !== contactId)
+        : [...current, contactId],
+    )
+  }
+
+  async function sendMessage() {
+    const trimmedMessage = message.trim()
+    if (!connection || !trimmedMessage || selectedContactIds.length === 0)
+      return
+    if (
+      !window.confirm(
+        `Siųsti šią Telegram žinutę ${selectedContactIds.length} gavėjui(-ams)?`,
+      )
+    )
+      return
+    setSending(true)
+    setSendError(null)
+    setSendNotice(null)
+    try {
+      const result = await sendTelegramMessage({
+        connectionId: connection.id,
+        message: trimmedMessage,
+        contactIds: selectedContactIds,
+      })
+      setSendNotice(
+        `Išsiųsta: ${result.sent}. Nepavyko: ${result.failed}. Užblokavo botą: ${result.blocked}.`,
+      )
+      if (result.sent > 0) setMessage('')
+      const refreshed = await fetchTelegramContacts(accountId)
+      setContacts(refreshed)
+      setSelectedContactIds((current) =>
+        current.filter((id) =>
+          refreshed.some(
+            (contact) =>
+              contact.id === id &&
+              contact.status === 'active' &&
+              contact.broadcast_opted_in_at,
+          ),
+        ),
+      )
+    } catch (reason) {
+      setSendError(reason instanceof Error ? reason.message : String(reason))
+    } finally {
+      setSending(false)
+    }
+  }
 
   async function connect() {
     setSetupError(null)
@@ -546,6 +617,101 @@ function TelegramForm({
         </>
       )}
       {setupError && <p className="mt-3 text-sm text-red-600">{setupError}</p>}
+      {connection?.status === 'active' && (
+        <div className="border-border mt-5 border-t pt-5">
+          <h3 className="text-sm font-semibold">Siųsti Telegram žinutę</h3>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Pasirinkite iki 100 aktyvių kontaktų, kurie patys paleido botą.
+          </p>
+          <Textarea
+            className="mt-3 min-h-28"
+            disabled={disabled || sending}
+            maxLength={4096}
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder="Įrašykite Telegram žinutę..."
+          />
+          <p className="text-muted-foreground mt-1 text-right text-xs">
+            {message.length}/4096
+          </p>
+          {activeContacts.length > 0 ? (
+            <>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium">
+                  Pasirinkta: {selectedContactIds.length} iš{' '}
+                  {activeContacts.length}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={disabled || sending}
+                  onClick={() =>
+                    setSelectedContactIds(
+                      allActiveSelected
+                        ? []
+                        : activeContacts.map((contact) => contact.id),
+                    )
+                  }
+                >
+                  {allActiveSelected ? 'Atžymėti visus' : 'Pasirinkti visus'}
+                </Button>
+              </div>
+              <div className="border-border mt-2 max-h-52 space-y-1 overflow-y-auto rounded-md border p-2">
+                {activeContacts.map((contact) => {
+                  const name = [contact.first_name, contact.last_name]
+                    .filter(Boolean)
+                    .join(' ')
+                  const label =
+                    name ||
+                    (contact.username
+                      ? `@${contact.username}`
+                      : `Telegram ID ${contact.telegram_user_id ?? contact.chat_id}`)
+                  return (
+                    <label
+                      key={contact.id}
+                      className="hover:bg-muted flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedContactIds.includes(contact.id)}
+                        disabled={disabled || sending}
+                        onChange={() => toggleContact(contact.id)}
+                      />
+                      <span>{label}</span>
+                    </label>
+                  )
+                })}
+              </div>
+              <Button
+                className="mt-3"
+                disabled={
+                  disabled ||
+                  sending ||
+                  !message.trim() ||
+                  selectedContactIds.length === 0
+                }
+                isLoading={sending}
+                onClick={() => void sendMessage()}
+              >
+                Siųsti žinutę
+              </Button>
+            </>
+          ) : (
+            <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
+              Aktyvių Telegram kontaktų dar nėra. Gavėjas pirmiausia turi
+              paspausti „Start“ jūsų bote.
+            </p>
+          )}
+          {sendError && (
+            <p className="mt-3 text-sm text-red-600">{sendError}</p>
+          )}
+          {sendNotice && (
+            <p className="mt-3 text-sm text-green-700 dark:text-green-300">
+              {sendNotice}
+            </p>
+          )}
+        </div>
+      )}
       {contacts.length > 0 && (
         <div className="bg-muted/40 mt-4 rounded-lg p-3">
           <p className="text-sm font-medium">
