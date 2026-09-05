@@ -140,6 +140,34 @@ export async function fetchTelegramContactCount(
   return count ?? 0
 }
 
+export async function uploadTelegramBroadcastImage(
+  accountId: string,
+  file: File,
+) {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  if (!allowedTypes.includes(file.type))
+    throw new Error('Pasirinkite JPG, PNG arba WEBP nuotrauką.')
+  if (file.size > 10 * 1024 * 1024)
+    throw new Error('Nuotrauka negali viršyti 10 MB.')
+
+  const extension =
+    file.type === 'image/png'
+      ? 'png'
+      : file.type === 'image/webp'
+        ? 'webp'
+        : 'jpg'
+  const path = `${accountId}/${crypto.randomUUID()}.${extension}`
+  const { error } = await supabase.storage
+    .from('telegram-broadcast-assets')
+    .upload(path, file, {
+      cacheControl: '3600',
+      contentType: file.type,
+      upsert: false,
+    })
+  if (error) throw error
+  return path
+}
+
 export interface TelegramBroadcast {
   id: string
   status: 'queued' | 'processing' | 'completed' | 'cancelled'
@@ -167,6 +195,7 @@ export async function createTelegramBroadcast(input: {
   audience: 'all' | 'selected'
   contactIds?: string[]
   requestKey: string
+  imagePath?: string | null
 }) {
   const result = await invokeTelegramBroadcast({
     action: 'create',
@@ -174,6 +203,7 @@ export async function createTelegramBroadcast(input: {
     message: input.message,
     audience: input.audience,
     request_key: input.requestKey,
+    image_path: input.imagePath ?? null,
     contact_ids: input.audience === 'selected' ? input.contactIds : undefined,
   })
   return result.broadcast

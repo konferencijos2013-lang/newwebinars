@@ -21,6 +21,7 @@ import {
   fetchLatestTelegramBroadcast,
   fetchTelegramContacts,
   saveIntegrationConnection,
+  uploadTelegramBroadcastImage,
   type TelegramBroadcast,
   type TelegramContact,
   type IntegrationConnection,
@@ -500,6 +501,9 @@ function TelegramForm({
   const [searchInput, setSearchInput] = useState('')
   const [loadingContacts, setLoadingContacts] = useState(false)
   const [message, setMessage] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+  const uploadedImagePathRef = useRef<string | null>(null)
   const [audience, setAudience] = useState<'selected' | 'all'>('selected')
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([])
   const [sending, setSending] = useState(false)
@@ -569,6 +573,23 @@ function TelegramForm({
     }
   }, [broadcast, connection, loadContacts])
 
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
+    }
+  }, [imagePreviewUrl])
+
+  function chooseImage(file: File | null) {
+    sendRequestKeyRef.current = null
+    uploadedImagePathRef.current = null
+    setImageFile(file)
+    setImagePreviewUrl((current) => {
+      if (current) URL.revokeObjectURL(current)
+      return file ? URL.createObjectURL(file) : null
+    })
+    setSendError(null)
+  }
+
   function toggleContact(contactId: string) {
     sendRequestKeyRef.current = null
     setSelectedContactIds((current) =>
@@ -596,16 +617,24 @@ function TelegramForm({
     try {
       const requestKey = sendRequestKeyRef.current ?? crypto.randomUUID()
       sendRequestKeyRef.current = requestKey
+      const imagePath = imageFile
+        ? (uploadedImagePathRef.current ??= await uploadTelegramBroadcastImage(
+            accountId,
+            imageFile,
+          ))
+        : null
       const created = await createTelegramBroadcast({
         connectionId: connection.id,
         message: trimmedMessage,
         audience,
         requestKey,
+        imagePath,
         contactIds: audience === 'selected' ? selectedContactIds : undefined,
       })
       setBroadcast(created)
       sendRequestKeyRef.current = null
       setMessage('')
+      chooseImage(null)
       setSelectedContactIds([])
     } catch (reason) {
       setSendError(reason instanceof Error ? reason.message : String(reason))
@@ -699,6 +728,40 @@ function TelegramForm({
           <p className="text-muted-foreground mt-1 text-right text-xs">
             {message.length}/4096
           </p>
+          <div className="mt-3">
+            <label className="text-sm font-medium" htmlFor="telegram-photo">
+              Nuotrauka prieš tekstą (nebūtina)
+            </label>
+            <Input
+              id="telegram-photo"
+              className="mt-1"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={disabled || sending || broadcastActive}
+              onChange={(event) => chooseImage(event.target.files?.[0] ?? null)}
+            />
+            <p className="text-muted-foreground mt-1 text-xs">
+              JPG, PNG arba WEBP, iki 10 MB. Nuotrauka bus išsiųsta prieš
+              žinutės tekstą.
+            </p>
+            {imagePreviewUrl && (
+              <div className="mt-2 flex items-start gap-3">
+                <img
+                  src={imagePreviewUrl}
+                  alt="Pasirinktos Telegram nuotraukos peržiūra"
+                  className="max-h-40 max-w-56 rounded-md object-contain"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={disabled || sending || broadcastActive}
+                  onClick={() => chooseImage(null)}
+                >
+                  Pašalinti
+                </Button>
+              </div>
+            )}
+          </div>
           <div className="mt-3 flex flex-wrap gap-4 text-sm">
             <label className="flex cursor-pointer items-center gap-2">
               <input

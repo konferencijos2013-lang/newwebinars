@@ -1,4 +1,22 @@
 -- Durable, batched Telegram broadcasts with a frozen recipient snapshot.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'telegram-broadcast-assets', 'telegram-broadcast-assets', false, 10485760,
+  array['image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do update set public = false, file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+create policy "Telegram broadcast assets: admins upload own account folder"
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'telegram-broadcast-assets'
+    and (storage.foldername(name))[1] in (
+      select account_id::text from public.account_members
+      where user_id = auth.uid() and role in ('owner', 'admin')
+    )
+  );
+
 alter table public.telegram_broadcasts
   drop constraint if exists telegram_broadcasts_recipient_count_check,
   drop constraint if exists telegram_broadcasts_check;
@@ -8,7 +26,9 @@ alter table public.telegram_broadcasts
     check (status in ('queued', 'processing', 'completed', 'cancelled')),
   add column completed_at timestamptz,
   add column updated_at timestamptz not null default now(),
-  add column request_key uuid;
+  add column request_key uuid,
+  add column image_path text
+    check (image_path is null or image_path ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}\.(jpg|png|webp)$');
 
 -- Rows created by the former synchronous implementation are already final.
 update public.telegram_broadcasts
@@ -45,6 +65,7 @@ create table public.telegram_broadcast_recipients (
   next_attempt_at timestamptz not null default now(),
   claimed_at timestamptz,
   claim_token uuid,
+  image_sent_at timestamptz,
   delivered_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -60,7 +81,7 @@ create or replace function public.claim_telegram_broadcast_recipients(
   p_broadcast_id uuid,
   p_limit integer default 30
 )
-returns table (recipient_id uuid, telegram_contact_id uuid, chat_id text, claim_token uuid)
+returns table (recipient_id uuid, telegram_contact_id uuid, chat_id text, claim_token uuid, image_sent boolean)
 language plpgsql security definer set search_path = public
 as $$
 declare v_connection_id uuid;
@@ -118,9 +139,10 @@ begin
         claimed_at = now(), claim_token = gen_random_uuid(), updated_at = now()
     from candidates
     where recipient.id = candidates.id
-    returning recipient.id, recipient.telegram_contact_id, recipient.chat_id, recipient.claim_token
+    returning recipient.id, recipient.telegram_contact_id, recipient.chat_id, recipient.claim_token, recipient.image_sent_at
   )
-  select claimed.id, claimed.telegram_contact_id, claimed.chat_id, claimed.claim_token from claimed;
+  select claimed.id, claimed.telegram_contact_id, claimed.chat_id, claimed.claim_token,
+    claimed.image_sent_at is not null from claimed;
 end;
 $$;
 
@@ -168,6 +190,31 @@ begin
   return v_row_count > 0;
 end;
 $$;
+
+create or replace function public.mark_telegram_broadcast_image_sent(
+  p_recipient_id uuid,
+  p_claim_token uuid
+)
+returns boolean
+language plpgsql security definer set search_path = public
+as $$
+declare v_row_count integer;
+begin
+  if current_setting('request.jwt.claim.role', true) <> 'service_role' then
+    raise exception 'Not authorized';
+  end if;
+  update public.telegram_broadcast_recipients recipient
+  set image_sent_at = coalesce(image_sent_at, now()), updated_at = now()
+  where recipient.id = p_recipient_id
+    and recipient.status = 'processing'
+    and recipient.claim_token = p_claim_token;
+  get diagnostics v_row_count = row_count;
+  return v_row_count > 0;
+end;
+$$;
+
+revoke all on function public.mark_telegram_broadcast_image_sent(uuid, uuid) from public;
+grant execute on function public.mark_telegram_broadcast_image_sent(uuid, uuid) to service_role;
 
 revoke all on function public.complete_telegram_broadcast_recipient(uuid, uuid, text, text, integer) from public;
 grant execute on function public.complete_telegram_broadcast_recipient(uuid, uuid, text, text, integer) to service_role;
@@ -243,6 +290,7 @@ create or replace function public.enqueue_telegram_broadcast(
   p_sent_by uuid,
   p_message text,
   p_request_key uuid,
+  p_image_path text default null,
   p_contact_ids uuid[] default null
 )
 returns uuid
@@ -253,6 +301,9 @@ begin
   if current_setting('request.jwt.claim.role', true) <> 'service_role' then raise exception 'Not authorized'; end if;
   if char_length(btrim(coalesce(p_message, ''))) not between 1 and 4096 then raise exception 'Invalid message'; end if;
   if p_request_key is null then raise exception 'Request key is required'; end if;
+  if p_image_path is not null and p_image_path !~ ('^' || p_account_id::text || '/[0-9a-f-]{36}\.(jpg|png|webp)$') then
+    raise exception 'Invalid Telegram broadcast image';
+  end if;
   select broadcast.id into v_broadcast_id from public.telegram_broadcasts broadcast
   where broadcast.account_id = p_account_id and broadcast.request_key = p_request_key;
   if v_broadcast_id is not null then return v_broadcast_id; end if;
@@ -284,9 +335,9 @@ begin
   if p_contact_ids is not null and v_recipient_count <> v_requested_count then raise exception 'One or more selected contacts are unavailable'; end if;
 
   insert into public.telegram_broadcasts (
-    account_id, integration_connection_id, sent_by, message, recipient_count, status, request_key
+    account_id, integration_connection_id, sent_by, message, recipient_count, status, request_key, image_path
   ) values (
-    p_account_id, p_connection_id, p_sent_by, btrim(p_message), v_recipient_count, 'queued', p_request_key
+    p_account_id, p_connection_id, p_sent_by, btrim(p_message), v_recipient_count, 'queued', p_request_key, p_image_path
   ) returning public.telegram_broadcasts.id into v_broadcast_id;
   insert into public.telegram_broadcast_recipients (broadcast_id, telegram_contact_id, chat_id)
   select v_broadcast_id, audience.contact_id, audience.chat_id from telegram_broadcast_audience audience;
@@ -299,5 +350,5 @@ exception when unique_violation then
 end;
 $$;
 
-revoke all on function public.enqueue_telegram_broadcast(uuid, uuid, uuid, text, uuid, uuid[]) from public;
-grant execute on function public.enqueue_telegram_broadcast(uuid, uuid, uuid, text, uuid, uuid[]) to service_role;
+revoke all on function public.enqueue_telegram_broadcast(uuid, uuid, uuid, text, uuid, text, uuid[]) from public;
+grant execute on function public.enqueue_telegram_broadcast(uuid, uuid, uuid, text, uuid, text, uuid[]) to service_role;

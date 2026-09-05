@@ -142,6 +142,8 @@ serve(async (req) => {
     const audience = payload.audience
     const requestKey = payload.request_key
     const contactIds = payload.contact_ids
+    const imagePath =
+      typeof payload.image_path === 'string' ? payload.image_path : null
     if (typeof connectionId !== 'string' || !UUID_PATTERN.test(connectionId))
       return json({ error: 'Invalid Telegram connection' }, 400)
     if (typeof requestKey !== 'string' || !UUID_PATTERN.test(requestKey))
@@ -180,6 +182,14 @@ serve(async (req) => {
       .maybeSingle()
     if (!['owner', 'admin'].includes(membership?.role ?? ''))
       return json({ error: 'Not authorized' }, 403)
+    if (
+      imagePath &&
+      !new RegExp(
+        `^${connection.account_id}/[0-9a-f-]{36}\\.(jpg|png|webp)$`,
+        'i',
+      ).test(imagePath)
+    )
+      return json({ error: 'Invalid Telegram broadcast image' }, 400)
 
     const uniqueContactIds =
       audience === 'selected' ? [...new Set(contactIds as string[])] : null
@@ -191,6 +201,7 @@ serve(async (req) => {
         p_sent_by: auth.user.id,
         p_message: message,
         p_request_key: requestKey,
+        p_image_path: imagePath,
         p_contact_ids: uniqueContactIds,
       },
     )
@@ -260,7 +271,7 @@ serve(async (req) => {
     if (claimError) return json({ error: 'Unable to claim recipients' }, 500)
     const { data: messageRow, error: messageError } = await admin
       .from('telegram_broadcasts')
-      .select('message')
+      .select('message,image_path')
       .eq('id', broadcastId)
       .single()
     if (messageError || !messageRow)
@@ -282,6 +293,53 @@ serve(async (req) => {
         errorMessage = 'Contact revoked consent or is no longer active.'
       } else {
         try {
+          if (messageRow.image_path && !recipient.image_sent) {
+            const { data: signedImage, error: signedImageError } =
+              await admin.storage
+                .from('telegram-broadcast-assets')
+                .createSignedUrl(messageRow.image_path, 3600)
+            if (signedImageError || !signedImage?.signedUrl)
+              throw new Error('Unable to load Telegram broadcast image.')
+            const photoResponse = await fetch(
+              `https://api.telegram.org/bot${botToken}/sendPhoto`,
+              {
+                signal: AbortSignal.timeout(15_000),
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: recipient.chat_id,
+                  photo: signedImage.signedUrl,
+                }),
+              },
+            )
+            const photoResult = await photoResponse.json().catch(() => ({}))
+            if (!photoResponse.ok || !photoResult?.ok) {
+              errorMessage = telegramError(photoResult)
+              if (photoResponse.status === 403) resultStatus = 'blocked'
+              else if (
+                photoResponse.status === 429 ||
+                photoResponse.status >= 500
+              ) {
+                resultStatus = 'retry'
+                const retryAfter = photoResult?.parameters?.retry_after
+                retryAfterSeconds =
+                  typeof retryAfter === 'number' ? retryAfter : null
+              }
+              throw new Error('Telegram photo delivery failed.')
+            }
+            const { data: imageMarked, error: imageMarkError } =
+              await admin.rpc('mark_telegram_broadcast_image_sent', {
+                p_recipient_id: recipient.recipient_id,
+                p_claim_token: recipient.claim_token,
+              })
+            if (imageMarkError || !imageMarked)
+              return json(
+                { error: 'Recipient lease expired after photo delivery' },
+                409,
+              )
+            await new Promise((resolve) => setTimeout(resolve, 40))
+          }
+
           const response = await fetch(
             `https://api.telegram.org/bot${botToken}/sendMessage`,
             {
@@ -290,7 +348,7 @@ serve(async (req) => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: recipient.chat_id,
-                text: messageRow?.message,
+                text: messageRow.message,
                 disable_web_page_preview: false,
               }),
             },
@@ -306,20 +364,22 @@ serve(async (req) => {
               retryAfterSeconds =
                 typeof retryAfter === 'number' ? retryAfter : null
             }
-            if (resultStatus === 'blocked') {
-              const { error: blockError } = await admin
-                .from('telegram_contacts')
-                .update({
-                  status: 'blocked',
-                  updated_at: new Date().toISOString(),
-                })
-                .eq('id', recipient.telegram_contact_id)
-              if (blockError) throw blockError
-            }
           }
-        } catch {
-          resultStatus = 'retry'
-          errorMessage = 'Telegram request failed.'
+        } catch (reason) {
+          if (!errorMessage) {
+            resultStatus = 'retry'
+            errorMessage =
+              reason instanceof Error
+                ? reason.message
+                : 'Telegram request failed.'
+          }
+        }
+        if (resultStatus === 'blocked') {
+          const { error: blockError } = await admin
+            .from('telegram_contacts')
+            .update({ status: 'blocked', updated_at: new Date().toISOString() })
+            .eq('id', recipient.telegram_contact_id)
+          if (blockError) throw blockError
         }
       }
       const { data: completed, error: completionError } = await admin.rpc(
