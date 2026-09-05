@@ -72,43 +72,153 @@ export interface TelegramContact {
   last_seen_at: string
 }
 
-export async function fetchTelegramContacts(accountId: string) {
-  const { data, error } = await supabase
+export interface TelegramContactPage {
+  contacts: TelegramContact[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export async function fetchTelegramContacts(input: {
+  accountId: string
+  connectionId: string
+  page?: number
+  pageSize?: number
+  search?: string
+  eligibleOnly?: boolean
+}): Promise<TelegramContactPage> {
+  const page = Math.max(0, input.page ?? 0)
+  const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
+  const from = page * pageSize
+  let query = supabase
     .from('telegram_contacts')
     .select(
       'id,integration_connection_id,chat_id,telegram_user_id,username,first_name,last_name,language_code,status,broadcast_opted_in_at,first_seen_at,last_seen_at',
+      { count: 'exact' },
     )
-    .eq('account_id', accountId)
+    .eq('account_id', input.accountId)
+    .eq('integration_connection_id', input.connectionId)
+
+  if (input.eligibleOnly) {
+    query = query
+      .eq('status', 'active')
+      .not('broadcast_opted_in_at', 'is', null)
+  }
+  const search = (input.search ?? '')
+    .trim()
+    .replace(/[%_,().]/g, '')
+    .slice(0, 100)
+  if (search) {
+    query = query.or(
+      `username.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%,telegram_user_id.ilike.%${search}%`,
+    )
+  }
+  const { data, error, count } = await query
     .order('last_seen_at', { ascending: false })
-    .limit(100)
+    .range(from, from + pageSize - 1)
   if (error) throw error
-  return (data ?? []) as TelegramContact[]
+  return {
+    contacts: (data ?? []) as TelegramContact[],
+    total: count ?? 0,
+    page,
+    pageSize,
+  }
 }
 
-export interface TelegramMessageResult {
-  requested: number
-  sent: number
-  failed: number
-  blocked: number
-  failures: Array<{ contact_id: string; error: string }>
+export async function fetchTelegramContactCount(
+  accountId: string,
+  connectionId: string,
+) {
+  const { count, error } = await supabase
+    .from('telegram_contacts')
+    .select('id', { count: 'exact', head: true })
+    .eq('account_id', accountId)
+    .eq('integration_connection_id', connectionId)
+    .eq('status', 'active')
+    .not('broadcast_opted_in_at', 'is', null)
+  if (error) throw error
+  return count ?? 0
 }
 
-export async function sendTelegramMessage(input: {
-  connectionId: string
-  message: string
-  contactIds: string[]
-}) {
+export async function uploadTelegramBroadcastImage(
+  accountId: string,
+  file: File,
+) {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  if (!allowedTypes.includes(file.type))
+    throw new Error('Pasirinkite JPG, PNG arba WEBP nuotrauką.')
+  if (file.size > 10 * 1024 * 1024)
+    throw new Error('Nuotrauka negali viršyti 10 MB.')
+
+  const extension =
+    file.type === 'image/png'
+      ? 'png'
+      : file.type === 'image/webp'
+        ? 'webp'
+        : 'jpg'
+  const path = `${accountId}/${crypto.randomUUID()}.${extension}`
+  const { error } = await supabase.storage
+    .from('telegram-broadcast-assets')
+    .upload(path, file, {
+      cacheControl: '3600',
+      contentType: file.type,
+      upsert: false,
+    })
+  if (error) throw error
+  return path
+}
+
+export interface TelegramBroadcast {
+  id: string
+  status: 'queued' | 'processing' | 'completed' | 'cancelled'
+  recipient_count: number
+  sent_count: number
+  failed_count: number
+  blocked_count: number
+  created_at: string
+  completed_at: string | null
+}
+
+async function invokeTelegramBroadcast(body: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke(
     'send-telegram-message',
-    {
-      body: {
-        connection_id: input.connectionId,
-        message: input.message,
-        contact_ids: input.contactIds,
-      },
-    },
+    { body },
   )
   if (error) throw error
   if (data?.error) throw new Error(String(data.error))
-  return data as TelegramMessageResult
+  return data as { broadcast: TelegramBroadcast; processed?: number }
+}
+
+export async function createTelegramBroadcast(input: {
+  connectionId: string
+  message: string
+  audience: 'all' | 'selected'
+  contactIds?: string[]
+  requestKey: string
+  imagePath?: string | null
+}) {
+  const result = await invokeTelegramBroadcast({
+    action: 'create',
+    connection_id: input.connectionId,
+    message: input.message,
+    audience: input.audience,
+    request_key: input.requestKey,
+    image_path: input.imagePath ?? null,
+    contact_ids: input.audience === 'selected' ? input.contactIds : undefined,
+  })
+  return result.broadcast
+}
+
+export async function fetchLatestTelegramBroadcast(connectionId: string) {
+  const { data, error } = await supabase
+    .from('telegram_broadcasts')
+    .select(
+      'id,status,recipient_count,sent_count,failed_count,blocked_count,created_at,completed_at',
+    )
+    .eq('integration_connection_id', connectionId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return data as TelegramBroadcast | null
 }
