@@ -2,7 +2,6 @@ import { Outlet } from 'react-router'
 import { Header } from './Header'
 import { Footer } from './Footer'
 import { ThemeProvider } from '@/providers/ThemeProvider'
-import { CookieConsent } from '@/features/consent/CookieConsent'
 
 export function PublicLayout() {
   return (
@@ -14,7 +13,6 @@ export function PublicLayout() {
           <Outlet />
         </main>
         <Footer />
-        <CookieConsent />
       </div>
     </ThemeProvider>
   )

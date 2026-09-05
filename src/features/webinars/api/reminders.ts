@@ -31,7 +31,7 @@ export async function createReminderRule(input: {
   minutesBefore: number
   subject: string
   body: string
-  channel?: 'email' | 'manychat'
+  channel?: 'email' | 'manychat' | 'telegram'
 }) {
   const { data, error } = await supabase
     .from('reminder_rules')

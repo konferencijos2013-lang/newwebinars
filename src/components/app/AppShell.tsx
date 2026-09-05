@@ -121,18 +121,6 @@ export function AppShell() {
               label={t('navigation.ai')}
             />
           ) : null}
-          <SidebarNavLink
-            to={path('/analytics')}
-            icon={BarChart3}
-            label={t('navigation.analytics')}
-          />
-          {!supportView ? (
-            <SidebarNavLink
-              to={path('/affiliate')}
-              icon={Users}
-              label={t('navigation.affiliate')}
-            />
-          ) : null}
           {!supportView ? (
             <SidebarNavLink
               to={path('/billing')}

@@ -74,9 +74,16 @@ export async function pollLiveInputStatus(
   try {
     const base = import.meta.env.VITE_SUPABASE_URL as string
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+    const { data: sessionData } = await supabase.auth.getSession()
+    const accessToken = sessionData.session?.access_token
     const res = await fetch(
       `${base}/functions/v1/get-live-input-status?webinar_id=${encodeURIComponent(webinarId)}`,
-      { headers: { apikey: anonKey } },
+      {
+        headers: {
+          apikey: anonKey,
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+      },
     )
     if (!res.ok) return null
     return (await res.json()) as LiveInputStatus

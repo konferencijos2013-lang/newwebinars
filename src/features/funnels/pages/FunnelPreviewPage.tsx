@@ -49,25 +49,33 @@ export function FunnelPreviewPage() {
 
   return (
     <main
-      className="bg-muted/30 min-h-screen py-6 sm:py-10"
+      className="bg-muted/30 min-h-screen overflow-x-clip"
       style={backgroundStyle(page.theme)}
     >
-      <div className="mx-auto min-h-[80vh] max-w-4xl rounded-lg border shadow-sm">
-        <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-6 sm:p-5">
+      <div className="mx-auto min-h-[80vh] max-w-4xl">
+        <div className="grid grid-cols-1 gap-3 px-3 py-3 sm:grid-cols-6 sm:px-5 sm:py-5">
           {blocks.map((block) => {
             const span = Number(
               (block.settings as Record<string, unknown>)?.column_span,
             )
+            const widthMode = String(
+              (block.settings as Record<string, unknown>)?.width_mode ??
+                'container',
+            )
             return (
               <div
                 key={block.id}
-                className={
-                  span === 4
-                    ? 'sm:col-span-2'
-                    : span === 6
-                      ? 'sm:col-span-3'
-                      : 'sm:col-span-6'
-                }
+                className={`${
+                  widthMode === 'viewport'
+                    ? 'relative left-1/2 w-screen max-w-none -translate-x-1/2 sm:col-span-6'
+                    : widthMode === 'page'
+                      ? '-mx-3 sm:col-span-6 sm:-mx-5'
+                      : span === 4
+                        ? 'sm:col-span-2'
+                        : span === 6
+                          ? 'sm:col-span-3'
+                          : 'sm:col-span-6'
+                }`}
               >
                 <BlockRenderer block={block} />
               </div>

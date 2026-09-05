@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 
-export type IntegrationProvider = 'brevo' | 'resend' | 'smtp' | 'manychat'
+export type IntegrationProvider =
+  'brevo' | 'resend' | 'smtp' | 'manychat' | 'telegram'
 export type IntegrationStatus = 'active' | 'disabled' | 'error'
 
 export interface IntegrationConnection {
@@ -44,4 +45,41 @@ export async function saveIntegrationConnection(input: {
   })
   if (error) throw error
   return data as IntegrationConnection
+}
+
+export async function configureTelegramBot(connectionId: string) {
+  const { data, error } = await supabase.functions.invoke(
+    'configure-telegram-bot',
+    { body: { connection_id: connectionId } },
+  )
+  if (error) throw error
+  if (data?.error) throw new Error(String(data.error))
+  return data as { configured: true; bot_username: string }
+}
+
+export interface TelegramContact {
+  id: string
+  integration_connection_id: string
+  chat_id: string
+  telegram_user_id: string | null
+  username: string | null
+  first_name: string | null
+  last_name: string | null
+  language_code: string | null
+  status: 'active' | 'blocked' | 'unsubscribed'
+  first_seen_at: string
+  last_seen_at: string
+}
+
+export async function fetchTelegramContacts(accountId: string) {
+  const { data, error } = await supabase
+    .from('telegram_contacts')
+    .select(
+      'id,integration_connection_id,chat_id,telegram_user_id,username,first_name,last_name,language_code,status,first_seen_at,last_seen_at',
+    )
+    .eq('account_id', accountId)
+    .order('last_seen_at', { ascending: false })
+    .limit(25)
+  if (error) throw error
+  return (data ?? []) as TelegramContact[]
 }

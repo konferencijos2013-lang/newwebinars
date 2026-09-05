@@ -4,6 +4,7 @@ import { Bot, Send, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useAccount } from '@/features/auth/hooks/useAccount'
+import { useUser } from '@/features/auth/hooks/useUser'
 import { sendMessage, fetchMessages, createThread } from '@/features/ai/api/ai'
 import type { AiMessage } from '@/shared/database.types'
 
@@ -18,6 +19,7 @@ export function AiAssistant({
 }) {
   const { t } = useTranslation('ai')
   const account = useAccount()
+  const { user } = useUser()
   const [open, setOpen] = useState(false)
   const [threadId, setThreadId] = useState<string | null>(null)
   const [messages, setMessages] = useState<AiMessage[]>([])
@@ -32,11 +34,11 @@ export function AiAssistant({
 
   async function ensureThread() {
     if (threadId) return threadId
-    if (account.status !== 'ready') throw new Error('Not logged in')
+    if (account.status !== 'ready' || !user) throw new Error('Not logged in')
 
     const thread = await createThread({
       account_id: account.account.id,
-      user_id: account.account.owner_id,
+      user_id: user.id,
       title: contextPrompt ?? t('newChat'),
       scope,
       scope_id: scopeId || null,
@@ -61,18 +63,18 @@ export function AiAssistant({
         content: m.content,
       }))
 
-      const reply = await sendMessage({
+      await sendMessage({
         thread_id: id,
         account_id: account.account.id,
         content: userContent,
         scope,
         scope_id: scopeId || null,
+        context_prompt: contextPrompt,
         previousMessages,
       })
 
       const history = await fetchMessages(id)
       setMessages(history)
-      console.log('AI tokens used', reply.tokens_used)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {

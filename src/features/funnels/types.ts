@@ -1,5 +1,6 @@
 export type FunnelBlockType =
   | 'hero'
+  | 'webinar_hero'
   | 'text'
   | 'image'
   | 'video'
@@ -22,6 +23,23 @@ export interface FunnelBlockDef {
 }
 
 export const FUNNEL_BLOCK_REGISTRY: Record<FunnelBlockType, FunnelBlockDef> = {
+  webinar_hero: {
+    type: 'webinar_hero',
+    label: 'Webinar Hero',
+    icon: 'Sparkles',
+    defaultContent: {
+      eyebrow: 'Free webinar',
+      title: 'Webinar title',
+      subtitle: 'Join us for a live session',
+      imageUrl: '',
+      imageAlt: '',
+      dateLabel: '',
+      badge: 'Free',
+      buttonText: 'Register for free',
+      showCountdown: true,
+    },
+    defaultSettings: { column_span: 12, width_mode: 'viewport' },
+  },
   hero: {
     type: 'hero',
     label: 'Hero',
@@ -58,7 +76,12 @@ export const FUNNEL_BLOCK_REGISTRY: Record<FunnelBlockType, FunnelBlockDef> = {
     type: 'registration_form',
     label: 'Registration Form',
     icon: 'FormInput',
-    defaultContent: { buttonText: 'Register now' },
+    defaultContent: {
+      buttonText: 'Register now',
+      title: 'Register for the webinar',
+      collectName: true,
+      successMessage: 'Registration successful!',
+    },
     defaultSettings: {},
   },
   countdown: {
@@ -98,7 +121,7 @@ export const FUNNEL_BLOCK_REGISTRY: Record<FunnelBlockType, FunnelBlockDef> = {
     label: 'CTA',
     icon: 'MousePointer',
     defaultContent: { text: 'Get access now', url: '#' },
-    defaultSettings: {},
+    defaultSettings: { sticky_mobile: false },
   },
   offer: {
     type: 'offer',

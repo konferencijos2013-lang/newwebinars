@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
-
-const PARTNER_VISITOR_TOKEN_KEY = 'newwebinars_partner_visitor_token'
+import {
+  hasMarketingConsent,
+  PARTNER_VISITOR_TOKEN_KEY,
+} from '@/features/consent/consent'
 
 function safeReturnTo(value: string | null) {
   if (!value) return '/dashboard'
@@ -43,7 +45,9 @@ export function AuthCallbackPage() {
       if (resolvedRef.current) return
       resolvedRef.current = true
       if (authListener) authListener.subscription.unsubscribe()
-      const visitorToken = localStorage.getItem(PARTNER_VISITOR_TOKEN_KEY)
+      const visitorToken = hasMarketingConsent()
+        ? localStorage.getItem(PARTNER_VISITOR_TOKEN_KEY)
+        : null
       if (visitorToken) {
         try {
           const { data: account } = await supabase
@@ -53,7 +57,7 @@ export function AuthCallbackPage() {
             .order('created_at')
             .limit(1)
             .maybeSingle()
-          if (account)
+          if (account && hasMarketingConsent())
             await supabase.rpc('claim_platform_partner_attribution', {
               p_account_id: account.id,
               p_visitor_token_hash: visitorToken,
@@ -91,20 +95,12 @@ export function AuthCallbackPage() {
       hashParamsForError.get('error_description') ||
       hashParamsForError.get('error')
 
-    console.log('[AuthCallback] mount', {
-      href: window.location.href,
-      hasAccessToken: window.location.hash.includes('access_token'),
-      hasCode: window.location.search.includes('code='),
-      oauthError,
-    })
-
     if (oauthError) {
       fail(oauthError)
       return
     }
 
     authListener = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[AuthCallback] auth event', { event, hasSession: !!session })
       if (event === 'SIGNED_IN' && session) {
         finish(returnTo)
       }
@@ -136,10 +132,6 @@ export function AuthCallbackPage() {
           const { error: setError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken ?? '',
-          })
-
-          console.log('[AuthCallback] setSession result', {
-            error: setError?.message,
           })
           if (!isActive || resolvedRef.current) return
           if (setError) {

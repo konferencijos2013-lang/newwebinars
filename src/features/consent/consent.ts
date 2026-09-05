@@ -10,6 +10,8 @@ export const CONSENT_STORAGE_KEY = 'newwebinars_consent'
 export const CONSENT_VERSION = 1
 export const CONSENT_OPEN_EVENT = 'newwebinars:open-consent'
 export const CONSENT_CHANGED_EVENT = 'newwebinars:consent-changed'
+export const PARTNER_VISITOR_TOKEN_KEY = 'newwebinars_partner_visitor_token'
+const ANALYTICS_STORAGE_PREFIX = 'newwebinars_analytics_'
 
 export function getConsentPreferences(): ConsentPreferences | null {
   try {
@@ -40,6 +42,16 @@ export function saveConsentPreferences(
     updatedAt: new Date().toISOString(),
   }
   localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(value))
+  if (!value.marketing) {
+    localStorage.removeItem(PARTNER_VISITOR_TOKEN_KEY)
+  }
+  if (!value.analytics) {
+    for (let index = localStorage.length - 1; index >= 0; index--) {
+      const key = localStorage.key(index)
+      if (key?.startsWith(ANALYTICS_STORAGE_PREFIX))
+        localStorage.removeItem(key)
+    }
+  }
   window.dispatchEvent(
     new CustomEvent(CONSENT_CHANGED_EVENT, { detail: value }),
   )
@@ -48,6 +60,10 @@ export function saveConsentPreferences(
 
 export function hasMarketingConsent() {
   return getConsentPreferences()?.marketing === true
+}
+
+export function hasAnalyticsConsent() {
+  return getConsentPreferences()?.analytics === true
 }
 
 export function openConsentSettings() {

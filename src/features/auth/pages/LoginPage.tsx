@@ -102,19 +102,11 @@ export function LoginPage() {
     setError(null)
     setIsLoadingGoogle(true)
 
-    console.log('[LoginPage] initiating Google OAuth', {
-      redirectTo: getRedirectTo(returnTo),
-    })
-
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: getRedirectTo(returnTo),
       },
-    })
-
-    console.log('[LoginPage] signInWithOAuth result', {
-      error: oauthError?.message,
     })
 
     setIsLoadingGoogle(false)

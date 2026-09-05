@@ -41,6 +41,7 @@
         "npm:@types/react@^19.2.17",
         "npm:@vitejs/plugin-react@^6.0.3",
         "npm:clsx@^2.1.1",
+        "npm:dompurify@^3.4.14",
         "npm:eslint-plugin-react-hooks@^7.1.1",
         "npm:eslint-plugin-react-refresh@~0.5.3",
         "npm:eslint@^10.6.0",
@@ -49,6 +50,7 @@
         "npm:i18next-browser-languagedetector@^8.2.1",
         "npm:i18next-http-backend@4",
         "npm:i18next@^26.3.4",
+        "npm:jsdom@^29.1.1",
         "npm:lucide-react@^1.23.0",
         "npm:prettier-plugin-tailwindcss@0.8",
         "npm:prettier@^3.9.4",
@@ -60,7 +62,8 @@
         "npm:tailwindcss@^4.3.2",
         "npm:typescript-eslint@^8.62.0",
         "npm:typescript@~6.0.2",
-        "npm:vite@^8.1.1"
+        "npm:vite@^8.1.1",
+        "npm:vitest@^4.1.11"
       ]
     }
   }

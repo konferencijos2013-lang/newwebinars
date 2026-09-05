@@ -117,6 +117,25 @@ async function sendManyChat(
   return responseText
 }
 
+async function sendTelegram(credential: string, chatId: string, body: string) {
+  const response = await fetch(
+    `https://api.telegram.org/bot${credential}/sendMessage`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: body,
+        disable_web_page_preview: false,
+      }),
+    },
+  )
+  const responseText = await response.text()
+  if (!response.ok)
+    throw new Error(`Telegram rejected delivery: ${responseText}`)
+  return responseText
+}
+
 async function sendSmtp(
   credential: string,
   config: Config,
@@ -245,6 +264,33 @@ serve(async (req) => {
           .eq('registration_id', job.registration_id)
           .eq('integration_connection_id', job.connection_id)
           .eq('provider', 'manychat')
+      } else if (job.provider === 'telegram') {
+        if (job.telegram_channel_status !== 'linked' || !job.telegram_chat_id) {
+          await db.rpc('complete_reminder_delivery', {
+            p_queue_id: job.queue_id,
+            p_status: 'skipped',
+            p_provider_response: null,
+            p_error_message:
+              'Participant did not connect Telegram before this reminder.',
+          })
+          skipped++
+          continue
+        }
+        responseText = await sendTelegram(
+          credential,
+          job.telegram_chat_id,
+          body,
+        )
+        await db
+          .from('registration_message_channels')
+          .update({
+            last_delivery_at: new Date().toISOString(),
+            last_error: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('registration_id', job.registration_id)
+          .eq('integration_connection_id', job.connection_id)
+          .eq('provider', 'telegram')
       } else throw new Error(`Unsupported reminder provider: ${job.provider}`)
       await db.rpc('complete_reminder_delivery', {
         p_queue_id: job.queue_id,

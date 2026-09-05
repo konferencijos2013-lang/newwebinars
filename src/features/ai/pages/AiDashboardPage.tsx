@@ -14,7 +14,7 @@ import { Card, CardDescription } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
 import { useUser } from '@/features/auth/hooks/useUser'
-import { sendMessage } from '@/features/ai/api/ai'
+import { createThread, sendMessage } from '@/features/ai/api/ai'
 
 const scopes = [
   {
@@ -70,15 +70,23 @@ export function AiDashboardPage() {
   const isReady = account.status === 'ready'
 
   async function handleGenerate() {
-    if (!input.trim() || !isReady) return
+    if (!input.trim() || !isReady || !user) return
     setLoading(true)
     setReply(null)
     try {
+      const storedScope = mode === 'chat_script' ? 'chat_script' : 'global'
+      const thread = await createThread({
+        account_id: account.account.id,
+        user_id: user.id,
+        title: t(`modes.${mode}.title`),
+        scope: storedScope,
+      })
       const data = await sendMessage({
-        thread_id: 'dash-' + Date.now(),
+        thread_id: thread.id,
         account_id: account.account.id,
         content: input,
-        scope: mode,
+        scope: storedScope,
+        generation_mode: mode,
         previousMessages: [],
       })
       setReply(data.content)

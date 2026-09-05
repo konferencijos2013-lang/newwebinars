@@ -38,7 +38,7 @@ serve(async (req) => {
     const { data: webinar, error: webinarError } = await supabaseAdmin
       .from('webinars')
       .select(
-        'id, cf_live_input_uid, cf_stream_status, cf_playback_hls_url, cf_playback_dash_url',
+        'id, account_id, status, cf_live_input_uid, cf_stream_status, cf_playback_hls_url, cf_playback_dash_url',
       )
       .eq('id', webinarId)
       .single()
@@ -48,6 +48,28 @@ serve(async (req) => {
         status: 404,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       })
+    }
+
+    if (webinar.status !== 'published' && webinar.status !== 'live') {
+      const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+      const { data: userData } = token
+        ? await supabaseAdmin.auth.getUser(token)
+        : { data: { user: null } }
+      const { data: member } = userData.user
+        ? await supabaseAdmin
+            .from('account_members')
+            .select('role')
+            .eq('account_id', webinar.account_id)
+            .eq('user_id', userData.user.id)
+            .maybeSingle()
+        : { data: null }
+
+      if (!member) {
+        return new Response(JSON.stringify({ error: 'Webinar not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        })
+      }
     }
 
     if (!webinar.cf_live_input_uid) {
@@ -161,10 +183,9 @@ serve(async (req) => {
       },
     )
   } catch (err) {
+    console.error('Live input status request failed', err)
     return new Response(
-      JSON.stringify({
-        error: err instanceof Error ? err.message : String(err),
-      }),
+      JSON.stringify({ error: 'Unable to fetch live input status' }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },

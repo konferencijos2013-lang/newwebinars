@@ -22,6 +22,10 @@ import type {
   Subscription,
   Payment,
 } from '@/shared/database.types'
+import {
+  trackAnalyticsEvent,
+  trackPurchaseOnce,
+} from '@/features/analytics/dataLayer'
 
 type BillingInterval = 'month' | 'year'
 const displayLimitKeys = [
@@ -61,6 +65,23 @@ export function BillingPage() {
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (searchParams.get('success') !== '1') return
+    const payment = payments
+      .filter((candidate) => candidate.status === 'succeeded')
+      .sort((a, b) =>
+        String(b.paid_at ?? b.created_at).localeCompare(
+          String(a.paid_at ?? a.created_at),
+        ),
+      )[0]
+    if (!payment) return
+    trackPurchaseOnce({
+      transaction_id: payment.stripe_invoice_id ?? payment.id,
+      currency: payment.currency.toUpperCase(),
+      value: payment.amount_cents / 100,
+    })
+  }, [payments, searchParams])
 
   useEffect(() => {
     if (redirectUrl) window.location.assign(redirectUrl)
@@ -141,6 +162,17 @@ export function BillingPage() {
       const result = hasSubscription
         ? await createCustomerPortalSession(account.account.id)
         : await createCheckoutSession(account.account.id, planId!)
+      if (!hasSubscription && planId) {
+        const plan = plans.find((candidate) => candidate.id === planId)
+        if (plan) {
+          trackAnalyticsEvent('begin_checkout', {
+            currency: plan.currency.toUpperCase(),
+            value: plan.price_cents / 100,
+            plan_code: plan.code,
+            billing_interval: plan.interval,
+          })
+        }
+      }
       setRedirectUrl(result.url)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

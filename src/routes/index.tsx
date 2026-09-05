@@ -47,10 +47,14 @@ import { AdminBillingListPage } from '@/features/admin/pages/AdminBillingListPag
 import { AdminPartnersPage } from '@/features/admin/pages/AdminPartnersPage'
 import { AdminPartnerDetailPage } from '@/features/admin/pages/AdminPartnerDetailPage'
 import { PartnerReferralRedirectPage } from '@/features/affiliate/pages/PartnerReferralRedirectPage'
+import { CookieConsent } from '@/features/consent/CookieConsent'
+import { SpaPageViewTracker } from '@/features/analytics/SpaPageViewTracker'
 
 export function AppRoutes() {
   return (
     <BrowserRouter>
+      <SpaPageViewTracker />
+      <CookieConsent />
       <Routes>
         {/* Public affiliate attribution must be matched before the generic :slug route. */}
         <Route path="r/:code" element={<PartnerReferralRedirectPage />} />

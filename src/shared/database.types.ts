@@ -7,14 +7,15 @@ export type WebinarStatus =
 export type RegistrationStatus =
   'registered' | 'attended' | 'cancelled' | 'no_show'
 export type MessageType = 'chat' | 'system' | 'offer'
-export type ReminderChannel = 'email' | 'telegram'
-export type IntegrationProvider = 'brevo' | 'resend' | 'smtp' | 'manychat'
+export type ReminderChannel = 'email' | 'telegram' | 'manychat'
+export type IntegrationProvider =
+  'brevo' | 'resend' | 'smtp' | 'manychat' | 'telegram'
 export type IntegrationStatus = 'active' | 'disabled' | 'error'
 export type PartnerType = 'affiliate' | 'business'
 export type WebinarSessionStatus = 'upcoming' | 'live' | 'ended' | 'cancelled'
 export type ReminderStatus =
-  'queued' | 'processing' | 'sent' | 'failed' | 'cancelled'
-export type ReminderLogStatus = 'sent' | 'failed'
+  'queued' | 'processing' | 'sent' | 'failed' | 'cancelled' | 'skipped'
+export type ReminderLogStatus = 'sent' | 'failed' | 'skipped'
 export type FunnelStatus = 'draft' | 'published' | 'archived'
 export type FunnelStepType =
   | 'registration'
