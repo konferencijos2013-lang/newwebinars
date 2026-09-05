@@ -251,26 +251,34 @@ export function FunnelEditor({
             )}
             style={backgroundStyle(pageTheme)}
           >
-            <div className="grid min-h-full grid-cols-1 gap-3 p-3 sm:grid-cols-6 sm:p-5">
+            <div
+              className={cn(
+                'grid min-h-full gap-3 p-3 sm:p-5',
+                previewDevice === 'desktop' ? 'grid-cols-6' : 'grid-cols-1',
+              )}
+            >
               {blocks.map((block) => {
+                const settings = block.settings as Record<string, unknown>
                 const columnSpan = (
-                  [4, 6].includes(
-                    Number(
-                      (block.settings as Record<string, unknown>)?.column_span,
-                    ),
-                  )
-                    ? (block.settings as Record<string, unknown>).column_span
+                  [4, 6].includes(Number(settings?.column_span))
+                    ? settings.column_span
                     : 12
                 ) as 4 | 6 | 12
+                const widthMode = String(settings?.width_mode ?? 'container')
+                const fillsRow = widthMode !== 'container' || columnSpan === 12
                 return (
                   <button
                     key={block.id}
                     type="button"
                     onClick={() => selectBlock(block.id)}
                     className={cn(
-                      'group focus-visible:ring-primary/40 relative block w-full rounded-lg border-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none sm:col-span-3',
-                      columnSpan === 6 && 'sm:col-span-3',
-                      columnSpan === 4 && 'sm:col-span-2',
+                      'group focus-visible:ring-primary/40 relative block w-full rounded-lg border-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
+                      previewDevice === 'desktop' &&
+                        (fillsRow
+                          ? 'col-span-6'
+                          : columnSpan === 6
+                            ? 'col-span-3'
+                            : 'col-span-2'),
                       selectedId === block.id
                         ? 'border-primary bg-background'
                         : 'hover:border-primary/30 border-transparent',
