@@ -277,6 +277,7 @@ Telegram uses a direct Bot API integration; Messenger and WhatsApp continue to u
 3. In **Settings → Integrations**, connect **Telegram Bot** with the BotFather token. The token is stored in Supabase Vault, validated with Telegram, and the webhook is configured automatically.
 4. Add a Telegram reminder rule to a webinar. The attendee sees **Gauti priminimus per Telegram** in the waiting room and must explicitly start the bot before messages can be delivered.
 5. Telegram contacts are stored per account in `telegram_contacts`. Scheduled messages use the existing reminder queue, retry, and delivery log infrastructure.
+6. Account owners and administrators can also compose a free-form message in **Settings → Integrations → Telegram Bot**, select up to 100 active opted-in contacts, and send it immediately. Broadcast summaries are stored in `telegram_broadcasts`; unsubscribed or blocked contacts cannot be selected.
 
 A Telegram bot cannot initiate a conversation with someone who has not started it. Facebook Messenger and WhatsApp also require platform-approved opt-in and message-template rules; this project handles those channels through ManyChat rather than storing Meta credentials directly.
 
