@@ -22,6 +22,7 @@ import {
   fetchTelegramContacts,
   saveIntegrationConnection,
   uploadTelegramBroadcastImage,
+  updateTelegramAiSettings,
   type TelegramBroadcast,
   type TelegramContact,
   type IntegrationConnection,
@@ -490,8 +491,32 @@ function TelegramForm({
   disabled: boolean
   accountId: string
 }) {
+  const initialConfig = connection?.config ?? {}
   const [credential, setCredential] = useState('')
   const [configuring, setConfiguring] = useState(false)
+  const [aiEnabled, setAiEnabled] = useState(
+    initialConfig.ai_reply_enabled === true,
+  )
+  const [aiPrompt, setAiPrompt] = useState(
+    String(
+      initialConfig.ai_system_prompt ??
+        'Tu esi webinarų virtualus asistentas. Atsakyk lietuviškai, trumpai, draugiškai ir tik pagal pateiktą informaciją. Jei atsakymo nežinai, aiškiai tai pasakyk ir nukreipk į administratorių.',
+    ),
+  )
+  const [aiWelcome, setAiWelcome] = useState(
+    String(
+      initialConfig.ai_welcome_message ??
+        'Sveiki! Parašykite savo klausimą, o virtualus asistentas pabandys padėti.',
+    ),
+  )
+  const [aiFallback, setAiFallback] = useState(
+    String(
+      initialConfig.ai_fallback_message ??
+        'Atsiprašau, šiuo metu negaliu atsakyti. Pabandykite dar kartą vėliau.',
+    ),
+  )
+  const [savingAi, setSavingAi] = useState(false)
+  const [aiNotice, setAiNotice] = useState<string | null>(null)
   const [setupError, setSetupError] = useState<string | null>(null)
   const [contacts, setContacts] = useState<TelegramContact[]>([])
   const [contactTotal, setContactTotal] = useState(0)
@@ -643,6 +668,27 @@ function TelegramForm({
     }
   }
 
+  async function saveAiSettings() {
+    if (!connection) return
+    setSavingAi(true)
+    setSetupError(null)
+    setAiNotice(null)
+    try {
+      await updateTelegramAiSettings({
+        connectionId: connection.id,
+        enabled: aiEnabled,
+        systemPrompt: aiPrompt.trim(),
+        welcomeMessage: aiWelcome.trim(),
+        fallbackMessage: aiFallback.trim(),
+      })
+      setAiNotice('DI atsakymų nustatymai išsaugoti.')
+    } catch (reason) {
+      setSetupError(reason instanceof Error ? reason.message : String(reason))
+    } finally {
+      setSavingAi(false)
+    }
+  }
+
   async function connect() {
     setSetupError(null)
     setConfiguring(true)
@@ -707,6 +753,84 @@ function TelegramForm({
         </>
       )}
       {setupError && <p className="mt-3 text-sm text-red-600">{setupError}</p>}
+      {connection?.status === 'active' && (
+        <div className="border-border mt-5 border-t pt-5">
+          <h3 className="text-sm font-semibold">DI automatiniai atsakymai</h3>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Virtualus asistentas atsakys į privačias boto žinutes pagal jūsų
+            promptą ir paskelbtų webinarų informaciją. Komandos, įskaitant
+            /stop, nėra perduodamos DI.
+          </p>
+          <label className="mt-3 flex items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={aiEnabled}
+              disabled={disabled || savingAi}
+              onChange={(event) => setAiEnabled(event.target.checked)}
+            />
+            Įjungti DI atsakymus
+          </label>
+          <label
+            className="mt-3 block text-sm font-medium"
+            htmlFor="telegram-ai-prompt"
+          >
+            DI sistemos promptas
+          </label>
+          <Textarea
+            id="telegram-ai-prompt"
+            className="mt-1 min-h-36"
+            disabled={disabled || savingAi}
+            maxLength={12000}
+            value={aiPrompt}
+            onChange={(event) => setAiPrompt(event.target.value)}
+            placeholder="Aprašykite, kaip virtualus asistentas turi atsakyti..."
+          />
+          <p className="text-muted-foreground mt-1 text-right text-xs">
+            {aiPrompt.length}/12000
+          </p>
+          <label
+            className="mt-3 block text-sm font-medium"
+            htmlFor="telegram-ai-welcome"
+          >
+            Atsakymas į paprastą /start
+          </label>
+          <Textarea
+            id="telegram-ai-welcome"
+            className="mt-1"
+            disabled={disabled || savingAi}
+            maxLength={4096}
+            value={aiWelcome}
+            onChange={(event) => setAiWelcome(event.target.value)}
+          />
+          <label
+            className="mt-3 block text-sm font-medium"
+            htmlFor="telegram-ai-fallback"
+          >
+            Atsarginis atsakymas, jei DI nepasiekiamas
+          </label>
+          <Textarea
+            id="telegram-ai-fallback"
+            className="mt-1"
+            disabled={disabled || savingAi}
+            maxLength={4096}
+            value={aiFallback}
+            onChange={(event) => setAiFallback(event.target.value)}
+          />
+          {aiNotice && (
+            <p className="mt-2 text-sm text-green-600">{aiNotice}</p>
+          )}
+          <Button
+            className="mt-3"
+            disabled={
+              disabled || savingAi || (aiEnabled && aiPrompt.trim().length < 20)
+            }
+            isLoading={savingAi}
+            onClick={() => void saveAiSettings()}
+          >
+            Išsaugoti DI nustatymus
+          </Button>
+        </div>
+      )}
       {connection?.status === 'active' && (
         <div className="border-border mt-5 border-t pt-5">
           <h3 className="text-sm font-semibold">Siųsti Telegram žinutę</h3>
