@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams } from 'react-router'
-import { Calendar, Clock, Globe, Lock } from 'lucide-react'
+import { Calendar, Clock, Globe, Lock, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
@@ -11,7 +11,9 @@ import { supabase } from '@/lib/supabase'
 import {
   fetchWebinarByHostname,
   fetchWebinarBySlug,
+  getTelegramRegistrationIntentStatus,
   registerForWebinar,
+  startTelegramWebinarRegistration,
 } from '@/features/webinars/api/public'
 import type { Webinar } from '@/shared/database.types'
 import { trackAnalyticsEvent } from '@/features/analytics/dataLayer'
@@ -29,6 +31,10 @@ export function PublicWebinarPage() {
     null,
   )
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
+  const [intentId, setIntentId] = useState<string | null>(null)
+  const [registrationError, setRegistrationError] = useState<string | null>(
+    null,
+  )
 
   useEffect(() => {
     if (!slug) return
@@ -62,10 +68,34 @@ export function PublicWebinarPage() {
     }
   }, [slug])
 
+  useEffect(() => {
+    if (!intentId) return
+    const interval = window.setInterval(async () => {
+      try {
+        const state = await getTelegramRegistrationIntentStatus(intentId)
+        if (state?.status === 'completed' && state.registration_access_token) {
+          setRegistrationToken(state.registration_access_token)
+          setIntentId(null)
+          trackAnalyticsEvent('webinar_registration', {
+            registration_method: 'telegram',
+            registration_source: 'public_webinar',
+          })
+        } else if (state?.status === 'expired') {
+          setIntentId(null)
+          setRegistrationError(t('telegramExpired'))
+        }
+      } catch {
+        // A temporary network failure must not cancel a still-valid intent.
+      }
+    }, 2000)
+    return () => window.clearInterval(interval)
+  }, [intentId, t])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!webinar) return
     setIsSubmitting(true)
+    setRegistrationError(null)
 
     try {
       const reg = await registerForWebinar({
@@ -77,7 +107,8 @@ export function PublicWebinarPage() {
           typeof window !== 'undefined' ? window.location.href : null,
       })
       trackAnalyticsEvent('webinar_registration', {
-        registration_method: 'public_webinar',
+        registration_method: 'email',
+        registration_source: 'public_webinar',
       })
       trackAnalyticsEvent('generate_lead', {
         lead_type: 'webinar_registration',
@@ -85,6 +116,28 @@ export function PublicWebinarPage() {
       setRegistrationToken(reg.access_token)
     } catch (err) {
       console.error(err)
+      setRegistrationError(t('registrationFailed'))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleTelegramRegistration() {
+    if (!webinar) return
+    setIsSubmitting(true)
+    setRegistrationError(null)
+    try {
+      const intent = await startTelegramWebinarRegistration({
+        webinar_id: webinar.id,
+        full_name: fullName.trim() || null,
+        referral_code: searchParams.get('ref') ?? undefined,
+        referrer_url: window.location.href,
+      })
+      setIntentId(intent.intent_id)
+      window.open(intent.connect_url, '_blank', 'noopener,noreferrer')
+    } catch (err) {
+      console.error(err)
+      setRegistrationError(t('telegramStartFailed'))
     } finally {
       setIsSubmitting(false)
     }
@@ -182,17 +235,7 @@ export function PublicWebinarPage() {
           <CardDescription className="mt-2">
             {t('registerDescription')}
           </CardDescription>
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
+          <div className="mt-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="fullName">{t('fullName')}</Label>
               <Input
@@ -201,10 +244,58 @@ export function PublicWebinarPage() {
                 onChange={(e) => setFullName(e.target.value)}
               />
             </div>
-            <Button type="submit" isLoading={isSubmitting} className="w-full">
-              {isSubmitting ? t('registering') : t('register')}
-            </Button>
-          </form>
+            {(webinar.registration_method === 'email' ||
+              webinar.registration_method === 'both') && (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">{t('email')}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  isLoading={isSubmitting}
+                  className="w-full"
+                >
+                  {isSubmitting ? t('registering') : t('registerByEmail')}
+                </Button>
+              </form>
+            )}
+            {webinar.registration_method === 'both' && (
+              <div className="text-muted-foreground flex items-center gap-3 text-xs">
+                <span className="bg-border h-px flex-1" />
+                {t('or')}
+                <span className="bg-border h-px flex-1" />
+              </div>
+            )}
+            {(webinar.registration_method === 'telegram' ||
+              webinar.registration_method === 'both') && (
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                className="w-full bg-[#229ED9] text-white hover:bg-[#1d8fc4]"
+                onClick={handleTelegramRegistration}
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                {t('registerViaTelegram')}
+              </Button>
+            )}
+            {intentId && (
+              <p className="text-center text-sm text-sky-700">
+                {t('telegramPending')}
+              </p>
+            )}
+            {registrationError && (
+              <p className="text-center text-sm text-red-600">
+                {registrationError}
+              </p>
+            )}
+          </div>
         </Card>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import DOMPurify from 'dompurify'
 import {
   CalendarDays,
@@ -10,7 +11,11 @@ import {
 } from 'lucide-react'
 import type { FunnelBlock } from '@/shared/database.types'
 import { backgroundStyle } from '@/features/funnels/pageTheme'
-import { registerForWebinar } from '@/features/webinars/api/public'
+import {
+  getTelegramRegistrationIntentStatus,
+  registerForWebinar,
+  startTelegramWebinarRegistration,
+} from '@/features/webinars/api/public'
 import { trackAnalyticsEvent } from '@/features/analytics/dataLayer'
 import { safePublicUrl } from './safePublicUrl'
 
@@ -126,6 +131,7 @@ type WebinarContext = {
   webinarId?: string | null
   webinarSlug?: string | null
   webinarScheduledAt?: string | null
+  webinarRegistrationMethod?: 'email' | 'telegram' | 'both' | null
 }
 
 function RegistrationForm({
@@ -137,12 +143,43 @@ function RegistrationForm({
   isPreview: boolean
   webinar: WebinarContext
 }) {
+  const { t } = useTranslation('public')
   const [email, setEmail] = useState('')
   const [fullName, setFullName] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [token, setToken] = useState<string | null>(null)
+  const [intentId, setIntentId] = useState<string | null>(null)
   const collectName = content.collectName !== false
+  const configuredMethod = String(content.registrationMethod ?? 'inherit')
+  const method = (
+    configuredMethod === 'inherit'
+      ? (webinar.webinarRegistrationMethod ?? 'email')
+      : configuredMethod
+  ) as 'email' | 'telegram' | 'both'
+
+  useEffect(() => {
+    if (!intentId) return
+    const interval = window.setInterval(async () => {
+      try {
+        const state = await getTelegramRegistrationIntentStatus(intentId)
+        if (state?.status === 'completed' && state.registration_access_token) {
+          setToken(state.registration_access_token)
+          setIntentId(null)
+          trackAnalyticsEvent('webinar_registration', {
+            registration_method: 'telegram',
+            registration_source: 'funnel',
+          })
+        } else if (state?.status === 'expired') {
+          setIntentId(null)
+          setError(t('telegramExpired'))
+        }
+      } catch {
+        /* Keep polling until expiration or completion. */
+      }
+    }, 2000)
+    return () => window.clearInterval(interval)
+  }, [intentId, t])
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -160,16 +197,38 @@ function RegistrationForm({
       })
       setToken(registration.access_token)
       trackAnalyticsEvent('webinar_registration', {
-        registration_method: 'funnel',
+        registration_method: 'email',
+        registration_source: 'funnel',
       })
       trackAnalyticsEvent('generate_lead', {
         lead_type: 'webinar_registration',
       })
     } catch (reason) {
       setError(
-        reason instanceof Error
-          ? reason.message
-          : 'Registration failed. Please try again.',
+        reason instanceof Error ? reason.message : t('registrationFailed'),
+      )
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function startTelegram() {
+    if (isPreview || !webinar.webinarId) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const intent = await startTelegramWebinarRegistration({
+        webinar_id: webinar.webinarId,
+        full_name: collectName ? fullName.trim() || null : null,
+        referral_code: params.get('ref'),
+        referrer_url: window.location.href,
+      })
+      setIntentId(intent.intent_id)
+      window.open(intent.connect_url, '_blank', 'noopener,noreferrer')
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : t('telegramStartFailed'),
       )
     } finally {
       setSubmitting(false)
@@ -184,63 +243,90 @@ function RegistrationForm({
       <div className="mx-auto max-w-md rounded-xl bg-emerald-50 p-5 text-center text-emerald-900">
         <CheckCircle2 className="mx-auto h-8 w-8" />
         <p className="mt-2 font-semibold">
-          {String(content.successMessage || 'Registration successful!')}
+          {String(content.successMessage || t('registeredTitle'))}
         </p>
         {waitingRoom && (
           <a
             className="mt-4 inline-block font-medium underline"
             href={waitingRoom}
           >
-            Open waiting room
+            {t('enterWaitingRoom')}
           </a>
         )}
       </div>
     )
   }
 
+  const disabled = isPreview || !webinar.webinarId || submitting
   return (
-    <form onSubmit={submit} className="mx-auto max-w-md space-y-3">
+    <div className="mx-auto max-w-md space-y-3">
       {typeof content.title === 'string' && content.title.trim() && (
         <Rich
           html={content.title}
-          fallback="Register for the webinar"
+          fallback={t('register')}
           className="mb-4 text-center text-2xl font-bold"
         />
       )}
       {collectName && (
         <input
-          required
-          disabled={isPreview || !webinar.webinarId || submitting}
+          disabled={disabled}
           value={fullName}
           onChange={(event) => setFullName(event.target.value)}
-          placeholder="Full name"
+          placeholder={t('fullName')}
           className="border-border bg-background w-full rounded-xl border px-4 py-3 text-sm"
         />
       )}
-      <input
-        required
-        type="email"
-        disabled={isPreview || !webinar.webinarId || submitting}
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-        placeholder="Email"
-        className="border-border bg-background w-full rounded-xl border px-4 py-3 text-sm"
-      />
-      <button
-        disabled={isPreview || !webinar.webinarId || submitting}
-        className="bg-primary text-primary-foreground w-full rounded-xl px-4 py-3 font-semibold disabled:opacity-60"
-      >
-        {submitting
-          ? 'Registering…'
-          : String(content.buttonText || 'Register now')}
-      </button>
+      {(method === 'email' || method === 'both') && (
+        <form onSubmit={submit} className="space-y-3">
+          <input
+            required
+            type="email"
+            disabled={disabled}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder={t('email')}
+            className="border-border bg-background w-full rounded-xl border px-4 py-3 text-sm"
+          />
+          <button
+            disabled={disabled}
+            className="bg-primary text-primary-foreground w-full rounded-xl px-4 py-3 font-semibold disabled:opacity-60"
+          >
+            {submitting
+              ? 'Registering…'
+              : String(content.buttonText || t('registerByEmail'))}
+          </button>
+        </form>
+      )}
+      {method === 'both' && (
+        <div className="text-muted-foreground flex items-center gap-3 text-xs">
+          <span className="h-px flex-1 bg-current opacity-20" />
+          {t('or')}
+          <span className="h-px flex-1 bg-current opacity-20" />
+        </div>
+      )}
+      {(method === 'telegram' || method === 'both') && (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={startTelegram}
+          className="w-full rounded-xl bg-[#229ED9] px-4 py-3 font-semibold text-white disabled:opacity-60"
+        >
+          <MessageCircle className="mr-2 inline h-4 w-4" />
+          {t('registerViaTelegram')}
+        </button>
+      )}
+      {intentId && (
+        <p className="text-center text-sm text-sky-700">
+          {t('telegramPending')}
+        </p>
+      )}
       {!webinar.webinarId && (
         <p className="text-muted-foreground text-center text-xs">
-          Link this funnel to a webinar to activate registration.
+          {t('linkFunnelWebinar')}
         </p>
       )}
       {error && <p className="text-center text-sm text-red-600">{error}</p>}
-    </form>
+    </div>
   )
 }
 
@@ -553,12 +639,14 @@ export function BlockRenderer({
   webinarId,
   webinarSlug,
   webinarScheduledAt,
+  webinarRegistrationMethod,
 }: {
   block: FunnelBlock
   isPreview?: boolean
   webinarId?: string | null
   webinarSlug?: string | null
   webinarScheduledAt?: string | null
+  webinarRegistrationMethod?: 'email' | 'telegram' | 'both' | null
 }) {
   const sticky =
     block.block_type === 'cta' && block.settings?.sticky_mobile === true
@@ -574,7 +662,12 @@ export function BlockRenderer({
       <BlockContent
         block={block}
         isPreview={isPreview}
-        webinar={{ webinarId, webinarSlug, webinarScheduledAt }}
+        webinar={{
+          webinarId,
+          webinarSlug,
+          webinarScheduledAt,
+          webinarRegistrationMethod,
+        }}
       />
     </div>
   )

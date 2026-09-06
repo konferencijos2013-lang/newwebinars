@@ -29,6 +29,9 @@ export function WebinarCreatePage() {
   const [roomPassword, setRoomPassword] = useState('')
   const [priceCents, setPriceCents] = useState('')
   const [waitingRoom, setWaitingRoom] = useState(true)
+  const [registrationMethod, setRegistrationMethod] = useState<
+    'email' | 'telegram' | 'both'
+  >('email')
   const [earlyEntry, setEarlyEntry] = useState('15')
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -74,6 +77,7 @@ export function WebinarCreatePage() {
             ? Number(priceCents)
             : null,
         waiting_room_enabled: waitingRoom,
+        registration_method: registrationMethod,
         early_entry_minutes: Number(earlyEntry) || 15,
       })
 
@@ -240,6 +244,30 @@ export function WebinarCreatePage() {
                 />
               </div>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="registrationMethod">
+              {t('registrationMethod')}
+            </Label>
+            <Select
+              id="registrationMethod"
+              value={registrationMethod}
+              onChange={(event) =>
+                setRegistrationMethod(
+                  event.target.value as 'email' | 'telegram' | 'both',
+                )
+              }
+            >
+              <option value="email">{t('registrationMethodEmail')}</option>
+              <option value="telegram">
+                {t('registrationMethodTelegram')}
+              </option>
+              <option value="both">{t('registrationMethodBoth')}</option>
+            </Select>
+            <p className="text-muted-foreground text-xs">
+              {t('registrationMethodHint')}
+            </p>
           </div>
 
           <div className="flex items-center gap-2">

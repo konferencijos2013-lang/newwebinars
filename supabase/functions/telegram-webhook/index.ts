@@ -183,15 +183,66 @@ serve(async (req) => {
 
   const match = messageText.match(/^\/start(?:@\w+)?\s+([A-Za-z0-9_-]{32,64})$/)
   if (match) {
-    const { data: status, error } = await db.rpc('link_telegram_contact', {
+    const identity = {
       p_connection_id: connectionId,
-      p_link_token: match[1],
       p_chat_id: chatId,
       p_telegram_user_id: stringValue(from.id) || null,
       p_username: stringValue(from.username) || null,
       p_first_name: stringValue(from.first_name) || null,
       p_last_name: stringValue(from.last_name) || null,
       p_language_code: stringValue(from.language_code) || null,
+    }
+    if (match[1].startsWith('r_')) {
+      const { data: registrationResult, error: registrationError } =
+        await db.rpc('complete_telegram_webinar_registration', {
+          ...identity,
+          p_token: match[1],
+        })
+      if (registrationError) {
+        console.error('Telegram registration failed', registrationError)
+        return json({ error: 'Unable to register participant' }, 500)
+      }
+      const completion = Array.isArray(registrationResult)
+        ? registrationResult[0]
+        : registrationResult
+      if (
+        completion?.result_status === 'registered' ||
+        completion?.result_status === 'already_registered'
+      ) {
+        const appUrl = (
+          Deno.env.get('APP_URL') ?? 'https://newwebinars.com'
+        ).replace(/\/$/, '')
+        const personalUrl = `${appUrl}/${completion.webinar_slug}/waiting-room?token=${completion.registration_access_token}`
+        await telegramReply(
+          botToken,
+          chatId,
+          `${completion.result_status === 'registered' ? 'Registracija sėkminga.' : 'Jūs jau užsiregistravote.'} Priminimus apie webinarą gausite čia.\n\nAsmeninė webinaro nuoroda: ${personalUrl}`,
+        )
+        return json({ received: true, status: completion.result_status })
+      }
+      if (completion?.result_status === 'registration_closed') {
+        await telegramReply(
+          botToken,
+          chatId,
+          'Registracija į šį webinaro seansą jau uždaryta arba nebėra laisvų vietų.',
+        )
+        return json({ received: true, status: completion.result_status })
+      }
+      await telegramReply(
+        botToken,
+        chatId,
+        'Ši registracijos nuoroda nebegalioja. Grįžkite į webinaro puslapį ir bandykite dar kartą.',
+      )
+      return json({
+        received: true,
+        status: completion?.result_status ?? 'invalid_or_expired',
+      })
+    }
+
+    // Existing post-registration reminder-linking tokens are unprefixed.
+    const { data: status, error } = await db.rpc('link_telegram_contact', {
+      ...identity,
+      p_link_token: match[1],
     })
     if (error) {
       console.error('Telegram contact linking failed', error)
@@ -202,7 +253,7 @@ serve(async (req) => {
       chatId,
       status === 'linked'
         ? 'Priminimai prijungti. Apie artėjantį webinarą parašysime čia.'
-        : 'Ši susiejimo nuoroda nebegalioja. Grįžkite į webinaro laukimo kambarį ir bandykite dar kartą.',
+        : 'Ši susiejimo nuoroda nebegalioja. Grįžkite į webinaro puslapį ir bandykite dar kartą.',
     )
     return json({ received: true, status })
   }

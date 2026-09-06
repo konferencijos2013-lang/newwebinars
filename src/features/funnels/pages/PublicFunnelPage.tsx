@@ -15,6 +15,7 @@ type PublicFunnelPageData = {
   webinar_id: string | null
   webinar_slug: string | null
   webinar_scheduled_at: string | null
+  webinar_registration_method: 'email' | 'telegram' | 'both' | null
 }
 
 export function PublicFunnelPage() {
@@ -92,6 +93,7 @@ export function PublicFunnelPage() {
                   webinarId={data.webinar_id}
                   webinarSlug={data.webinar_slug}
                   webinarScheduledAt={data.webinar_scheduled_at}
+                  webinarRegistrationMethod={data.webinar_registration_method}
                 />
               </div>
             )

@@ -25,6 +25,7 @@ export type FunnelStepType =
   | 'order_form'
   | 'thank_you'
   | 'lead_magnet'
+export type WebinarRegistrationMethod = 'email' | 'telegram' | 'both'
 export type WebinarAccessMode =
   'public' | 'password_protected' | 'paid_access' | 'invited_only'
 export type WebinarScheduleType =
@@ -129,6 +130,7 @@ export interface Webinar {
   duration_minutes: number | null
   max_participants: number | null
   waiting_room_enabled: boolean
+  registration_method: WebinarRegistrationMethod
   early_entry_minutes: number
   meeting_url: string | null
   automated_video_url: string | null
@@ -202,7 +204,9 @@ export interface Registration {
   session_id: string | null
   user_id: string | null
   access_token: string
-  email: string
+  email: string | null
+  registration_method: 'email' | 'telegram'
+  telegram_contact_id: string | null
   full_name: string | null
   status: RegistrationStatus
   registered_at: string
@@ -539,6 +543,7 @@ export interface PublishedWebinar {
   duration_minutes: number | null
   max_participants: number | null
   waiting_room_enabled: boolean
+  registration_method: WebinarRegistrationMethod
   early_entry_minutes: number
   created_at: string
 }

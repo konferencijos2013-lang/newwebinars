@@ -111,5 +111,10 @@
   "publishForYoutube": "Paskelbti webinarą",
   "youtubePreviewTitle": "YouTube Live peržiūra",
   "youtubePreviewMissingUrl": "Įklijuokite ir išsaugokite viešą YouTube Live nuorodą, kad matytumėte peržiūrą.",
-  "planWebinarLimitExceeded": "Pasiektas jūsų plano webinarų limitas. Atnaujinkite planą arba ištrinkite nebereikalingą webinarą."
+  "planWebinarLimitExceeded": "Pasiektas jūsų plano webinarų limitas. Atnaujinkite planą arba ištrinkite nebereikalingą webinarą.",
+  "registrationMethod": "Registracijos būdas",
+  "registrationMethodEmail": "El. paštu",
+  "registrationMethodTelegram": "Per Telegram",
+  "registrationMethodBoth": "El. paštu arba per Telegram",
+  "registrationMethodHint": "Registracijai per Telegram prieš publikavimą turi būti prijungtas aktyvus Telegram botas."
 }

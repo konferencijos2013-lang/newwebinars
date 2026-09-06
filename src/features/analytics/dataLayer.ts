@@ -4,7 +4,10 @@ type AnalyticsEvents = {
   page_view: { page_path: string }
   sign_up: { method: string }
   generate_lead: { lead_type: 'webinar_registration' }
-  webinar_registration: { registration_method: 'public_webinar' | 'funnel' }
+  webinar_registration: {
+    registration_method: 'email' | 'telegram'
+    registration_source: 'public_webinar' | 'funnel'
+  }
   webinar_entry: { webinar_id: string; entry_point: 'waiting_room' }
   webinar_join: { webinar_id: string; room_type: 'attendee' }
   webinar_cta_click: { webinar_id: string; cta_type: 'offer' }

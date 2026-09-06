@@ -111,5 +111,10 @@
   "publishForYoutube": "Publish webinar",
   "youtubePreviewTitle": "YouTube Live preview",
   "youtubePreviewMissingUrl": "Paste and save a public YouTube Live URL to see the preview.",
-  "planWebinarLimitExceeded": "Your plan’s webinar limit has been reached. Upgrade your plan or delete a webinar you no longer need."
+  "planWebinarLimitExceeded": "Your plan’s webinar limit has been reached. Upgrade your plan or delete a webinar you no longer need.",
+  "registrationMethod": "Registration method",
+  "registrationMethodEmail": "Email",
+  "registrationMethodTelegram": "Telegram",
+  "registrationMethodBoth": "Email or Telegram",
+  "registrationMethodHint": "Telegram registration requires an active Telegram bot connection before publishing."
 }

@@ -27,5 +27,14 @@
   "deleteMessage": "Ištrinti žinutę",
   "unmute": "Įjungti garsą",
   "chatUnavailable": "Nepavyko išsiųsti žinutės. Galbūt esate nutildytas arba pašalintas iš webinaro.",
-  "youtubeLiveTitle": "YouTube Live transliacija"
+  "youtubeLiveTitle": "YouTube Live transliacija",
+  "email": "El. paštas",
+  "registerByEmail": "Registruotis el. paštu",
+  "registerViaTelegram": "Registruotis per Telegram",
+  "or": "arba",
+  "telegramPending": "Užbaikite registraciją Telegram programėlėje. Šis puslapis atsinaujins automatiškai.",
+  "telegramExpired": "Telegram registracijos nuoroda nebegalioja. Bandykite dar kartą.",
+  "telegramStartFailed": "Nepavyko pradėti Telegram registracijos. Patikrinkite, ar prijungtas webinaro botas.",
+  "registrationFailed": "Registracija nepavyko. Bandykite dar kartą.",
+  "linkFunnelWebinar": "Susiekite funnelį su webinaru, kad registracija veiktų."
 }

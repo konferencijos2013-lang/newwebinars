@@ -18,6 +18,7 @@ export type CreateWebinarInput = {
   access_mode: 'public' | 'password_protected' | 'paid_access' | 'invited_only'
   price_cents?: number | null
   waiting_room_enabled?: boolean
+  registration_method?: Webinar['registration_method']
   early_entry_minutes?: number
   status?: Webinar['status']
   chat_script_offset_seconds?: number

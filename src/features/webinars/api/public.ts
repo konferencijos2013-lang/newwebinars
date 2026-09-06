@@ -50,6 +50,50 @@ export async function fetchWebinarByHostname(hostname: string, slug: string) {
 // RETURNING row. The RPC re-checks the same open-for-registration/partner-code
 // rules the previous INSERT policy enforced and returns only the row it just
 // created, so it's safe for anon without a blanket table grant.
+export interface TelegramRegistrationIntent {
+  intent_id: string
+  connect_url: string
+  expires_at: string
+}
+
+export async function startTelegramWebinarRegistration(input: {
+  webinar_id: string
+  full_name?: string | null
+  referrer_url?: string | null
+  referral_code?: string | null
+}) {
+  const { data, error } = await supabase.rpc(
+    'start_telegram_webinar_registration',
+    {
+      p_webinar_id: input.webinar_id,
+      p_full_name: input.full_name ?? null,
+      p_referrer_url: input.referrer_url ?? null,
+      p_referral_code: input.referral_code ?? null,
+    },
+  )
+  if (error) throw error
+  const intent = (data ?? [])[0] as TelegramRegistrationIntent | undefined
+  if (!intent) throw new Error('Unable to start Telegram registration')
+  return intent
+}
+
+export async function getTelegramRegistrationIntentStatus(intentId: string) {
+  const { data, error } = await supabase.rpc(
+    'get_telegram_registration_intent_status',
+    {
+      p_intent_id: intentId,
+    },
+  )
+  if (error) throw error
+  return (data ?? [])[0] as
+    | {
+        status: 'pending' | 'completed' | 'expired'
+        registration_access_token: string | null
+        expires_at: string
+      }
+    | undefined
+}
+
 export async function registerForWebinar(input: {
   webinar_id: string
   email: string

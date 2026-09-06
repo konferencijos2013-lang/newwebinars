@@ -691,6 +691,22 @@ function BlockEditor({
               onChange={(buttonText) => set({ buttonText })}
             />
           </Field>
+          <Field label={t('registrationMethod')}>
+            <select
+              className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+              value={(content.registrationMethod as string) ?? 'inherit'}
+              onChange={(event) =>
+                set({ registrationMethod: event.target.value })
+              }
+            >
+              <option value="inherit">{t('registrationMethodInherit')}</option>
+              <option value="email">{t('registrationMethodEmail')}</option>
+              <option value="telegram">
+                {t('registrationMethodTelegram')}
+              </option>
+              <option value="both">{t('registrationMethodBoth')}</option>
+            </select>
+          </Field>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"

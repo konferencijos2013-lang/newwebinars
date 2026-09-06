@@ -27,5 +27,14 @@
   "deleteMessage": "Delete message",
   "unmute": "Unmute",
   "chatUnavailable": "Your message could not be sent. You may be muted or removed from the webinar.",
-  "youtubeLiveTitle": "YouTube Live stream"
+  "youtubeLiveTitle": "YouTube Live stream",
+  "email": "Email",
+  "registerByEmail": "Register by email",
+  "registerViaTelegram": "Register via Telegram",
+  "or": "or",
+  "telegramPending": "Complete registration in Telegram. This page will update automatically.",
+  "telegramExpired": "The Telegram registration link expired. Please try again.",
+  "telegramStartFailed": "Unable to start Telegram registration. Check that the webinar bot is connected.",
+  "registrationFailed": "Registration failed. Please try again.",
+  "linkFunnelWebinar": "Link this funnel to a webinar to activate registration."
 }

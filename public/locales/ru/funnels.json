@@ -108,5 +108,10 @@
   "formTitle": "Заголовок формы",
   "collectName": "Собирать имя и фамилию",
   "successMessage": "Сообщение об успехе",
-  "stickyMobile": "Закреплённый CTA на телефоне"
+  "stickyMobile": "Закреплённый CTA на телефоне",
+  "registrationMethod": "Способ регистрации",
+  "registrationMethodInherit": "Использовать настройку вебинара",
+  "registrationMethodEmail": "По электронной почте",
+  "registrationMethodTelegram": "Через Telegram",
+  "registrationMethodBoth": "По почте или через Telegram"
 }

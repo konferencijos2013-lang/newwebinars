@@ -34,6 +34,9 @@ export function WebinarEditPage() {
   >('public')
   const [priceCents, setPriceCents] = useState('')
   const [waitingRoom, setWaitingRoom] = useState(true)
+  const [registrationMethod, setRegistrationMethod] = useState<
+    'email' | 'telegram' | 'both'
+  >('email')
   const [earlyEntry, setEarlyEntry] = useState('15')
 
   useEffect(() => {
@@ -57,6 +60,7 @@ export function WebinarEditPage() {
         setAccessMode(w.access_mode)
         setPriceCents(w.price_cents?.toString() ?? '')
         setWaitingRoom(w.waiting_room_enabled)
+        setRegistrationMethod(w.registration_method ?? 'email')
         setEarlyEntry(w.early_entry_minutes.toString())
         setStatus('ready')
       })
@@ -91,6 +95,7 @@ export function WebinarEditPage() {
             ? Number(priceCents)
             : null,
         waiting_room_enabled: waitingRoom,
+        registration_method: registrationMethod,
         early_entry_minutes: Number(earlyEntry) || 15,
       })
       navigate(`/webinars/${webinar.id}`)
@@ -247,6 +252,30 @@ export function WebinarEditPage() {
               />
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="registrationMethod">
+              {t('registrationMethod')}
+            </Label>
+            <Select
+              id="registrationMethod"
+              value={registrationMethod}
+              onChange={(event) =>
+                setRegistrationMethod(
+                  event.target.value as 'email' | 'telegram' | 'both',
+                )
+              }
+            >
+              <option value="email">{t('registrationMethodEmail')}</option>
+              <option value="telegram">
+                {t('registrationMethodTelegram')}
+              </option>
+              <option value="both">{t('registrationMethodBoth')}</option>
+            </Select>
+            <p className="text-muted-foreground text-xs">
+              {t('registrationMethodHint')}
+            </p>
+          </div>
 
           <div className="flex items-center gap-2">
             <input

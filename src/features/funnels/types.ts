@@ -80,6 +80,7 @@ export const FUNNEL_BLOCK_REGISTRY: Record<FunnelBlockType, FunnelBlockDef> = {
       buttonText: 'Register now',
       title: 'Register for the webinar',
       collectName: true,
+      registrationMethod: 'inherit',
       successMessage: 'Registration successful!',
     },
     defaultSettings: {},

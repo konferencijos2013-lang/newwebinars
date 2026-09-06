@@ -27,5 +27,14 @@
   "deleteMessage": "Удалить сообщение",
   "unmute": "Включить звук",
   "chatUnavailable": "Не удалось отправить сообщение. Возможно, вы отключены от чата или удалены с вебинара.",
-  "youtubeLiveTitle": "Трансляция YouTube Live"
+  "youtubeLiveTitle": "Трансляция YouTube Live",
+  "email": "Эл. почта",
+  "registerByEmail": "Зарегистрироваться по эл. почте",
+  "registerViaTelegram": "Зарегистрироваться через Telegram",
+  "or": "или",
+  "telegramPending": "Завершите регистрацию в Telegram. Эта страница обновится автоматически.",
+  "telegramExpired": "Ссылка регистрации Telegram истекла. Попробуйте ещё раз.",
+  "telegramStartFailed": "Не удалось начать регистрацию через Telegram. Проверьте подключение бота вебинара.",
+  "registrationFailed": "Регистрация не удалась. Попробуйте ещё раз.",
+  "linkFunnelWebinar": "Свяжите воронку с вебинаром, чтобы активировать регистрацию."
 }

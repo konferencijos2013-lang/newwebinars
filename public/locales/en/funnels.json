@@ -108,5 +108,10 @@
   "formTitle": "Form title",
   "collectName": "Collect full name",
   "successMessage": "Success message",
-  "stickyMobile": "Sticky CTA on mobile"
+  "stickyMobile": "Sticky CTA on mobile",
+  "registrationMethod": "Registration method",
+  "registrationMethodInherit": "Use webinar setting",
+  "registrationMethodEmail": "Email",
+  "registrationMethodTelegram": "Telegram",
+  "registrationMethodBoth": "Email or Telegram"
 }

@@ -197,7 +197,7 @@ serve(async (req) => {
       const webinarLink = `${publicWebinarLink}/waiting-room?token=${job.access_token}`
       const values = {
         name: job.full_name ?? '',
-        email: job.email,
+        email: job.email ?? '',
         webinar_title: job.webinar_title ?? '',
         webinar_link: webinarLink,
         public_webinar_link: publicWebinarLink,
@@ -209,6 +209,16 @@ serve(async (req) => {
         `Your webinar ${values.webinar_title} starts soon.`
       const config = (job.provider_config ?? {}) as Config
       let responseText: string
+      if (['brevo', 'resend', 'smtp'].includes(job.provider) && !job.email) {
+        await db.rpc('complete_reminder_delivery', {
+          p_queue_id: job.queue_id,
+          p_status: 'skipped',
+          p_provider_response: null,
+          p_error_message: 'Participant registered without an email address.',
+        })
+        skipped++
+        continue
+      }
       if (job.provider === 'brevo')
         responseText = await sendBrevo(
           credential,
