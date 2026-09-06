@@ -79,7 +79,12 @@ export function WebinarCreatePage() {
 
       navigate('/webinars')
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const message = err instanceof Error ? err.message : String(err)
+      setError(
+        message.includes('PLAN_WEBINAR_LIMIT_EXCEEDED')
+          ? t('planWebinarLimitExceeded')
+          : message || t('errorSaving'),
+      )
       setIsSaving(false)
     }
   }

@@ -110,5 +110,6 @@
   "openYoutubeStudio": "Atidaryti YouTube Studio",
   "publishForYoutube": "Paskelbti webinarą",
   "youtubePreviewTitle": "YouTube Live peržiūra",
-  "youtubePreviewMissingUrl": "Įklijuokite ir išsaugokite viešą YouTube Live nuorodą, kad matytumėte peržiūrą."
+  "youtubePreviewMissingUrl": "Įklijuokite ir išsaugokite viešą YouTube Live nuorodą, kad matytumėte peržiūrą.",
+  "planWebinarLimitExceeded": "Pasiektas jūsų plano webinarų limitas. Atnaujinkite planą arba ištrinkite nebereikalingą webinarą."
 }

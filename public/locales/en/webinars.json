@@ -110,5 +110,6 @@
   "openYoutubeStudio": "Open YouTube Studio",
   "publishForYoutube": "Publish webinar",
   "youtubePreviewTitle": "YouTube Live preview",
-  "youtubePreviewMissingUrl": "Paste and save a public YouTube Live URL to see the preview."
+  "youtubePreviewMissingUrl": "Paste and save a public YouTube Live URL to see the preview.",
+  "planWebinarLimitExceeded": "Your plan’s webinar limit has been reached. Upgrade your plan or delete a webinar you no longer need."
 }

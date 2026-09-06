@@ -110,5 +110,6 @@
   "openYoutubeStudio": "Открыть YouTube Studio",
   "publishForYoutube": "Опубликовать вебинар",
   "youtubePreviewTitle": "Предпросмотр YouTube Live",
-  "youtubePreviewMissingUrl": "Вставьте и сохраните публичную ссылку YouTube Live, чтобы увидеть предпросмотр."
+  "youtubePreviewMissingUrl": "Вставьте и сохраните публичную ссылку YouTube Live, чтобы увидеть предпросмотр.",
+  "planWebinarLimitExceeded": "Достигнут лимит вебинаров вашего тарифа. Обновите тариф или удалите ненужный вебинар."
 }

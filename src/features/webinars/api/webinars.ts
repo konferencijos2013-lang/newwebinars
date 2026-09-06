@@ -122,7 +122,7 @@ export async function createWebinar(input: CreateWebinarInput) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) throw new Error(error.message)
   return data as Webinar
 }
 
