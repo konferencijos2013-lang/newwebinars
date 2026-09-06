@@ -116,5 +116,6 @@
   "registrationMethodEmail": "Email",
   "registrationMethodTelegram": "Telegram",
   "registrationMethodBoth": "Email or Telegram",
-  "registrationMethodHint": "Telegram registration requires an active Telegram bot connection before publishing."
+  "registrationMethodHint": "Telegram registration requires an active Telegram bot connection before publishing.",
+  "invalidScheduledAt": "Enter a valid webinar date and time."
 }

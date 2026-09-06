@@ -13,6 +13,13 @@ import { ReminderRulesCard } from '@/features/webinars/components/ReminderRulesC
 import type { Webinar } from '@/shared/database.types'
 import { slugify } from '@/shared/utils/slug'
 
+function toIsoDateTime(value: string): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) throw new Error('INVALID_SCHEDULED_AT')
+  return date.toISOString()
+}
+
 export function WebinarEditPage() {
   const { t } = useTranslation('webinars')
   const navigate = useNavigate()
@@ -86,7 +93,7 @@ export function WebinarEditPage() {
         title: title.trim(),
         slug: slugify(slug),
         description: description.trim() || null,
-        scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+        scheduled_at: toIsoDateTime(scheduledAt),
         duration_minutes: durationMinutes ? Number(durationMinutes) : null,
         max_participants: maxParticipants ? Number(maxParticipants) : null,
         access_mode: accessMode,
@@ -100,7 +107,12 @@ export function WebinarEditPage() {
       })
       navigate(`/webinars/${webinar.id}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const message = err instanceof Error ? err.message : String(err)
+      setError(
+        message === 'INVALID_SCHEDULED_AT'
+          ? t('invalidScheduledAt')
+          : message || t('errorSaving'),
+      )
       setIsSaving(false)
     }
   }

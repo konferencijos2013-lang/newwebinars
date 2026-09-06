@@ -116,5 +116,6 @@
   "registrationMethodEmail": "По электронной почте",
   "registrationMethodTelegram": "Через Telegram",
   "registrationMethodBoth": "По почте или через Telegram",
-  "registrationMethodHint": "Для регистрации через Telegram перед публикацией должен быть подключён активный Telegram-бот."
+  "registrationMethodHint": "Для регистрации через Telegram перед публикацией должен быть подключён активный Telegram-бот.",
+  "invalidScheduledAt": "Введите корректные дату и время вебинара."
 }

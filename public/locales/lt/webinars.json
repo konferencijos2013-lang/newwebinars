@@ -116,5 +116,6 @@
   "registrationMethodEmail": "El. paštu",
   "registrationMethodTelegram": "Per Telegram",
   "registrationMethodBoth": "El. paštu arba per Telegram",
-  "registrationMethodHint": "Registracijai per Telegram prieš publikavimą turi būti prijungtas aktyvus Telegram botas."
+  "registrationMethodHint": "Registracijai per Telegram prieš publikavimą turi būti prijungtas aktyvus Telegram botas.",
+  "invalidScheduledAt": "Įveskite galiojančią webinaro datą ir laiką."
 }

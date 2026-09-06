@@ -11,6 +11,13 @@ import { useAccount } from '@/features/auth/hooks/useAccount'
 import { createWebinar } from '@/features/webinars/api/webinars'
 import { slugify } from '@/shared/utils/slug'
 
+function toIsoDateTime(value: string): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) throw new Error('INVALID_SCHEDULED_AT')
+  return date.toISOString()
+}
+
 export function WebinarCreatePage() {
   const { t } = useTranslation('webinars')
   const navigate = useNavigate()
@@ -68,7 +75,7 @@ export function WebinarCreatePage() {
         slug: generatedSlug,
         type,
         description: description.trim() || null,
-        scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+        scheduled_at: toIsoDateTime(scheduledAt),
         duration_minutes: durationMinutes ? Number(durationMinutes) : null,
         max_participants: maxParticipants ? Number(maxParticipants) : null,
         access_mode: accessMode,
@@ -85,9 +92,11 @@ export function WebinarCreatePage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setError(
-        message.includes('PLAN_WEBINAR_LIMIT_EXCEEDED')
-          ? t('planWebinarLimitExceeded')
-          : message || t('errorSaving'),
+        message === 'INVALID_SCHEDULED_AT'
+          ? t('invalidScheduledAt')
+          : message.includes('PLAN_WEBINAR_LIMIT_EXCEEDED')
+            ? t('planWebinarLimitExceeded')
+            : message || t('errorSaving'),
       )
       setIsSaving(false)
     }
