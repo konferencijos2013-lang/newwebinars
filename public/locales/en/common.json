@@ -31,7 +31,8 @@
     "billing": "Billing",
     "settings": "Settings",
     "ai": "AI",
-    "user": "User"
+    "user": "User",
+    "telegram": "Telegram"
   },
   "dashboard": {
     "title": "Dashboard",

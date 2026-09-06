@@ -31,7 +31,8 @@
     "billing": "Оплата",
     "settings": "Настройки",
     "ai": "AI",
-    "user": "Пользователь"
+    "user": "Пользователь",
+    "telegram": "Telegram"
   },
   "dashboard": {
     "title": "Кабинет",

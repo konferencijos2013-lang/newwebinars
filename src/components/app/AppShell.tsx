@@ -14,6 +14,7 @@ import {
   Bot,
   ShieldCheck,
   Link2,
+  Send,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useUser } from '@/features/auth/hooks/useUser'
@@ -141,6 +142,13 @@ export function AppShell() {
                 label="Partneriai"
               />
             </>
+          ) : null}
+          {!supportView ? (
+            <SidebarNavLink
+              to={path('/telegram')}
+              icon={Send}
+              label={t('navigation.telegram')}
+            />
           ) : null}
           {!supportView ? (
             <SidebarNavLink
