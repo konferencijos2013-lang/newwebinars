@@ -15,8 +15,10 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
 import {
   configureTelegramBot,
+  cancelScheduledTelegramBroadcast,
   createTelegramBroadcast,
   fetchIntegrationConnections,
+  fetchTelegramBroadcasts,
   fetchTelegramContactCount,
   fetchLatestTelegramBroadcast,
   fetchTelegramContacts,
@@ -155,11 +157,6 @@ function IntegrationSettings({
             connection={existing('smtp')}
             disabled={!canManage}
             onSave={save}
-          />
-          <TelegramForm
-            connection={existing('telegram')}
-            disabled={!canManage}
-            accountId={accountId}
           />
           <ManyChatForm
             connection={existing('manychat')}
@@ -482,7 +479,29 @@ function ManyChatForm({
   )
 }
 
-function TelegramForm({
+function localDateTimeValue(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="bg-muted/40 rounded-md p-3">
+      <p className="text-muted-foreground text-xs">{label}</p>
+      <p className="mt-1 text-xl font-semibold">{value}</p>
+    </div>
+  )
+}
+
+function broadcastStatusLabel(status: TelegramBroadcast['status']) {
+  if (status === 'scheduled') return 'Suplanuota'
+  if (status === 'queued') return 'Laukia siuntimo'
+  if (status === 'processing') return 'Siunčiama'
+  if (status === 'cancelled') return 'Atšaukta'
+  return 'Baigta'
+}
+
+export function TelegramForm({
   connection,
   disabled,
   accountId,
@@ -534,6 +553,12 @@ function TelegramForm({
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const [broadcast, setBroadcast] = useState<TelegramBroadcast | null>(null)
+  const [broadcasts, setBroadcasts] = useState<TelegramBroadcast[]>([])
+  const [sendTiming, setSendTiming] = useState<'now' | 'scheduled'>('now')
+  const [scheduledLocal, setScheduledLocal] = useState('')
+  const [minimumScheduledLocal] = useState(() =>
+    localDateTimeValue(new Date(Date.now() + 60_000)),
+  )
   const sendRequestKeyRef = useRef<string | null>(null)
   const pageSize = 20
 
@@ -566,15 +591,24 @@ function TelegramForm({
     const timer = window.setTimeout(() => void loadContacts(), 0)
     return () => window.clearTimeout(timer)
   }, [loadContacts])
-  useEffect(() => {
+  const loadBroadcasts = useCallback(async () => {
     if (!connection) return
-    void fetchLatestTelegramBroadcast(connection.id)
-      .then(setBroadcast)
-      .catch(() => undefined)
+    const items = await fetchTelegramBroadcasts(connection.id)
+    setBroadcasts(items)
+    setBroadcast(items[0] ?? null)
   }, [connection])
 
   useEffect(() => {
-    if (!broadcast || !['queued', 'processing'].includes(broadcast.status))
+    void Promise.resolve()
+      .then(loadBroadcasts)
+      .catch(() => undefined)
+  }, [loadBroadcasts])
+
+  useEffect(() => {
+    if (
+      !broadcast ||
+      !['scheduled', 'queued', 'processing'].includes(broadcast.status)
+    )
       return
     let active = true
     const refresh = async () => {
@@ -582,6 +616,9 @@ function TelegramForm({
         const updated = await fetchLatestTelegramBroadcast(connection?.id ?? '')
         if (active && updated) {
           setBroadcast(updated)
+          setBroadcasts((current) =>
+            current.map((item) => (item.id === updated.id ? updated : item)),
+          )
           if (updated.status === 'completed') void loadContacts()
         }
       } catch (reason) {
@@ -591,7 +628,10 @@ function TelegramForm({
           )
       }
     }
-    const interval = window.setInterval(() => void refresh(), 2000)
+    const interval = window.setInterval(
+      () => void refresh(),
+      broadcast.status === 'scheduled' ? 15_000 : 2000,
+    )
     return () => {
       active = false
       window.clearInterval(interval)
@@ -636,7 +676,15 @@ function TelegramForm({
       audience === 'all'
         ? `visiems ${eligibleContactTotal} aktyviems kontaktams`
         : `${selectedContactIds.length} pasirinktiems kontaktams`
-    if (!window.confirm(`Siųsti šią Telegram žinutę ${target}?`)) return
+    if (sendTiming === 'scheduled') {
+      const timestamp = Date.parse(scheduledLocal)
+      if (!Number.isFinite(timestamp) || timestamp <= Date.now() + 30_000) {
+        setSendError('Pasirinkite būsimą siuntimo datą ir laiką.')
+        return
+      }
+    }
+    const action = sendTiming === 'scheduled' ? 'Suplanuoti' : 'Siųsti'
+    if (!window.confirm(`${action} šią Telegram žinutę ${target}?`)) return
     setSending(true)
     setSendError(null)
     try {
@@ -648,17 +696,25 @@ function TelegramForm({
             imageFile,
           ))
         : null
+      const scheduledFor =
+        sendTiming === 'scheduled'
+          ? new Date(scheduledLocal).toISOString()
+          : null
       const created = await createTelegramBroadcast({
         connectionId: connection.id,
         message: trimmedMessage,
         audience,
         requestKey,
         imagePath,
+        scheduledFor,
         contactIds: audience === 'selected' ? selectedContactIds : undefined,
       })
       setBroadcast(created)
+      setBroadcasts((current) => [created, ...current].slice(0, 20))
       sendRequestKeyRef.current = null
       setMessage('')
+      setScheduledLocal('')
+      setSendTiming('now')
       chooseImage(null)
       setSelectedContactIds([])
     } catch (reason) {
@@ -719,8 +775,9 @@ function TelegramForm({
   const allPageSelected =
     contacts.length > 0 &&
     contacts.every((contact) => selectedContactIds.includes(contact.id))
-  const broadcastActive =
-    broadcast != null && ['queued', 'processing'].includes(broadcast.status)
+  const broadcastActive = broadcasts.some((item) =>
+    ['queued', 'processing'].includes(item.status),
+  )
 
   return (
     <ProviderCard
@@ -884,6 +941,47 @@ function TelegramForm({
                   Pašalinti
                 </Button>
               </div>
+            )}
+          </div>
+          <div className="border-border mt-4 rounded-md border p-3">
+            <p className="text-sm font-medium">Siuntimo laikas</p>
+            <div className="mt-2 flex flex-wrap items-center gap-4 text-sm">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  checked={sendTiming === 'now'}
+                  disabled={disabled || sending || broadcastActive}
+                  onChange={() => setSendTiming('now')}
+                />
+                Siųsti dabar
+              </label>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  checked={sendTiming === 'scheduled'}
+                  disabled={disabled || sending || broadcastActive}
+                  onChange={() => setSendTiming('scheduled')}
+                />
+                Suplanuoti
+              </label>
+              {sendTiming === 'scheduled' && (
+                <Input
+                  type="datetime-local"
+                  value={scheduledLocal}
+                  min={minimumScheduledLocal}
+                  disabled={disabled || sending || broadcastActive}
+                  onChange={(event) => {
+                    sendRequestKeyRef.current = null
+                    setScheduledLocal(event.target.value)
+                  }}
+                />
+              )}
+            </div>
+            {sendTiming === 'scheduled' && (
+              <p className="text-muted-foreground mt-2 text-xs">
+                Laikas interpretuojamas pagal šio įrenginio laiko juostą. Žinutė
+                bus išsiųsta automatiškai, net jei uždarysite šį puslapį.
+              </p>
             )}
           </div>
           <div className="mt-3 flex flex-wrap gap-4 text-sm">
@@ -1052,6 +1150,83 @@ function TelegramForm({
                 Apdorota {completed} iš {broadcast.recipient_count} · Išsiųsta:{' '}
                 {broadcast.sent_count} · Nepavyko: {broadcast.failed_count} ·
                 Užblokavo botą: {broadcast.blocked_count}
+              </p>
+            </div>
+          )}
+          {broadcasts.length > 0 && (
+            <div className="border-border mt-5 border-t pt-5">
+              <h3 className="text-sm font-semibold">Siuntimų statistika</h3>
+              <div className="mt-3 grid gap-3 sm:grid-cols-4">
+                <Stat label="Siuntimų" value={broadcasts.length} />
+                <Stat
+                  label="Gavėjų"
+                  value={broadcasts.reduce(
+                    (sum, item) => sum + item.recipient_count,
+                    0,
+                  )}
+                />
+                <Stat
+                  label="Išsiųsta"
+                  value={broadcasts.reduce(
+                    (sum, item) => sum + item.sent_count,
+                    0,
+                  )}
+                />
+                <Stat
+                  label="Nepavyko"
+                  value={broadcasts.reduce(
+                    (sum, item) => sum + item.failed_count + item.blocked_count,
+                    0,
+                  )}
+                />
+              </div>
+              <div className="border-border mt-3 divide-y rounded-md border">
+                {broadcasts.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex flex-wrap items-center justify-between gap-3 px-3 py-2 text-sm"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {broadcastStatusLabel(item.status)}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {new Date(
+                          item.scheduled_for ?? item.created_at,
+                        ).toLocaleString()}{' '}
+                        · {item.sent_count}/{item.recipient_count} išsiųsta ·{' '}
+                        {item.failed_count + item.blocked_count} nepavyko
+                      </p>
+                    </div>
+                    {item.status === 'scheduled' && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={disabled}
+                        onClick={() => {
+                          if (
+                            !window.confirm('Atšaukti šį suplanuotą siuntimą?')
+                          )
+                            return
+                          void cancelScheduledTelegramBroadcast(item.id)
+                            .then(loadBroadcasts)
+                            .catch((reason) =>
+                              setSendError(
+                                reason instanceof Error
+                                  ? reason.message
+                                  : String(reason),
+                              ),
+                            )
+                        }}
+                      >
+                        Atšaukti
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-muted-foreground mt-2 text-xs">
+                Rodomi paskutiniai {broadcasts.length} siuntimų.
               </p>
             </div>
           )}

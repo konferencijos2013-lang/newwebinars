@@ -31,7 +31,8 @@
     "billing": "Mokėjimai",
     "settings": "Nustatymai",
     "ai": "DI",
-    "user": "Vartotojas"
+    "user": "Vartotojas",
+    "telegram": "Telegram"
   },
   "dashboard": {
     "title": "Kabinetas",

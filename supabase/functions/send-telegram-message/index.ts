@@ -62,6 +62,8 @@ type Broadcast = {
   blocked_count: number
   created_at: string
   completed_at: string | null
+  scheduled_for: string | null
+  started_at: string | null
 }
 
 function telegramError(value: unknown) {
@@ -80,7 +82,7 @@ async function authorizedBroadcast(
   const { data: broadcast } = await admin
     .from('telegram_broadcasts')
     .select(
-      'id,account_id,integration_connection_id,status,recipient_count,sent_count,failed_count,blocked_count,created_at,completed_at',
+      'id,account_id,integration_connection_id,status,recipient_count,sent_count,failed_count,blocked_count,created_at,completed_at,scheduled_for,started_at',
     )
     .eq('id', broadcastId)
     .maybeSingle()
@@ -144,6 +146,8 @@ serve(async (req) => {
     const contactIds = payload.contact_ids
     const imagePath =
       typeof payload.image_path === 'string' ? payload.image_path : null
+    const scheduledFor =
+      typeof payload.scheduled_for === 'string' ? payload.scheduled_for : null
     if (typeof connectionId !== 'string' || !UUID_PATTERN.test(connectionId))
       return json({ error: 'Invalid Telegram connection' }, 400)
     if (typeof requestKey !== 'string' || !UUID_PATTERN.test(requestKey))
@@ -155,6 +159,15 @@ serve(async (req) => {
       )
     if (audience !== 'all' && audience !== 'selected')
       return json({ error: 'Invalid audience' }, 400)
+    if (scheduledFor) {
+      const scheduledTime = Date.parse(scheduledFor)
+      if (!Number.isFinite(scheduledTime))
+        return json({ error: 'Invalid scheduled time' }, 400)
+      if (scheduledTime <= Date.now() + 30_000)
+        return json({ error: 'Scheduled time must be in the future' }, 400)
+      if (scheduledTime > Date.now() + 365 * 24 * 60 * 60 * 1000)
+        return json({ error: 'Scheduled time is too far in the future' }, 400)
+    }
     if (
       audience === 'selected' &&
       (!Array.isArray(contactIds) ||
@@ -203,6 +216,7 @@ serve(async (req) => {
         p_request_key: requestKey,
         p_image_path: imagePath,
         p_contact_ids: uniqueContactIds,
+        p_scheduled_for: scheduledFor,
       },
     )
     if (enqueueError || !broadcastId)
@@ -213,13 +227,13 @@ serve(async (req) => {
     const { data: broadcast, error: broadcastError } = await admin
       .from('telegram_broadcasts')
       .select(
-        'id,status,recipient_count,sent_count,failed_count,blocked_count,created_at,completed_at',
+        'id,status,recipient_count,sent_count,failed_count,blocked_count,created_at,completed_at,scheduled_for,started_at',
       )
       .eq('id', broadcastId)
       .single()
     if (broadcastError || !broadcast)
       return json({ error: 'Unable to load broadcast' }, 500)
-    scheduleNextBatch(broadcast.id)
+    if (broadcast.status !== 'scheduled') scheduleNextBatch(broadcast.id)
     return json({ broadcast })
   }
 
@@ -245,7 +259,7 @@ serve(async (req) => {
       const { data, error } = await admin
         .from('telegram_broadcasts')
         .select(
-          'id,account_id,integration_connection_id,status,recipient_count,sent_count,failed_count,blocked_count,created_at,completed_at',
+          'id,account_id,integration_connection_id,status,recipient_count,sent_count,failed_count,blocked_count,created_at,completed_at,scheduled_for,started_at',
         )
         .eq('id', broadcastId)
         .maybeSingle()

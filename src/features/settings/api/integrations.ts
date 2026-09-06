@@ -188,13 +188,15 @@ export async function uploadTelegramBroadcastImage(
 
 export interface TelegramBroadcast {
   id: string
-  status: 'queued' | 'processing' | 'completed' | 'cancelled'
+  status: 'scheduled' | 'queued' | 'processing' | 'completed' | 'cancelled'
   recipient_count: number
   sent_count: number
   failed_count: number
   blocked_count: number
   created_at: string
   completed_at: string | null
+  scheduled_for: string | null
+  started_at: string | null
 }
 
 async function invokeTelegramBroadcast(body: Record<string, unknown>) {
@@ -214,6 +216,7 @@ export async function createTelegramBroadcast(input: {
   contactIds?: string[]
   requestKey: string
   imagePath?: string | null
+  scheduledFor?: string | null
 }) {
   const result = await invokeTelegramBroadcast({
     action: 'create',
@@ -222,6 +225,7 @@ export async function createTelegramBroadcast(input: {
     audience: input.audience,
     request_key: input.requestKey,
     image_path: input.imagePath ?? null,
+    scheduled_for: input.scheduledFor ?? null,
     contact_ids: input.audience === 'selected' ? input.contactIds : undefined,
   })
   return result.broadcast
@@ -231,7 +235,7 @@ export async function fetchLatestTelegramBroadcast(connectionId: string) {
   const { data, error } = await supabase
     .from('telegram_broadcasts')
     .select(
-      'id,status,recipient_count,sent_count,failed_count,blocked_count,created_at,completed_at',
+      'id,status,recipient_count,sent_count,failed_count,blocked_count,created_at,completed_at,scheduled_for,started_at',
     )
     .eq('integration_connection_id', connectionId)
     .order('created_at', { ascending: false })
@@ -239,4 +243,29 @@ export async function fetchLatestTelegramBroadcast(connectionId: string) {
     .maybeSingle()
   if (error) throw error
   return data as TelegramBroadcast | null
+}
+
+export async function fetchTelegramBroadcasts(
+  connectionId: string,
+  limit = 20,
+) {
+  const { data, error } = await supabase
+    .from('telegram_broadcasts')
+    .select(
+      'id,status,recipient_count,sent_count,failed_count,blocked_count,created_at,completed_at,scheduled_for,started_at',
+    )
+    .eq('integration_connection_id', connectionId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data ?? []) as TelegramBroadcast[]
+}
+
+export async function cancelScheduledTelegramBroadcast(broadcastId: string) {
+  const { data, error } = await supabase.rpc(
+    'cancel_scheduled_telegram_broadcast',
+    { p_broadcast_id: broadcastId },
+  )
+  if (error) throw error
+  if (!data) throw new Error('Suplanuoto siuntimo atšaukti nepavyko.')
 }
