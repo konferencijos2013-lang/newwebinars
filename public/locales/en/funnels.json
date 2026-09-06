@@ -113,5 +113,11 @@
   "registrationMethodInherit": "Use webinar setting",
   "registrationMethodEmail": "Email",
   "registrationMethodTelegram": "Telegram",
-  "registrationMethodBoth": "Email or Telegram"
+  "registrationMethodBoth": "Email or Telegram",
+  "saveSettings": "Save settings",
+  "settingsSaved": "Funnel settings saved.",
+  "publicRegistrationLink": "Public registration link",
+  "copyLink": "Copy",
+  "publicLinkCopied": "Public link copied.",
+  "openPublicPage": "Open"
 }

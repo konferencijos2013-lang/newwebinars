@@ -113,5 +113,11 @@
   "registrationMethodInherit": "Naudoti webinaro nustatymą",
   "registrationMethodEmail": "El. paštu",
   "registrationMethodTelegram": "Per Telegram",
-  "registrationMethodBoth": "El. paštu arba per Telegram"
+  "registrationMethodBoth": "El. paštu arba per Telegram",
+  "saveSettings": "Išsaugoti nustatymus",
+  "settingsSaved": "Funnelio nustatymai išsaugoti.",
+  "publicRegistrationLink": "Vieša registracijos nuoroda",
+  "copyLink": "Kopijuoti",
+  "publicLinkCopied": "Vieša nuoroda nukopijuota.",
+  "openPublicPage": "Atidaryti"
 }

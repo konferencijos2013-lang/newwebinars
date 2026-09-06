@@ -113,5 +113,11 @@
   "registrationMethodInherit": "Использовать настройку вебинара",
   "registrationMethodEmail": "По электронной почте",
   "registrationMethodTelegram": "Через Telegram",
-  "registrationMethodBoth": "По почте или через Telegram"
+  "registrationMethodBoth": "По почте или через Telegram",
+  "saveSettings": "Сохранить настройки",
+  "settingsSaved": "Настройки воронки сохранены.",
+  "publicRegistrationLink": "Публичная ссылка регистрации",
+  "copyLink": "Копировать",
+  "publicLinkCopied": "Публичная ссылка скопирована.",
+  "openPublicPage": "Открыть"
 }
