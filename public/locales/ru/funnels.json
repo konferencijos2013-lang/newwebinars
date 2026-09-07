@@ -121,5 +121,21 @@
   "publicLinkCopied": "Публичная ссылка скопирована.",
   "openPublicPage": "Открыть",
   "moveBlockUp": "Поднять выше",
-  "moveBlockDown": "Опустить ниже"
+  "moveBlockDown": "Опустить ниже",
+  "imageDesktopWidth": "Ширина изображения на компьютере",
+  "imageMobileWidth": "Ширина изображения на телефоне",
+  "imageResponsiveHint": "Можно задать разный размер изображения для компьютера и телефона.",
+  "contentPanel": "Информационная панель",
+  "pageContentWidth": "Ширина содержимого страницы",
+  "highlightContentPanel": "Выделить информационную панель",
+  "contentBackgroundColor": "Цвет информационной панели",
+  "showContentBorder": "Показывать рамку",
+  "contentBorderColor": "Цвет рамки",
+  "contentBorderWidth": "Толщина рамки",
+  "contentShadow": "Тень панели",
+  "shadowNone": "Без тени",
+  "shadowSmall": "Маленькая",
+  "shadowMedium": "Средняя",
+  "shadowLarge": "Большая",
+  "contentCornerRadius": "Скругление углов"
 }

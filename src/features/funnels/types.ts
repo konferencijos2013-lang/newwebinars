@@ -33,6 +33,8 @@ export const FUNNEL_BLOCK_REGISTRY: Record<FunnelBlockType, FunnelBlockDef> = {
       subtitle: 'Join us for a live session',
       imageUrl: '',
       imageAlt: '',
+      imageWidthDesktop: 100,
+      imageWidthMobile: 100,
       dateLabel: '',
       badge: 'Free',
       buttonText: 'Register for free',
@@ -62,7 +64,12 @@ export const FUNNEL_BLOCK_REGISTRY: Record<FunnelBlockType, FunnelBlockDef> = {
     type: 'image',
     label: 'Image',
     icon: 'Image',
-    defaultContent: { url: '', alt: '' },
+    defaultContent: {
+      url: '',
+      alt: '',
+      widthDesktop: 100,
+      widthMobile: 100,
+    },
     defaultSettings: {},
   },
   video: {

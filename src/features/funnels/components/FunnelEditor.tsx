@@ -34,6 +34,8 @@ import type { FunnelBlock, FunnelPage } from '@/shared/database.types'
 import {
   backgroundSettings,
   backgroundStyle,
+  pageContentSettings,
+  pageContentStyle,
 } from '@/features/funnels/pageTheme'
 
 type MobilePanel = 'blocks' | 'settings' | null
@@ -200,6 +202,11 @@ export function FunnelEditor({
         onChange={handleUpdatePageTheme}
         saving={saving}
       />
+      <PageContentEditor
+        value={pageTheme}
+        onChange={handleUpdatePageTheme}
+        saving={saving}
+      />
     </>
   )
 
@@ -316,119 +323,129 @@ export function FunnelEditor({
           </div>
           <div
             className={cn(
-              'mx-auto min-h-full rounded-lg border shadow-sm transition-[max-width] duration-200',
-              previewDevice === 'desktop' ? 'max-w-4xl' : 'max-w-[390px]',
+              'min-h-full rounded-lg border p-3 shadow-sm sm:p-5',
+              previewDevice === 'desktop' ? 'w-full' : 'mx-auto max-w-[390px]',
             )}
             style={backgroundStyle(pageTheme)}
           >
             <div
-              className={cn(
-                'grid min-h-full gap-3 p-3 sm:p-5',
-                previewDevice === 'desktop' ? 'grid-cols-6' : 'grid-cols-1',
-              )}
+              className="mx-auto min-h-full transition-[max-width] duration-200"
+              style={
+                previewDevice === 'desktop'
+                  ? pageContentStyle(pageTheme)
+                  : { ...pageContentStyle(pageTheme), maxWidth: '390px' }
+              }
             >
-              {blocks.map((block) => {
-                const settings = block.settings as Record<string, unknown>
-                const columnSpan = (
-                  [4, 6].includes(Number(settings?.column_span))
-                    ? settings.column_span
-                    : 12
-                ) as 4 | 6 | 12
-                const widthMode = String(settings?.width_mode ?? 'container')
-                const fillsRow = widthMode !== 'container' || columnSpan === 12
-                const blockIndex = blocks.findIndex(
-                  (item) => item.id === block.id,
-                )
-                return (
-                  <div
-                    key={block.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => selectBlock(block.id)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault()
-                        selectBlock(block.id)
-                      }
-                    }}
-                    className={cn(
-                      'group focus-visible:ring-primary/40 relative block w-full cursor-pointer rounded-lg border-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
-                      previewDevice === 'desktop' &&
-                        (fillsRow
-                          ? 'col-span-6'
-                          : columnSpan === 6
-                            ? 'col-span-3'
-                            : 'col-span-2'),
-                      selectedId === block.id
-                        ? 'border-primary bg-background'
-                        : 'hover:border-primary/30 border-transparent',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'bg-primary text-primary-foreground absolute top-2 left-2 z-10 rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase opacity-0 transition-opacity',
-                        selectedId === block.id
-                          ? 'opacity-100'
-                          : 'group-hover:opacity-100',
-                      )}
-                    >
-                      {t(`blocks.${block.block_type}`, block.block_type)}
-                    </span>
+              <div
+                className={cn(
+                  'grid min-h-full gap-3 p-3 sm:p-5',
+                  previewDevice === 'desktop' ? 'grid-cols-6' : 'grid-cols-1',
+                )}
+              >
+                {blocks.map((block) => {
+                  const settings = block.settings as Record<string, unknown>
+                  const columnSpan = (
+                    [4, 6].includes(Number(settings?.column_span))
+                      ? settings.column_span
+                      : 12
+                  ) as 4 | 6 | 12
+                  const widthMode = String(settings?.width_mode ?? 'container')
+                  const fillsRow =
+                    widthMode !== 'container' || columnSpan === 12
+                  const blockIndex = blocks.findIndex(
+                    (item) => item.id === block.id,
+                  )
+                  return (
                     <div
+                      key={block.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => selectBlock(block.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          selectBlock(block.id)
+                        }
+                      }}
                       className={cn(
-                        'absolute top-2 right-2 z-20 flex gap-1 opacity-0 transition-opacity',
+                        'group focus-visible:ring-primary/40 relative block w-full cursor-pointer rounded-lg border-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
+                        previewDevice === 'desktop' &&
+                          (fillsRow
+                            ? 'col-span-6'
+                            : columnSpan === 6
+                              ? 'col-span-3'
+                              : 'col-span-2'),
                         selectedId === block.id
-                          ? 'opacity-100'
-                          : 'group-focus-within:opacity-100 group-hover:opacity-100',
+                          ? 'border-primary bg-background'
+                          : 'hover:border-primary/30 border-transparent',
                       )}
                     >
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0 shadow-sm"
-                        disabled={saving || blockIndex === 0}
-                        aria-label={t('moveBlockUp')}
-                        title={t('moveBlockUp')}
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          void handleMoveBlock(block.id, -1)
-                        }}
+                      <span
+                        className={cn(
+                          'bg-primary text-primary-foreground absolute top-2 left-2 z-10 rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase opacity-0 transition-opacity',
+                          selectedId === block.id
+                            ? 'opacity-100'
+                            : 'group-hover:opacity-100',
+                        )}
                       >
-                        <ArrowUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0 shadow-sm"
-                        disabled={saving || blockIndex === blocks.length - 1}
-                        aria-label={t('moveBlockDown')}
-                        title={t('moveBlockDown')}
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          void handleMoveBlock(block.id, 1)
-                        }}
+                        {t(`blocks.${block.block_type}`, block.block_type)}
+                      </span>
+                      <div
+                        className={cn(
+                          'absolute top-2 right-2 z-20 flex gap-1 opacity-0 transition-opacity',
+                          selectedId === block.id
+                            ? 'opacity-100'
+                            : 'group-focus-within:opacity-100 group-hover:opacity-100',
+                        )}
                       >
-                        <ArrowDown className="h-4 w-4" />
-                      </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0 shadow-sm"
+                          disabled={saving || blockIndex === 0}
+                          aria-label={t('moveBlockUp')}
+                          title={t('moveBlockUp')}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            void handleMoveBlock(block.id, -1)
+                          }}
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0 shadow-sm"
+                          disabled={saving || blockIndex === blocks.length - 1}
+                          aria-label={t('moveBlockDown')}
+                          title={t('moveBlockDown')}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            void handleMoveBlock(block.id, 1)
+                          }}
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <BlockRenderer block={block} isPreview />
                     </div>
-                    <BlockRenderer block={block} isPreview />
-                  </div>
-                )
-              })}
-              {blocks.length === 0 && (
-                <Card className="py-16 text-center">
-                  <p className="text-muted-foreground">{t('emptyBlocks')}</p>
-                  <Button
-                    className="mt-4 lg:hidden"
-                    variant="outline"
-                    onClick={() => setMobilePanel('blocks')}
-                  >
-                    <Plus className="h-4 w-4" /> {t('addBlock')}
-                  </Button>
-                </Card>
-              )}
+                  )
+                })}
+                {blocks.length === 0 && (
+                  <Card className="py-16 text-center">
+                    <p className="text-muted-foreground">{t('emptyBlocks')}</p>
+                    <Button
+                      className="mt-4 lg:hidden"
+                      variant="outline"
+                      onClick={() => setMobilePanel('blocks')}
+                    >
+                      <Plus className="h-4 w-4" /> {t('addBlock')}
+                    </Button>
+                  </Card>
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -703,9 +720,18 @@ function BlockEditor({
             accountId={accountId}
             url={(content.imageUrl as string) ?? ''}
             alt={(content.imageAlt as string) ?? ''}
-            onChange={(patch) =>
-              set({ imageUrl: patch.url, imageAlt: patch.alt })
-            }
+            widthDesktop={Number(content.imageWidthDesktop ?? 100)}
+            widthMobile={Number(content.imageWidthMobile ?? 100)}
+            onChange={(patch) => {
+              const heroPatch: Record<string, unknown> = {}
+              if ('url' in patch) heroPatch.imageUrl = patch.url
+              if ('alt' in patch) heroPatch.imageAlt = patch.alt
+              if ('widthDesktop' in patch)
+                heroPatch.imageWidthDesktop = patch.widthDesktop
+              if ('widthMobile' in patch)
+                heroPatch.imageWidthMobile = patch.widthMobile
+              set(heroPatch)
+            }}
           />
           <Field label={t('heroDateLabel')}>
             <TextInput
@@ -770,6 +796,8 @@ function BlockEditor({
           accountId={accountId}
           url={(content.url as string) ?? ''}
           alt={(content.alt as string) ?? ''}
+          widthDesktop={Number(content.widthDesktop ?? 100)}
+          widthMobile={Number(content.widthMobile ?? 100)}
           onChange={(patch) => set(patch)}
         />
       )}
@@ -1017,11 +1045,15 @@ function ImageBlockFields({
   accountId,
   url,
   alt,
+  widthDesktop,
+  widthMobile,
   onChange,
 }: {
   accountId: string
   url: string
   alt: string
+  widthDesktop: number
+  widthMobile: number
   onChange: (patch: Record<string, unknown>) => void
 }) {
   const { t } = useTranslation('funnels')
@@ -1069,7 +1101,162 @@ function ImageBlockFields({
           onChange={(nextAlt) => onChange({ alt: nextAlt })}
         />
       </Field>
+      <Field label={t('imageDesktopWidth')}>
+        <select
+          className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+          value={widthDesktop}
+          onChange={(event) =>
+            onChange({ widthDesktop: Number(event.target.value) })
+          }
+        >
+          {[25, 50, 75, 100].map((width) => (
+            <option key={width} value={width}>
+              {width}%
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label={t('imageMobileWidth')}>
+        <select
+          className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+          value={widthMobile}
+          onChange={(event) =>
+            onChange({ widthMobile: Number(event.target.value) })
+          }
+        >
+          {[25, 50, 75, 100].map((width) => (
+            <option key={width} value={width}>
+              {width}%
+            </option>
+          ))}
+        </select>
+        <p className="text-muted-foreground mt-1 text-xs">
+          {t('imageResponsiveHint')}
+        </p>
+      </Field>
     </>
+  )
+}
+
+function PageContentEditor({
+  value,
+  onChange,
+  saving,
+}: {
+  value: Record<string, unknown>
+  onChange: (value: Record<string, unknown>) => void
+  saving: boolean
+}) {
+  const { t } = useTranslation('funnels')
+  const settings = pageContentSettings(value)
+  const set = (patch: Record<string, unknown>) =>
+    onChange({ ...value, ...patch })
+
+  return (
+    <div className="border-border mt-6 space-y-4 border-t pt-5">
+      <p className="text-sm font-medium">{t('contentPanel')}</p>
+      <Field label={`${t('pageContentWidth')}: ${settings.content_width}px`}>
+        <input
+          className="w-full"
+          type="range"
+          min="600"
+          max="800"
+          step="20"
+          value={settings.content_width}
+          onChange={(event) =>
+            set({ content_width: Number(event.target.value) })
+          }
+        />
+      </Field>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={settings.content_panel_enabled}
+          onChange={(event) =>
+            set({ content_panel_enabled: event.target.checked })
+          }
+        />
+        {t('highlightContentPanel')}
+      </label>
+      {settings.content_panel_enabled && (
+        <Field label={t('contentBackgroundColor')}>
+          <input
+            className="border-border bg-background h-9 w-full rounded-md border p-1"
+            type="color"
+            value={String(settings.content_background_color)}
+            onChange={(event) =>
+              set({ content_background_color: event.target.value })
+            }
+          />
+        </Field>
+      )}
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={settings.content_border_enabled}
+          onChange={(event) =>
+            set({ content_border_enabled: event.target.checked })
+          }
+        />
+        {t('showContentBorder')}
+      </label>
+      {settings.content_border_enabled && (
+        <>
+          <Field label={t('contentBorderColor')}>
+            <input
+              className="border-border bg-background h-9 w-full rounded-md border p-1"
+              type="color"
+              value={String(settings.content_border_color)}
+              onChange={(event) =>
+                set({ content_border_color: event.target.value })
+              }
+            />
+          </Field>
+          <Field
+            label={`${t('contentBorderWidth')}: ${settings.content_border_width}px`}
+          >
+            <input
+              className="w-full"
+              type="range"
+              min="1"
+              max="4"
+              value={settings.content_border_width}
+              onChange={(event) =>
+                set({ content_border_width: Number(event.target.value) })
+              }
+            />
+          </Field>
+        </>
+      )}
+      <Field label={t('contentShadow')}>
+        <select
+          className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+          value={settings.content_shadow}
+          onChange={(event) => set({ content_shadow: event.target.value })}
+        >
+          <option value="none">{t('shadowNone')}</option>
+          <option value="small">{t('shadowSmall')}</option>
+          <option value="medium">{t('shadowMedium')}</option>
+          <option value="large">{t('shadowLarge')}</option>
+        </select>
+      </Field>
+      <Field
+        label={`${t('contentCornerRadius')}: ${settings.content_border_radius}px`}
+      >
+        <input
+          className="w-full"
+          type="range"
+          min="0"
+          max="40"
+          step="2"
+          value={settings.content_border_radius}
+          onChange={(event) =>
+            set({ content_border_radius: Number(event.target.value) })
+          }
+        />
+      </Field>
+      {saving && <p className="text-muted-foreground text-xs">{t('saving')}</p>}
+    </div>
   )
 }
 

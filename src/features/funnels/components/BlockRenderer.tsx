@@ -340,6 +340,18 @@ function WebinarHero({
   webinar: WebinarContext
 }) {
   const imageUrl = safePublicUrl(content.imageUrl, '')
+  const imageWidthDesktop = Math.min(
+    100,
+    Math.max(25, Number(content.imageWidthDesktop ?? 100)),
+  )
+  const imageWidthMobile = Math.min(
+    100,
+    Math.max(25, Number(content.imageWidthMobile ?? 100)),
+  )
+  const imageStyle = {
+    '--funnel-image-desktop-width': `${imageWidthDesktop}%`,
+    '--funnel-image-mobile-width': `${imageWidthMobile}%`,
+  } as React.CSSProperties
   const dateLabel = String(
     content.dateLabel ||
       (webinar.webinarScheduledAt
@@ -353,7 +365,8 @@ function WebinarHero({
           <img
             src={imageUrl}
             alt={String(content.imageAlt || '')}
-            className="mx-auto mb-7 max-h-[32rem] w-full max-w-2xl rounded-[2rem] object-cover shadow-sm"
+            style={imageStyle}
+            className="mx-auto mb-7 h-auto w-[var(--funnel-image-mobile-width)] max-w-2xl rounded-[2rem] object-contain shadow-sm sm:w-[var(--funnel-image-desktop-width)]"
           />
         )}
         {typeof content.eyebrow === 'string' && content.eyebrow.trim() && (
@@ -457,13 +470,26 @@ function BlockContent({
       )
     case 'image': {
       const url = safePublicUrl(content.url, '')
+      const desktopWidth = Math.min(
+        100,
+        Math.max(25, Number(content.widthDesktop ?? 100)),
+      )
+      const mobileWidth = Math.min(
+        100,
+        Math.max(25, Number(content.widthMobile ?? 100)),
+      )
+      const imageStyle = {
+        '--funnel-image-desktop-width': `${desktopWidth}%`,
+        '--funnel-image-mobile-width': `${mobileWidth}%`,
+      } as React.CSSProperties
       return (
         <div className={common}>
           {url ? (
             <img
               src={url}
               alt={String(content.alt || '')}
-              className="mx-auto h-auto max-w-full rounded-lg object-contain"
+              style={imageStyle}
+              className="mx-auto h-auto w-[var(--funnel-image-mobile-width)] max-w-full rounded-lg object-contain sm:w-[var(--funnel-image-desktop-width)]"
             />
           ) : (
             <div className="bg-muted text-muted-foreground flex aspect-video items-center justify-center rounded-lg">

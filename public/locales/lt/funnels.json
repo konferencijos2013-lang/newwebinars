@@ -121,5 +121,21 @@
   "publicLinkCopied": "Vieša nuoroda nukopijuota.",
   "openPublicPage": "Atidaryti",
   "moveBlockUp": "Pakelti aukštyn",
-  "moveBlockDown": "Nuleisti žemyn"
+  "moveBlockDown": "Nuleisti žemyn",
+  "imageDesktopWidth": "Nuotraukos plotis kompiuteryje",
+  "imageMobileWidth": "Nuotraukos plotis telefone",
+  "imageResponsiveHint": "Galite nustatyti skirtingą nuotraukos dydį kompiuteriui ir telefonui.",
+  "contentPanel": "Informacijos juosta",
+  "pageContentWidth": "Puslapio turinio plotis",
+  "highlightContentPanel": "Išskirti informacijos juostą",
+  "contentBackgroundColor": "Informacijos juostos spalva",
+  "showContentBorder": "Rodyti rėmelį",
+  "contentBorderColor": "Rėmelio spalva",
+  "contentBorderWidth": "Rėmelio storis",
+  "contentShadow": "Rėmelio šešėlis",
+  "shadowNone": "Be šešėlio",
+  "shadowSmall": "Mažas",
+  "shadowMedium": "Vidutinis",
+  "shadowLarge": "Didelis",
+  "contentCornerRadius": "Kampų apvalinimas"
 }

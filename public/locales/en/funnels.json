@@ -121,5 +121,21 @@
   "publicLinkCopied": "Public link copied.",
   "openPublicPage": "Open",
   "moveBlockUp": "Move up",
-  "moveBlockDown": "Move down"
+  "moveBlockDown": "Move down",
+  "imageDesktopWidth": "Image width on desktop",
+  "imageMobileWidth": "Image width on mobile",
+  "imageResponsiveHint": "Set a different image size for desktop and mobile layouts.",
+  "contentPanel": "Information panel",
+  "pageContentWidth": "Page content width",
+  "highlightContentPanel": "Highlight the information panel",
+  "contentBackgroundColor": "Information panel color",
+  "showContentBorder": "Show border",
+  "contentBorderColor": "Border color",
+  "contentBorderWidth": "Border width",
+  "contentShadow": "Panel shadow",
+  "shadowNone": "No shadow",
+  "shadowSmall": "Small",
+  "shadowMedium": "Medium",
+  "shadowLarge": "Large",
+  "contentCornerRadius": "Corner radius"
 }
