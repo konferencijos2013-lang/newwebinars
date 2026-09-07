@@ -240,6 +240,7 @@ export function FunnelEditor({
             }
             accountId={accountId}
             saving={saving}
+            blocks={blocks}
           />
           <div className="grid grid-cols-2 gap-2">
             <Button
@@ -349,7 +350,10 @@ export function FunnelEditor({
                       ? settings.column_span
                       : 12
                   ) as 4 | 6 | 12
-                  const widthMode = String(settings?.width_mode ?? 'container')
+                  const widthMode =
+                    block.block_type === 'webinar_hero'
+                      ? 'container'
+                      : String(settings?.width_mode ?? 'container')
                   const fillsRow =
                     widthMode !== 'container' || columnSpan === 12
                   const blockIndex = blocks.findIndex(
@@ -429,7 +433,11 @@ export function FunnelEditor({
                           <ArrowDown className="h-4 w-4" />
                         </Button>
                       </div>
-                      <BlockRenderer block={block} isPreview />
+                      <BlockRenderer
+                        block={block}
+                        isPreview
+                        availableBlockIds={blocks.map((item) => item.id)}
+                      />
                     </div>
                   )
                 })}
@@ -631,6 +639,7 @@ function BlockEditor({
   onSettingsChange,
   accountId,
   saving,
+  blocks,
 }: {
   block: FunnelBlock
   onChange: (content: Record<string, unknown>) => void
@@ -638,6 +647,7 @@ function BlockEditor({
   onSettingsChange: (settings: Record<string, unknown>) => void
   accountId: string
   saving: boolean
+  blocks: FunnelBlock[]
 }) {
   const { t } = useTranslation('funnels')
   const content = (block.content as Record<string, unknown>) || {}
@@ -669,25 +679,27 @@ function BlockEditor({
           {t('blockWidthHint')}
         </p>
       </Field>
-      <Field label={t('sectionWidth')}>
-        <select
-          className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
-          value={String(
-            (block.settings as Record<string, unknown>)?.width_mode ??
-              'container',
-          )}
-          onChange={(event) =>
-            onSettingsChange({
-              ...(block.settings as Record<string, unknown>),
-              width_mode: event.target.value,
-            })
-          }
-        >
-          <option value="container">{t('widthContainer')}</option>
-          <option value="page">{t('widthPage')}</option>
-          <option value="viewport">{t('widthViewport')}</option>
-        </select>
-      </Field>
+      {block.block_type !== 'webinar_hero' && (
+        <Field label={t('sectionWidth')}>
+          <select
+            className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+            value={String(
+              (block.settings as Record<string, unknown>)?.width_mode ??
+                'container',
+            )}
+            onChange={(event) =>
+              onSettingsChange({
+                ...(block.settings as Record<string, unknown>),
+                width_mode: event.target.value,
+              })
+            }
+          >
+            <option value="container">{t('widthContainer')}</option>
+            <option value="page">{t('widthPage')}</option>
+            <option value="viewport">{t('widthViewport')}</option>
+          </select>
+        </Field>
+      )}
       <BackgroundEditor
         accountId={accountId}
         value={block.settings as Record<string, unknown>}
@@ -752,6 +764,48 @@ function BlockEditor({
               onChange={(buttonText) => set({ buttonText })}
             />
           </Field>
+          <Field label={t('heroButtonAction')}>
+            <select
+              className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+              value={String(content.buttonAction ?? 'registration')}
+              onChange={(event) => set({ buttonAction: event.target.value })}
+            >
+              <option value="registration">
+                {t('heroButtonRegistration')}
+              </option>
+              <option value="block">{t('heroButtonBlock')}</option>
+              <option value="url">{t('heroButtonExternalUrl')}</option>
+            </select>
+          </Field>
+          {content.buttonAction === 'block' && (
+            <Field label={t('heroButtonTargetBlock')}>
+              <select
+                className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
+                value={String(content.buttonTargetBlockId ?? '')}
+                onChange={(event) =>
+                  set({ buttonTargetBlockId: event.target.value })
+                }
+              >
+                <option value="">{t('heroButtonSelectBlock')}</option>
+                {blocks
+                  .filter((item) => item.id !== block.id)
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {t(`blocks.${item.block_type}`, item.block_type)}
+                    </option>
+                  ))}
+              </select>
+            </Field>
+          )}
+          {content.buttonAction === 'url' && (
+            <Field label={t('heroButtonUrl')}>
+              <TextInput
+                value={String(content.buttonUrl ?? '')}
+                placeholder="https://..."
+                onChange={(buttonUrl) => set({ buttonUrl })}
+              />
+            </Field>
+          )}
         </>
       )}
       {block.block_type === 'hero' && (

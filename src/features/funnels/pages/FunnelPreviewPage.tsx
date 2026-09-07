@@ -69,18 +69,23 @@ export function FunnelPreviewPage() {
               <div
                 key={block.id}
                 className={`${
-                  widthMode === 'viewport'
-                    ? 'relative left-1/2 w-screen max-w-none -translate-x-1/2 sm:col-span-6'
-                    : widthMode === 'page'
-                      ? '-mx-3 sm:col-span-6 sm:-mx-5'
-                      : span === 4
-                        ? 'sm:col-span-2'
-                        : span === 6
-                          ? 'sm:col-span-3'
-                          : 'sm:col-span-6'
+                  block.block_type === 'webinar_hero'
+                    ? 'sm:col-span-6'
+                    : widthMode === 'viewport'
+                      ? 'relative left-1/2 w-screen max-w-none -translate-x-1/2 sm:col-span-6'
+                      : widthMode === 'page'
+                        ? '-mx-3 sm:col-span-6 sm:-mx-5'
+                        : span === 4
+                          ? 'sm:col-span-2'
+                          : span === 6
+                            ? 'sm:col-span-3'
+                            : 'sm:col-span-6'
                 }`}
               >
-                <BlockRenderer block={block} />
+                <BlockRenderer
+                  block={block}
+                  availableBlockIds={blocks.map((item) => item.id)}
+                />
               </div>
             )
           })}

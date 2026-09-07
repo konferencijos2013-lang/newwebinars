@@ -137,5 +137,12 @@
   "shadowSmall": "Mažas",
   "shadowMedium": "Vidutinis",
   "shadowLarge": "Didelis",
-  "contentCornerRadius": "Kampų apvalinimas"
+  "contentCornerRadius": "Kampų apvalinimas",
+  "heroButtonAction": "Mygtuko veiksmas",
+  "heroButtonRegistration": "Slinkti iki registracijos formos",
+  "heroButtonBlock": "Slinkti iki kito bloko",
+  "heroButtonExternalUrl": "Atidaryti išorinę nuorodą",
+  "heroButtonTargetBlock": "Tikslinis blokas",
+  "heroButtonSelectBlock": "Pasirinkite bloką",
+  "heroButtonUrl": "Išorinė nuoroda"
 }

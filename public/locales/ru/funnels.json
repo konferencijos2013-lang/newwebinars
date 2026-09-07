@@ -137,5 +137,12 @@
   "shadowSmall": "Маленькая",
   "shadowMedium": "Средняя",
   "shadowLarge": "Большая",
-  "contentCornerRadius": "Скругление углов"
+  "contentCornerRadius": "Скругление углов",
+  "heroButtonAction": "Действие кнопки",
+  "heroButtonRegistration": "Прокрутить к форме регистрации",
+  "heroButtonBlock": "Прокрутить к другому блоку",
+  "heroButtonExternalUrl": "Открыть внешнюю ссылку",
+  "heroButtonTargetBlock": "Целевой блок",
+  "heroButtonSelectBlock": "Выберите блок",
+  "heroButtonUrl": "Внешняя ссылка"
 }

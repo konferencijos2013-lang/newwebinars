@@ -137,5 +137,12 @@
   "shadowSmall": "Small",
   "shadowMedium": "Medium",
   "shadowLarge": "Large",
-  "contentCornerRadius": "Corner radius"
+  "contentCornerRadius": "Corner radius",
+  "heroButtonAction": "Button action",
+  "heroButtonRegistration": "Scroll to registration form",
+  "heroButtonBlock": "Scroll to another block",
+  "heroButtonExternalUrl": "Open external URL",
+  "heroButtonTargetBlock": "Target block",
+  "heroButtonSelectBlock": "Select a block",
+  "heroButtonUrl": "External URL"
 }

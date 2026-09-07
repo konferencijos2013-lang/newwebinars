@@ -334,10 +334,12 @@ function WebinarHero({
   block,
   content,
   webinar,
+  availableBlockIds,
 }: {
   block: FunnelBlock
   content: Record<string, unknown>
   webinar: WebinarContext
+  availableBlockIds: Set<string>
 }) {
   const imageUrl = safePublicUrl(content.imageUrl, '')
   const imageWidthDesktop = Math.min(
@@ -352,6 +354,18 @@ function WebinarHero({
     '--funnel-image-desktop-width': `${imageWidthDesktop}%`,
     '--funnel-image-mobile-width': `${imageWidthMobile}%`,
   } as React.CSSProperties
+  const buttonAction = String(content.buttonAction ?? 'registration')
+  const requestedTargetId = String(content.buttonTargetBlockId ?? '')
+  const targetBlockId =
+    buttonAction === 'block' && availableBlockIds.has(requestedTargetId)
+      ? requestedTargetId
+      : null
+  const isExternalButton = buttonAction === 'url'
+  const buttonHref = isExternalButton
+    ? safePublicUrl(content.buttonUrl)
+    : targetBlockId
+      ? `#funnel-block-${targetBlockId}`
+      : '#registration'
   const dateLabel = String(
     content.dateLabel ||
       (webinar.webinarScheduledAt
@@ -366,7 +380,7 @@ function WebinarHero({
             src={imageUrl}
             alt={String(content.imageAlt || '')}
             style={imageStyle}
-            className="mx-auto mb-7 h-auto w-[var(--funnel-image-mobile-width)] max-w-2xl rounded-[2rem] object-contain shadow-sm sm:w-[var(--funnel-image-desktop-width)]"
+            className="mx-auto mb-7 h-auto w-[var(--funnel-image-mobile-width)] max-w-full rounded-[2rem] object-contain shadow-sm sm:w-[var(--funnel-image-desktop-width)]"
           />
         )}
         {typeof content.eyebrow === 'string' && content.eyebrow.trim() && (
@@ -412,7 +426,15 @@ function WebinarHero({
           </div>
         )}
         <a
-          href="#registration"
+          href={buttonHref}
+          target={isExternalButton ? '_blank' : undefined}
+          rel={isExternalButton ? 'noopener noreferrer' : undefined}
+          onClick={(event) => {
+            if (isExternalButton) return
+            event.preventDefault()
+            const target = document.querySelector(buttonHref)
+            target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}
           className="mt-7 inline-flex min-w-64 items-center justify-center rounded-full bg-[#78a653] px-8 py-4 font-bold text-white shadow-lg"
         >
           {String(content.buttonText || 'Register for free')} ↓
@@ -426,17 +448,26 @@ function BlockContent({
   block,
   isPreview = false,
   webinar,
+  availableBlockIds,
 }: {
   block: FunnelBlock
   isPreview?: boolean
   webinar: WebinarContext
+  availableBlockIds: Set<string>
 }) {
   const content = (block.content as Record<string, unknown>) || {}
   const common = isPreview ? 'p-6 rounded-lg' : 'p-4'
 
   switch (block.block_type) {
     case 'webinar_hero':
-      return <WebinarHero block={block} content={content} webinar={webinar} />
+      return (
+        <WebinarHero
+          block={block}
+          content={content}
+          webinar={webinar}
+          availableBlockIds={availableBlockIds}
+        />
+      )
     case 'hero':
       return (
         <div
@@ -666,6 +697,7 @@ export function BlockRenderer({
   webinarSlug,
   webinarScheduledAt,
   webinarRegistrationMethod,
+  availableBlockIds = [],
 }: {
   block: FunnelBlock
   isPreview?: boolean
@@ -673,11 +705,13 @@ export function BlockRenderer({
   webinarSlug?: string | null
   webinarScheduledAt?: string | null
   webinarRegistrationMethod?: 'email' | 'telegram' | 'both' | null
+  availableBlockIds?: string[]
 }) {
   const sticky =
     block.block_type === 'cta' && block.settings?.sticky_mobile === true
   return (
     <div
+      id={`funnel-block-${block.id}`}
       className={
         sticky
           ? 'sticky bottom-0 z-40 overflow-hidden rounded-lg md:static'
@@ -688,6 +722,7 @@ export function BlockRenderer({
       <BlockContent
         block={block}
         isPreview={isPreview}
+        availableBlockIds={new Set(availableBlockIds)}
         webinar={{
           webinarId,
           webinarSlug,
