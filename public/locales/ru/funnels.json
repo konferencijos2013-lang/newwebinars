@@ -119,5 +119,7 @@
   "publicRegistrationLink": "Публичная ссылка регистрации",
   "copyLink": "Копировать",
   "publicLinkCopied": "Публичная ссылка скопирована.",
-  "openPublicPage": "Открыть"
+  "openPublicPage": "Открыть",
+  "moveBlockUp": "Поднять выше",
+  "moveBlockDown": "Опустить ниже"
 }

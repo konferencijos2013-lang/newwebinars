@@ -119,5 +119,7 @@
   "publicRegistrationLink": "Public registration link",
   "copyLink": "Copy",
   "publicLinkCopied": "Public link copied.",
-  "openPublicPage": "Open"
+  "openPublicPage": "Open",
+  "moveBlockUp": "Move up",
+  "moveBlockDown": "Move down"
 }

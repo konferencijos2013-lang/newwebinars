@@ -119,5 +119,7 @@
   "publicRegistrationLink": "Vieša registracijos nuoroda",
   "copyLink": "Kopijuoti",
   "publicLinkCopied": "Vieša nuoroda nukopijuota.",
-  "openPublicPage": "Atidaryti"
+  "openPublicPage": "Atidaryti",
+  "moveBlockUp": "Pakelti aukštyn",
+  "moveBlockDown": "Nuleisti žemyn"
 }

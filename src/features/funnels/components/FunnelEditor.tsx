@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  ArrowDown,
+  ArrowUp,
   Layers3,
   Monitor,
   PanelLeft,
@@ -69,7 +71,9 @@ export function FunnelEditor({
       } = {
         page_id: page.id,
         block_type: type,
-        sort_order: blocks.length,
+        sort_order:
+          blocks.reduce((max, block) => Math.max(max, block.sort_order), -1) +
+          1,
         content: def.defaultContent,
         settings: def.defaultSettings,
       }
@@ -100,6 +104,45 @@ export function FunnelEditor({
       }
     },
     [blocks, onChange, selectedId],
+  )
+
+  const handleMoveBlock = useCallback(
+    async (id: string, direction: -1 | 1) => {
+      if (saving) return
+      const currentIndex = blocks.findIndex((block) => block.id === id)
+      const targetIndex = currentIndex + direction
+      if (currentIndex < 0 || targetIndex < 0 || targetIndex >= blocks.length)
+        return
+
+      const previous = blocks
+      const reordered = [...blocks]
+      ;[reordered[currentIndex], reordered[targetIndex]] = [
+        reordered[targetIndex],
+        reordered[currentIndex],
+      ]
+      const normalized = reordered.map((block, index) => ({
+        ...block,
+        sort_order: index,
+      }))
+
+      setSaving(true)
+      setBlocks(normalized)
+      onChange?.(normalized)
+      try {
+        const saved = await Promise.all(
+          normalized.map((block) => upsertBlock(block)),
+        )
+        setBlocks(saved)
+        onChange?.(saved)
+      } catch (err) {
+        setBlocks(previous)
+        onChange?.(previous)
+        console.error('Failed to move block', err)
+      } finally {
+        setSaving(false)
+      }
+    },
+    [blocks, onChange, saving],
   )
 
   const handleUpdateBlock = useCallback(
@@ -191,6 +234,33 @@ export function FunnelEditor({
             accountId={accountId}
             saving={saving}
           />
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={
+                saving ||
+                blocks.findIndex((block) => block.id === selectedBlock.id) === 0
+              }
+              onClick={() => void handleMoveBlock(selectedBlock.id, -1)}
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+              {t('moveBlockUp')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={
+                saving ||
+                blocks.findIndex((block) => block.id === selectedBlock.id) ===
+                  blocks.length - 1
+              }
+              onClick={() => void handleMoveBlock(selectedBlock.id, 1)}
+            >
+              <ArrowDown className="h-3.5 w-3.5" />
+              {t('moveBlockDown')}
+            </Button>
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -266,13 +336,23 @@ export function FunnelEditor({
                 ) as 4 | 6 | 12
                 const widthMode = String(settings?.width_mode ?? 'container')
                 const fillsRow = widthMode !== 'container' || columnSpan === 12
+                const blockIndex = blocks.findIndex(
+                  (item) => item.id === block.id,
+                )
                 return (
-                  <button
+                  <div
                     key={block.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => selectBlock(block.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        selectBlock(block.id)
+                      }
+                    }}
                     className={cn(
-                      'group focus-visible:ring-primary/40 relative block w-full rounded-lg border-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
+                      'group focus-visible:ring-primary/40 relative block w-full cursor-pointer rounded-lg border-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
                       previewDevice === 'desktop' &&
                         (fillsRow
                           ? 'col-span-6'
@@ -294,8 +374,47 @@ export function FunnelEditor({
                     >
                       {t(`blocks.${block.block_type}`, block.block_type)}
                     </span>
+                    <div
+                      className={cn(
+                        'absolute top-2 right-2 z-20 flex gap-1 opacity-0 transition-opacity',
+                        selectedId === block.id
+                          ? 'opacity-100'
+                          : 'group-focus-within:opacity-100 group-hover:opacity-100',
+                      )}
+                    >
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 shadow-sm"
+                        disabled={saving || blockIndex === 0}
+                        aria-label={t('moveBlockUp')}
+                        title={t('moveBlockUp')}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void handleMoveBlock(block.id, -1)
+                        }}
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 shadow-sm"
+                        disabled={saving || blockIndex === blocks.length - 1}
+                        aria-label={t('moveBlockDown')}
+                        title={t('moveBlockDown')}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void handleMoveBlock(block.id, 1)
+                        }}
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                    </div>
                     <BlockRenderer block={block} isPreview />
-                  </button>
+                  </div>
                 )
               })}
               {blocks.length === 0 && (
