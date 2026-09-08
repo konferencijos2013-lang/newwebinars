@@ -36,5 +36,6 @@
   "telegramExpired": "Telegram registracijos nuoroda nebegalioja. Bandykite dar kartą.",
   "telegramStartFailed": "Nepavyko pradėti Telegram registracijos. Patikrinkite, ar prijungtas webinaro botas.",
   "registrationFailed": "Registracija nepavyko. Bandykite dar kartą.",
-  "linkFunnelWebinar": "Susiekite funnelį su webinaru, kad registracija veiktų."
+  "linkFunnelWebinar": "Susiekite funnelį su webinaru, kad registracija veiktų.",
+  "waitingRoomTitle": "Laukimo kambarys"
 }

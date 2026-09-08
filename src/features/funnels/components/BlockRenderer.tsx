@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import DOMPurify from 'dompurify'
 import {
   CalendarDays,
+  Check,
   CheckCircle2,
   ImageIcon,
   MessageCircle,
@@ -17,7 +18,9 @@ import {
   startTelegramWebinarRegistration,
 } from '@/features/webinars/api/public'
 import { trackAnalyticsEvent } from '@/features/analytics/dataLayer'
+import { WaitingRoomContent } from '@/features/webinars/components/WaitingRoomContent'
 import { safePublicUrl } from './safePublicUrl'
+import { formatOfferPrice, normalizeOfferTiers } from './offerTiers'
 
 function remainingTime(target: number, now: number) {
   const total = Number.isFinite(target)
@@ -128,6 +131,7 @@ function Rich({
 }
 
 type WebinarContext = {
+  funnelSlug?: string | null
   webinarId?: string | null
   webinarSlug?: string | null
   webinarScheduledAt?: string | null
@@ -150,6 +154,7 @@ function RegistrationForm({
   const [error, setError] = useState<string | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [intentId, setIntentId] = useState<string | null>(null)
+  const hasRedirected = useRef(false)
   const collectName = content.collectName !== false
   const configuredMethod = String(content.registrationMethod ?? 'inherit')
   const method = (
@@ -235,10 +240,18 @@ function RegistrationForm({
     }
   }
 
-  if (token) {
-    const waitingRoom = webinar.webinarSlug
-      ? `/${webinar.webinarSlug}/waiting-room?token=${token}`
+  const waitingRoom =
+    token && webinar.funnelSlug
+      ? `/f/${webinar.funnelSlug}/waiting-room?token=${encodeURIComponent(token)}`
       : null
+
+  useEffect(() => {
+    if (!waitingRoom || isPreview || hasRedirected.current) return
+    hasRedirected.current = true
+    window.location.assign(waitingRoom)
+  }, [isPreview, waitingRoom])
+
+  if (token) {
     return (
       <div className="mx-auto max-w-md rounded-xl bg-emerald-50 p-5 text-center text-emerald-900">
         <CheckCircle2 className="mx-auto h-8 w-8" />
@@ -326,6 +339,96 @@ function RegistrationForm({
         </p>
       )}
       {error && <p className="text-center text-sm text-red-600">{error}</p>}
+    </div>
+  )
+}
+
+function Offer({ content }: { content: Record<string, unknown> }) {
+  const tiers = normalizeOfferTiers(content)
+  if (!tiers.length) {
+    return (
+      <div className="border-border mx-auto max-w-md rounded-lg border p-6 text-center">
+        <Rich
+          html={content.title}
+          fallback="Special offer"
+          className="font-semibold"
+        />
+        <p className="text-muted-foreground text-sm">
+          {String(content.price || '$0.00')}
+        </p>
+      </div>
+    )
+  }
+  return (
+    <div className="mx-auto max-w-6xl">
+      <Rich
+        html={content.title}
+        fallback="Special offer"
+        className="mb-8 text-center text-3xl font-bold"
+      />
+      <div className="grid gap-5 md:grid-cols-3">
+        {tiers.map((tier, index) => {
+          const href = safePublicUrl(tier.buttonUrl)
+          const external = /^https?:\/\//i.test(href)
+          const features = Array.isArray(tier.features) ? tier.features : []
+          return (
+            <article
+              key={index}
+              className={`relative flex flex-col rounded-2xl border p-6 ${tier.featured ? 'border-primary ring-primary shadow-lg ring-2' : 'border-border'}`}
+            >
+              {String(tier.badge || '').trim() && (
+                <span className="bg-primary text-primary-foreground absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold">
+                  {String(tier.badge)}
+                </span>
+              )}
+              <Rich
+                html={tier.name}
+                fallback={`Plan ${index + 1}`}
+                className="text-xl font-bold"
+              />
+              <Rich
+                html={tier.description}
+                fallback=""
+                className="text-muted-foreground mt-2 text-sm"
+              />
+              <div className="mt-5 flex items-baseline gap-2">
+                <span className="text-3xl font-bold">
+                  {formatOfferPrice(tier.price, tier.currency)}
+                </span>
+                {String(tier.oldPrice || '').trim() && (
+                  <span className="text-muted-foreground line-through">
+                    {formatOfferPrice(tier.oldPrice, tier.currency)}
+                  </span>
+                )}
+              </div>
+              {features.length > 0 && (
+                <ul className="mt-6 flex-1 space-y-3 text-left">
+                  {features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex gap-2">
+                      <Check className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+                      <Rich
+                        html={feature}
+                        fallback=""
+                        className="[&_a]:underline"
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {String(tier.buttonText || '').trim() && (
+                <a
+                  href={href}
+                  target={external ? '_blank' : undefined}
+                  rel={external ? 'noopener noreferrer' : undefined}
+                  className="bg-primary text-primary-foreground mt-6 rounded-full px-5 py-3 text-center font-semibold"
+                >
+                  {String(tier.buttonText)}
+                </a>
+              )}
+            </article>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -562,6 +665,13 @@ function BlockContent({
     case 'benefits':
       return (
         <div className={common}>
+          {typeof content.title === 'string' && content.title.trim() ? (
+            <Rich
+              html={content.title}
+              fallback=""
+              className="mb-5 text-center text-2xl font-bold"
+            />
+          ) : null}
           <ul className="mx-auto max-w-md list-disc space-y-1 pl-5">
             {(
               (content.items as string[]) ?? ['Benefit one', 'Benefit two']
@@ -573,6 +683,19 @@ function BlockContent({
             ))}
           </ul>
         </div>
+      )
+    case 'waiting_room_system':
+      return (
+        <WaitingRoomContent
+          webinarSlug={webinar.webinarSlug}
+          funnelSlug={webinar.funnelSlug}
+          token={
+            typeof window === 'undefined'
+              ? null
+              : new URLSearchParams(window.location.search).get('token')
+          }
+          isPreview={isPreview}
+        />
       )
     case 'speaker': {
       const photo = safePublicUrl(content.imageUrl, '')
@@ -632,16 +755,7 @@ function BlockContent({
     case 'offer':
       return (
         <div className={common}>
-          <div className="border-border mx-auto max-w-md rounded-lg border p-6 text-center">
-            <Rich
-              html={content.title}
-              fallback="Special offer"
-              className="font-semibold"
-            />
-            <p className="text-muted-foreground text-sm">
-              {String(content.price || '$0.00')}
-            </p>
-          </div>
+          <Offer content={content} />
         </div>
       )
     case 'order_form':
@@ -694,6 +808,7 @@ export function BlockRenderer({
   block,
   isPreview = false,
   webinarId,
+  funnelSlug,
   webinarSlug,
   webinarScheduledAt,
   webinarRegistrationMethod,
@@ -702,6 +817,7 @@ export function BlockRenderer({
   block: FunnelBlock
   isPreview?: boolean
   webinarId?: string | null
+  funnelSlug?: string | null
   webinarSlug?: string | null
   webinarScheduledAt?: string | null
   webinarRegistrationMethod?: 'email' | 'telegram' | 'both' | null
@@ -725,6 +841,7 @@ export function BlockRenderer({
         availableBlockIds={new Set(availableBlockIds)}
         webinar={{
           webinarId,
+          funnelSlug,
           webinarSlug,
           webinarScheduledAt,
           webinarRegistrationMethod,

@@ -108,7 +108,7 @@ export function WebinarRoomPage() {
         if (token) {
           const r = await fetchRegistrationByToken(token).catch(() => null)
           if (!isActive) return
-          if (!r) {
+          if (!r || r.webinar_id !== w.id) {
             setStatus('error')
             return
           }

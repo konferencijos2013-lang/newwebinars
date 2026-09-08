@@ -8,14 +8,18 @@ import { Select } from '@/components/ui/Select'
 import { Card } from '@/components/ui/Card'
 import { useAccount } from '@/features/auth/hooks/useAccount'
 import {
-  createFunnel,
-  createDefaultPages,
+  createFunnelWithPages,
+  localizedTemplatePayload,
 } from '@/features/funnels/api/funnels'
+import {
+  getFunnelTemplates,
+  normalizeFunnelTemplateLanguage,
+} from '@/features/funnels/templates'
 import { fetchWebinars } from '@/features/webinars/api/webinars'
 import type { Webinar } from '@/shared/database.types'
 
 export function FunnelCreatePage() {
-  const { t } = useTranslation('funnels')
+  const { t, i18n } = useTranslation('funnels')
   const navigate = useNavigate()
   const account = useAccount()
 
@@ -65,13 +69,25 @@ export function FunnelCreatePage() {
     try {
       const generatedSlug =
         slug.trim() || name.toLowerCase().replace(/\s+/g, '-')
-      const funnel = await createFunnel({
+      const defaults = Object.fromEntries(
+        (['registration', 'waiting_room', 'offer'] as const).map((step) => {
+          const template = getFunnelTemplates(step)[0]
+          return [
+            step,
+            localizedTemplatePayload(
+              template,
+              normalizeFunnelTemplateLanguage(i18n.resolvedLanguage),
+            ),
+          ]
+        }),
+      )
+      const { funnel } = await createFunnelWithPages({
         account_id: account.account.id,
         name: name.trim(),
         slug: generatedSlug,
         webinar_id: webinarId || null,
+        page_templates: defaults,
       })
-      await createDefaultPages(funnel.id, webinarId || null)
       navigate(`/funnels/${funnel.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { formatOfferPrice, normalizeOfferTiers } from './offerTiers'
 import { safePublicUrl } from './safePublicUrl'
 
 describe('safePublicUrl', () => {
@@ -19,5 +20,24 @@ describe('safePublicUrl', () => {
   it('supports an empty fallback for image sources', () => {
     expect(safePublicUrl('javascript:alert(1)', '')).toBe('')
     expect(safePublicUrl(undefined, '')).toBe('')
+  })
+})
+
+describe('offer tiers', () => {
+  it('normalizes one featured tier even with inconsistent stored data', () => {
+    const tiers = normalizeOfferTiers({
+      tiers: [
+        { name: 'Basic', price: '49', featured: true },
+        { name: 'Standard', price: '99', featured: true },
+        { name: 'Pro', price: '249' },
+      ],
+    })
+    expect(tiers).toHaveLength(3)
+    expect(tiers.map((tier) => tier.featured)).toEqual([true, false, false])
+  })
+
+  it('formats numeric prices and preserves descriptive prices', () => {
+    expect(formatOfferPrice('49', 'EUR')).toMatch(/49/)
+    expect(formatOfferPrice('€19/mėn.', 'EUR')).toBe('€19/mėn.')
   })
 })

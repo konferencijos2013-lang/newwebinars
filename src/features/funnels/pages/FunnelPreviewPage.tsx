@@ -1,17 +1,26 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router'
+import { Navigate, useParams } from 'react-router'
 import { Card } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { BlockRenderer } from '@/features/funnels/components/BlockRenderer'
 import {
+  fetchFunnel,
   fetchFunnelBlocks,
   fetchFunnelPages,
 } from '@/features/funnels/api/funnels'
-import type { FunnelBlock, FunnelPage } from '@/shared/database.types'
+import type {
+  Funnel,
+  FunnelBlock,
+  FunnelPage,
+  Webinar,
+} from '@/shared/database.types'
+import { fetchWebinar } from '@/features/webinars/api/webinars'
 import { backgroundStyle, pageContentStyle } from '@/features/funnels/pageTheme'
 
 export function FunnelPreviewPage() {
   const { id, path } = useParams<{ id: string; path: string }>()
+  const [funnel, setFunnel] = useState<Funnel | null>(null)
+  const [webinar, setWebinar] = useState<Webinar | null>(null)
   const [page, setPage] = useState<FunnelPage | null>(null)
   const [blocks, setBlocks] = useState<FunnelBlock[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -20,6 +29,11 @@ export function FunnelPreviewPage() {
     if (!id || !path) return
     void (async () => {
       try {
+        const nextFunnel = await fetchFunnel(id)
+        setFunnel(nextFunnel)
+        if (nextFunnel.webinar_id) {
+          setWebinar(await fetchWebinar(nextFunnel.webinar_id))
+        }
         const pages = await fetchFunnelPages(id)
         const nextPage = pages.find((item) => item.path === path)
         if (!nextPage) throw new Error('Puslapis nerastas')
@@ -40,12 +54,16 @@ export function FunnelPreviewPage() {
         </Card>
       </div>
     )
-  if (!page || !blocks)
+  if (!page || !blocks || !funnel)
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Spinner className="h-8 w-8" />
       </div>
     )
+
+  if (page.step_type === 'webinar_room' && webinar?.slug) {
+    return <Navigate replace to={`/w/${webinar.slug}/room?preview=1`} />
+  }
 
   return (
     <main
@@ -84,6 +102,12 @@ export function FunnelPreviewPage() {
               >
                 <BlockRenderer
                   block={block}
+                  isPreview
+                  funnelSlug={funnel.slug}
+                  webinarId={webinar?.id}
+                  webinarSlug={webinar?.slug}
+                  webinarScheduledAt={webinar?.scheduled_at}
+                  webinarRegistrationMethod={webinar?.registration_method}
                   availableBlockIds={blocks.map((item) => item.id)}
                 />
               </div>

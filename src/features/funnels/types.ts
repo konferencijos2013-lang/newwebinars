@@ -14,8 +14,10 @@ export type FunnelBlockType =
   | 'order_form'
   | 'faq'
 
+export type FunnelRuntimeBlockType = FunnelBlockType | 'waiting_room_system'
+
 export interface FunnelBlockDef {
-  type: FunnelBlockType
+  type: FunnelRuntimeBlockType
   label: string
   icon: string
   defaultContent: Record<string, unknown>
@@ -110,7 +112,10 @@ export const FUNNEL_BLOCK_REGISTRY: Record<FunnelBlockType, FunnelBlockDef> = {
     type: 'benefits',
     label: 'Benefits',
     icon: 'ListChecks',
-    defaultContent: { items: ['Benefit one', 'Benefit two'] },
+    defaultContent: {
+      title: 'What you will learn',
+      items: ['Benefit one', 'Benefit two'],
+    },
     defaultSettings: {},
   },
   speaker: {
@@ -157,4 +162,12 @@ export const FUNNEL_BLOCK_REGISTRY: Record<FunnelBlockType, FunnelBlockDef> = {
     },
     defaultSettings: {},
   },
+}
+
+export const WAITING_ROOM_SYSTEM_BLOCK: FunnelBlockDef = {
+  type: 'waiting_room_system',
+  label: 'Waiting room',
+  icon: 'Clock',
+  defaultContent: {},
+  defaultSettings: { column_span: 12 },
 }

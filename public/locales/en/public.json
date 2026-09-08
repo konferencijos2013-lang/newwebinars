@@ -36,5 +36,6 @@
   "telegramExpired": "The Telegram registration link expired. Please try again.",
   "telegramStartFailed": "Unable to start Telegram registration. Check that the webinar bot is connected.",
   "registrationFailed": "Registration failed. Please try again.",
-  "linkFunnelWebinar": "Link this funnel to a webinar to activate registration."
+  "linkFunnelWebinar": "Link this funnel to a webinar to activate registration.",
+  "waitingRoomTitle": "Waiting room"
 }

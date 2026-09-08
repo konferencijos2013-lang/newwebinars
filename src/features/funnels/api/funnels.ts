@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase'
 import type { Funnel, FunnelPage, FunnelBlock } from '@/shared/database.types'
+import type {
+  FunnelTemplateBlockSeed,
+  FunnelTemplateDefinition,
+  FunnelTemplateStep,
+} from '@/features/funnels/templates'
 
 export type CreateFunnelInput = {
   account_id: string
@@ -202,4 +207,87 @@ export async function uploadFunnelImage(accountId: string, file: File) {
 
   const { data } = supabase.storage.from('funnel-assets').getPublicUrl(path)
   return data.publicUrl
+}
+
+export interface FunnelPageTemplateInput {
+  theme: Record<string, unknown>
+  blocks: readonly FunnelTemplateBlockSeed[]
+}
+
+export type InitialFunnelPageTemplates = Partial<
+  Record<FunnelTemplateStep | 'webinar_room', FunnelPageTemplateInput>
+>
+
+export interface CreateFunnelWithPagesInput extends CreateFunnelInput {
+  page_templates?: InitialFunnelPageTemplates
+}
+
+export interface CreateFunnelWithPagesResult {
+  funnel: Funnel
+  pages: FunnelPage[]
+}
+
+function templatePayload(template: FunnelPageTemplateInput) {
+  return {
+    theme: template.theme,
+    blocks: template.blocks.map((block, sortOrder) => ({
+      block_type: block.block_type,
+      sort_order: sortOrder,
+      content: block.content,
+      settings: block.settings,
+    })),
+  }
+}
+
+export function localizedTemplatePayload(
+  template: FunnelTemplateDefinition,
+  language: keyof FunnelTemplateDefinition['blocks'],
+): FunnelPageTemplateInput {
+  return {
+    theme: template.theme,
+    blocks: template.blocks[language],
+  }
+}
+
+export async function replaceFunnelPageTemplate(
+  pageId: string,
+  template: FunnelPageTemplateInput,
+): Promise<FunnelPage> {
+  const { data, error } = await supabase.rpc('replace_funnel_page_template', {
+    p_page_id: pageId,
+    p_theme: template.theme,
+    p_blocks: templatePayload(template).blocks,
+  })
+
+  if (error) throw error
+  return data as FunnelPage
+}
+
+export async function createFunnelWithPages(
+  input: CreateFunnelWithPagesInput,
+): Promise<CreateFunnelWithPagesResult> {
+  const pageTemplates = Object.fromEntries(
+    Object.entries(input.page_templates ?? {}).map(([step, template]) => [
+      step,
+      templatePayload(template),
+    ]),
+  )
+  const { data, error } = await supabase.rpc('create_funnel_with_pages', {
+    p_account_id: input.account_id,
+    p_name: input.name,
+    p_slug: input.slug,
+    p_webinar_id: input.webinar_id ?? null,
+    p_page_templates: pageTemplates,
+  })
+
+  if (error) throw error
+  const result = data as unknown as CreateFunnelWithPagesResult
+  return {
+    funnel: result.funnel,
+    pages: [...result.pages].sort(
+      (a, b) =>
+        (STEP_TYPE_ORDER[a.step_type] ?? 99) -
+        (STEP_TYPE_ORDER[b.step_type] ?? 99),
+    ),
+  }
 }

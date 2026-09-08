@@ -21,6 +21,11 @@ import { BlockToolbar } from './BlockToolbar'
 import { BlockRenderer } from './BlockRenderer'
 import { RichTextEditor } from './RichTextEditor'
 import {
+  getFunnelTemplates,
+  localizeFunnelTemplate,
+  type FunnelTemplateId,
+} from '@/features/funnels/templates'
+import {
   FUNNEL_BLOCK_REGISTRY,
   type FunnelBlockType,
 } from '@/features/funnels/types'
@@ -46,16 +51,24 @@ export function FunnelEditor({
   accountId,
   initialBlocks,
   onChange,
+  onApplyTemplate,
 }: {
   page: FunnelPage
   accountId: string
   initialBlocks: FunnelBlock[]
   onChange?: (blocks: FunnelBlock[]) => void
+  onApplyTemplate?: (
+    templateId: FunnelTemplateId,
+  ) => Promise<{ page: FunnelPage; blocks: FunnelBlock[] }>
 }) {
-  const { t } = useTranslation('funnels')
+  const { t, i18n } = useTranslation('funnels')
   const [blocks, setBlocks] = useState<FunnelBlock[]>(initialBlocks)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [applyingTemplateId, setApplyingTemplateId] = useState<string | null>(
+    null,
+  )
+  const [templateError, setTemplateError] = useState<string | null>(null)
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null)
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop')
   const [pageTheme, setPageTheme] = useState<Record<string, unknown>>(
@@ -63,6 +76,43 @@ export function FunnelEditor({
   )
 
   const selectedBlock = blocks.find((block) => block.id === selectedId)
+
+  const templates =
+    page.step_type === 'registration' ||
+    page.step_type === 'waiting_room' ||
+    page.step_type === 'offer'
+      ? getFunnelTemplates(page.step_type).map((template) =>
+          localizeFunnelTemplate(template, i18n.resolvedLanguage),
+        )
+      : []
+
+  async function handleApplyTemplate(templateId: FunnelTemplateId) {
+    if (!onApplyTemplate) return
+    if (
+      blocks.length > 0 &&
+      !window.confirm(
+        t('templateReplaceConfirm', {
+          defaultValue:
+            'Applying this template will replace all blocks on this page. Continue?',
+        }),
+      )
+    )
+      return
+
+    setApplyingTemplateId(templateId)
+    setTemplateError(null)
+    setSelectedId(null)
+    try {
+      const result = await onApplyTemplate(templateId)
+      setBlocks(result.blocks)
+      setPageTheme(result.page.theme ?? {})
+      onChange?.(result.blocks)
+    } catch (err) {
+      setTemplateError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setApplyingTemplateId(null)
+    }
+  }
 
   const handleAdd = useCallback(
     async (type: FunnelBlockType) => {
@@ -286,225 +336,296 @@ export function FunnelEditor({
   )
 
   return (
-    <div className="relative lg:h-[calc(100svh-14rem)] lg:min-h-[620px]">
-      <div className="border-border bg-card mb-4 flex items-center justify-between rounded-xl border p-2 shadow-sm lg:hidden">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setMobilePanel('blocks')}
-        >
-          <PanelLeft className="h-4 w-4" /> {t('addBlock')}
-        </Button>
-        <PreviewSwitcher value={previewDevice} onChange={setPreviewDevice} />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setMobilePanel('settings')}
-        >
-          <PanelRight className="h-4 w-4" />
-          <span className="sr-only">{t('blockSettings')}</span>
-        </Button>
-      </div>
-
-      <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[17rem_minmax(0,1fr)_19rem]">
-        <aside className="border-border bg-card hidden min-h-0 overflow-y-auto rounded-xl border p-4 shadow-sm lg:block">
-          <div className="mb-5 flex items-center gap-2">
-            <Layers3 className="text-primary h-4 w-4" />
-            <h2 className="text-sm font-semibold">{t('addBlock')}</h2>
+    <div className="relative space-y-4">
+      {templates.length > 0 && (
+        <section aria-labelledby="funnel-templates-title">
+          <div className="mb-3">
+            <h2 id="funnel-templates-title" className="text-sm font-semibold">
+              {t('pageTemplates', { defaultValue: 'Page templates' })}
+            </h2>
+            <p className="text-muted-foreground text-xs">
+              {t('pageTemplatesHint', {
+                defaultValue:
+                  'Choose a design to replace this page’s theme and blocks.',
+              })}
+            </p>
           </div>
-          <BlockToolbar onAdd={handleAdd} />
-        </aside>
-
-        <section className="border-border bg-muted/40 min-h-[540px] overflow-auto rounded-xl border p-3 sm:p-6 lg:min-h-0">
-          <div className="mb-4 hidden justify-center lg:flex">
-            <PreviewSwitcher
-              value={previewDevice}
-              onChange={setPreviewDevice}
-            />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {templates.map((template, index) => (
+              <button
+                key={template.id}
+                type="button"
+                className="border-border bg-card hover:border-primary/50 overflow-hidden rounded-xl border text-left transition-colors disabled:opacity-50"
+                disabled={!onApplyTemplate || applyingTemplateId !== null}
+                onClick={() =>
+                  void handleApplyTemplate(template.id as FunnelTemplateId)
+                }
+              >
+                <span
+                  className="block h-24 p-3"
+                  style={backgroundStyle(template.theme)}
+                >
+                  <span className="mx-auto block h-full max-w-[85%] rounded-md border border-black/10 bg-white/80 p-2 shadow-sm">
+                    <span className="mb-2 block h-2 w-2/3 rounded bg-slate-800/70" />
+                    <span className="mb-1 block h-1.5 w-full rounded bg-slate-400/50" />
+                    <span className="mb-3 block h-1.5 w-4/5 rounded bg-slate-400/50" />
+                    <span
+                      className={cn(
+                        'block h-3 w-1/2 rounded',
+                        index % 2 ? 'bg-indigo-500' : 'bg-emerald-500',
+                      )}
+                    />
+                  </span>
+                </span>
+                <span className="block p-3">
+                  <span className="block text-sm font-semibold">
+                    {template.name}
+                  </span>
+                  <span className="text-muted-foreground mt-1 block text-xs">
+                    {template.description}
+                  </span>
+                  {applyingTemplateId === template.id && (
+                    <span className="text-primary mt-2 block text-xs">
+                      {t('applyingTemplate', { defaultValue: 'Applying…' })}
+                    </span>
+                  )}
+                </span>
+              </button>
+            ))}
           </div>
-          <div
-            className={cn(
-              'min-h-full rounded-lg border p-3 shadow-sm sm:p-5',
-              previewDevice === 'desktop' ? 'w-full' : 'mx-auto max-w-[390px]',
-            )}
-            style={backgroundStyle(pageTheme)}
+          {templateError && (
+            <p className="text-destructive mt-2 text-sm">{templateError}</p>
+          )}
+        </section>
+      )}
+      <div className="relative lg:h-[calc(100svh-14rem)] lg:min-h-[620px]">
+        <div className="border-border bg-card mb-4 flex items-center justify-between rounded-xl border p-2 shadow-sm lg:hidden">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMobilePanel('blocks')}
           >
+            <PanelLeft className="h-4 w-4" /> {t('addBlock')}
+          </Button>
+          <PreviewSwitcher value={previewDevice} onChange={setPreviewDevice} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMobilePanel('settings')}
+          >
+            <PanelRight className="h-4 w-4" />
+            <span className="sr-only">{t('blockSettings')}</span>
+          </Button>
+        </div>
+
+        <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[17rem_minmax(0,1fr)_19rem]">
+          <aside className="border-border bg-card hidden min-h-0 overflow-y-auto rounded-xl border p-4 shadow-sm lg:block">
+            <div className="mb-5 flex items-center gap-2">
+              <Layers3 className="text-primary h-4 w-4" />
+              <h2 className="text-sm font-semibold">{t('addBlock')}</h2>
+            </div>
+            <BlockToolbar onAdd={handleAdd} />
+          </aside>
+
+          <section className="border-border bg-muted/40 min-h-[540px] overflow-auto rounded-xl border p-3 sm:p-6 lg:min-h-0">
+            <div className="mb-4 hidden justify-center lg:flex">
+              <PreviewSwitcher
+                value={previewDevice}
+                onChange={setPreviewDevice}
+              />
+            </div>
             <div
-              className="mx-auto min-h-full transition-[max-width] duration-200"
-              style={
+              className={cn(
+                'min-h-full rounded-lg border p-3 shadow-sm sm:p-5',
                 previewDevice === 'desktop'
-                  ? pageContentStyle(pageTheme)
-                  : { ...pageContentStyle(pageTheme), maxWidth: '390px' }
-              }
+                  ? 'w-full'
+                  : 'mx-auto max-w-[390px]',
+              )}
+              style={backgroundStyle(pageTheme)}
             >
               <div
-                className={cn(
-                  'grid min-h-full gap-3 p-3 sm:p-5',
-                  previewDevice === 'desktop' ? 'grid-cols-6' : 'grid-cols-1',
-                )}
+                className="mx-auto min-h-full transition-[max-width] duration-200"
+                style={
+                  previewDevice === 'desktop'
+                    ? pageContentStyle(pageTheme)
+                    : { ...pageContentStyle(pageTheme), maxWidth: '390px' }
+                }
               >
-                {blocks.map((block) => {
-                  const settings = block.settings as Record<string, unknown>
-                  const columnSpan = (
-                    [4, 6].includes(Number(settings?.column_span))
-                      ? settings.column_span
-                      : 12
-                  ) as 4 | 6 | 12
-                  const widthMode =
-                    block.block_type === 'webinar_hero'
-                      ? 'container'
-                      : String(settings?.width_mode ?? 'container')
-                  const fillsRow =
-                    widthMode !== 'container' || columnSpan === 12
-                  const blockIndex = blocks.findIndex(
-                    (item) => item.id === block.id,
-                  )
-                  return (
-                    <div
-                      key={block.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => selectBlock(block.id)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault()
-                          selectBlock(block.id)
-                        }
-                      }}
-                      className={cn(
-                        'group focus-visible:ring-primary/40 relative block w-full cursor-pointer rounded-lg border-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
-                        previewDevice === 'desktop' &&
-                          (fillsRow
-                            ? 'col-span-6'
-                            : columnSpan === 6
-                              ? 'col-span-3'
-                              : 'col-span-2'),
-                        selectedId === block.id
-                          ? 'border-primary bg-background'
-                          : 'hover:border-primary/30 border-transparent',
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'bg-primary text-primary-foreground absolute top-2 left-2 z-10 rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase opacity-0 transition-opacity',
-                          selectedId === block.id
-                            ? 'opacity-100'
-                            : 'group-hover:opacity-100',
-                        )}
-                      >
-                        {t(`blocks.${block.block_type}`, block.block_type)}
-                      </span>
+                <div
+                  className={cn(
+                    'grid min-h-full gap-3 p-3 sm:p-5',
+                    previewDevice === 'desktop' ? 'grid-cols-6' : 'grid-cols-1',
+                  )}
+                >
+                  {blocks.map((block) => {
+                    const settings = block.settings as Record<string, unknown>
+                    const columnSpan = (
+                      [4, 6].includes(Number(settings?.column_span))
+                        ? settings.column_span
+                        : 12
+                    ) as 4 | 6 | 12
+                    const widthMode =
+                      block.block_type === 'webinar_hero'
+                        ? 'container'
+                        : String(settings?.width_mode ?? 'container')
+                    const fillsRow =
+                      widthMode !== 'container' || columnSpan === 12
+                    const blockIndex = blocks.findIndex(
+                      (item) => item.id === block.id,
+                    )
+                    return (
                       <div
+                        key={block.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => selectBlock(block.id)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            selectBlock(block.id)
+                          }
+                        }}
                         className={cn(
-                          'absolute top-2 right-2 z-20 flex gap-1 opacity-0 transition-opacity',
+                          'group focus-visible:ring-primary/40 relative block w-full cursor-pointer rounded-lg border-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
+                          previewDevice === 'desktop' &&
+                            (fillsRow
+                              ? 'col-span-6'
+                              : columnSpan === 6
+                                ? 'col-span-3'
+                                : 'col-span-2'),
                           selectedId === block.id
-                            ? 'opacity-100'
-                            : 'group-focus-within:opacity-100 group-hover:opacity-100',
+                            ? 'border-primary bg-background'
+                            : 'hover:border-primary/30 border-transparent',
                         )}
                       >
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0 shadow-sm"
-                          disabled={saving || blockIndex === 0}
-                          aria-label={t('moveBlockUp')}
-                          title={t('moveBlockUp')}
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            void handleMoveBlock(block.id, -1)
-                          }}
+                        <span
+                          className={cn(
+                            'bg-primary text-primary-foreground absolute top-2 left-2 z-10 rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase opacity-0 transition-opacity',
+                            selectedId === block.id
+                              ? 'opacity-100'
+                              : 'group-hover:opacity-100',
+                          )}
                         >
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0 shadow-sm"
-                          disabled={saving || blockIndex === blocks.length - 1}
-                          aria-label={t('moveBlockDown')}
-                          title={t('moveBlockDown')}
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            void handleMoveBlock(block.id, 1)
-                          }}
+                          {t(`blocks.${block.block_type}`, block.block_type)}
+                        </span>
+                        <div
+                          className={cn(
+                            'absolute top-2 right-2 z-20 flex gap-1 opacity-0 transition-opacity',
+                            selectedId === block.id
+                              ? 'opacity-100'
+                              : 'group-focus-within:opacity-100 group-hover:opacity-100',
+                          )}
                         >
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 shadow-sm"
+                            disabled={saving || blockIndex === 0}
+                            aria-label={t('moveBlockUp')}
+                            title={t('moveBlockUp')}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              void handleMoveBlock(block.id, -1)
+                            }}
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 shadow-sm"
+                            disabled={
+                              saving || blockIndex === blocks.length - 1
+                            }
+                            aria-label={t('moveBlockDown')}
+                            title={t('moveBlockDown')}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              void handleMoveBlock(block.id, 1)
+                            }}
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <BlockRenderer
+                          block={block}
+                          isPreview
+                          availableBlockIds={blocks.map((item) => item.id)}
+                        />
                       </div>
-                      <BlockRenderer
-                        block={block}
-                        isPreview
-                        availableBlockIds={blocks.map((item) => item.id)}
-                      />
-                    </div>
-                  )
-                })}
-                {blocks.length === 0 && (
-                  <Card className="py-16 text-center">
-                    <p className="text-muted-foreground">{t('emptyBlocks')}</p>
-                    <Button
-                      className="mt-4 lg:hidden"
-                      variant="outline"
-                      onClick={() => setMobilePanel('blocks')}
-                    >
-                      <Plus className="h-4 w-4" /> {t('addBlock')}
-                    </Button>
-                  </Card>
-                )}
+                    )
+                  })}
+                  {blocks.length === 0 && (
+                    <Card className="py-16 text-center">
+                      <p className="text-muted-foreground">
+                        {t('emptyBlocks')}
+                      </p>
+                      <Button
+                        className="mt-4 lg:hidden"
+                        variant="outline"
+                        onClick={() => setMobilePanel('blocks')}
+                      >
+                        <Plus className="h-4 w-4" /> {t('addBlock')}
+                      </Button>
+                    </Card>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <aside className="border-border bg-card hidden min-h-0 overflow-y-auto rounded-xl border p-4 shadow-sm lg:block">
-          <div className="space-y-8">
-            {pageSettingsContent}
-            {settingsContent}
-          </div>
-        </aside>
-      </div>
-
-      {mobilePanel && (
-        <div
-          className="fixed inset-0 z-50 lg:hidden"
-          role="dialog"
-          aria-modal="true"
-        >
-          <button
-            type="button"
-            aria-label="Close panel"
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setMobilePanel(null)}
-          />
-          <aside className="bg-card absolute inset-y-0 right-0 flex w-full max-w-sm flex-col shadow-2xl">
-            <div className="border-border flex items-center justify-between border-b p-4">
-              <span className="text-sm font-semibold">
-                {mobilePanel === 'blocks' ? t('addBlock') : t('blockSettings')}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setMobilePanel(null)}
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-              </Button>
-            </div>
-            <div className="min-h-0 overflow-y-auto p-4">
-              {mobilePanel === 'blocks' ? (
-                <BlockToolbar onAdd={handleAdd} />
-              ) : (
-                <div className="space-y-8">
-                  {pageSettingsContent}
-                  {settingsContent}
-                </div>
-              )}
+          <aside className="border-border bg-card hidden min-h-0 overflow-y-auto rounded-xl border p-4 shadow-sm lg:block">
+            <div className="space-y-8">
+              {pageSettingsContent}
+              {settingsContent}
             </div>
           </aside>
         </div>
-      )}
+
+        {mobilePanel && (
+          <div
+            className="fixed inset-0 z-50 lg:hidden"
+            role="dialog"
+            aria-modal="true"
+          >
+            <button
+              type="button"
+              aria-label="Close panel"
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setMobilePanel(null)}
+            />
+            <aside className="bg-card absolute inset-y-0 right-0 flex w-full max-w-sm flex-col shadow-2xl">
+              <div className="border-border flex items-center justify-between border-b p-4">
+                <span className="text-sm font-semibold">
+                  {mobilePanel === 'blocks'
+                    ? t('addBlock')
+                    : t('blockSettings')}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMobilePanel(null)}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </div>
+              <div className="min-h-0 overflow-y-auto p-4">
+                {mobilePanel === 'blocks' ? (
+                  <BlockToolbar onAdd={handleAdd} />
+                ) : (
+                  <div className="space-y-8">
+                    {pageSettingsContent}
+                    {settingsContent}
+                  </div>
+                )}
+              </div>
+            </aside>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -969,21 +1090,30 @@ function BlockEditor({
         </>
       )}
       {block.block_type === 'benefits' && (
-        <Field label={t('benefitsItems')}>
-          <ListEditor
-            items={(content.items as string[]) ?? []}
-            onChange={(items) => set({ items })}
-            renderItem={(item, update) => (
-              <RichTextEditor
-                multiline={false}
-                value={item}
-                onChange={update}
-              />
-            )}
-            createItem={() => ''}
-            addLabel={t('addItem')}
-          />
-        </Field>
+        <>
+          <Field label={t('benefitsTitle')}>
+            <RichTextEditor
+              multiline={false}
+              value={(content.title as string) ?? ''}
+              onChange={(title) => set({ title })}
+            />
+          </Field>
+          <Field label={t('benefitsItems')}>
+            <ListEditor
+              items={(content.items as string[]) ?? []}
+              onChange={(items) => set({ items })}
+              renderItem={(item, update) => (
+                <RichTextEditor
+                  multiline={false}
+                  value={item}
+                  onChange={update}
+                />
+              )}
+              createItem={() => ''}
+              addLabel={t('addItem')}
+            />
+          </Field>
+        </>
       )}
       {block.block_type === 'speaker' && (
         <>
@@ -1044,21 +1174,7 @@ function BlockEditor({
         </>
       )}
       {block.block_type === 'offer' && (
-        <>
-          <Field label={t('offerTitle')}>
-            <RichTextEditor
-              multiline={false}
-              value={(content.title as string) ?? ''}
-              onChange={(title) => set({ title })}
-            />
-          </Field>
-          <Field label={t('offerPrice')}>
-            <TextInput
-              value={(content.price as string) ?? ''}
-              onChange={(price) => set({ price })}
-            />
-          </Field>
-        </>
+        <OfferBlockEditor content={content} onChange={set} />
       )}
       {block.block_type === 'faq' && (
         <Field label={t('faqItems')}>
@@ -1092,6 +1208,190 @@ function BlockEditor({
       )}
       {saving && <p className="text-muted-foreground text-xs">{t('saving')}</p>}
     </div>
+  )
+}
+
+type OfferTier = {
+  name: string
+  description: string
+  price: string
+  currency: string
+  oldPrice: string
+  features: string[]
+  badge: string
+  featured: boolean
+  buttonText: string
+  buttonUrl: string
+}
+
+const DEFAULT_OFFER_TIERS: OfferTier[] = ['Basic', 'Standard', 'Pro'].map(
+  (name) => ({
+    name,
+    description: '',
+    price: '',
+    currency: 'EUR',
+    oldPrice: '',
+    features: [],
+    badge: '',
+    featured: name === 'Standard',
+    buttonText: '',
+    buttonUrl: '',
+  }),
+)
+
+function normalizeOfferTier(
+  value: Partial<OfferTier>,
+  index: number,
+): OfferTier {
+  return {
+    ...DEFAULT_OFFER_TIERS[index],
+    ...value,
+    features: Array.isArray(value.features) ? value.features : [],
+    featured: value.featured === true,
+  }
+}
+
+function OfferBlockEditor({
+  content,
+  onChange,
+}: {
+  content: Record<string, unknown>
+  onChange: (patch: Record<string, unknown>) => void
+}) {
+  const { t } = useTranslation('funnels')
+  const isTiered =
+    content.mode === 'tiers' ||
+    content.variant === 'tiers' ||
+    Array.isArray(content.tiers)
+  const tiers = DEFAULT_OFFER_TIERS.map((fallback, index) =>
+    normalizeOfferTier(
+      ((content.tiers as Array<Partial<OfferTier>> | undefined)?.[index] ??
+        fallback) as Partial<OfferTier>,
+      index,
+    ),
+  )
+  const updateTier = (index: number, patch: Partial<OfferTier>) => {
+    const next = tiers.map((tier, tierIndex) => ({
+      ...tier,
+      ...(tierIndex === index ? patch : {}),
+      ...(patch.featured === true && tierIndex !== index
+        ? { featured: false }
+        : {}),
+    }))
+    onChange({ tiers: next })
+  }
+
+  return (
+    <>
+      <Field label={t('offerTitle')}>
+        <RichTextEditor
+          multiline={false}
+          value={(content.title as string) ?? ''}
+          onChange={(title) => onChange({ title })}
+        />
+      </Field>
+      {!isTiered ? (
+        <Field label={t('offerPrice')}>
+          <TextInput
+            value={(content.price as string) ?? ''}
+            onChange={(price) => onChange({ price })}
+          />
+        </Field>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm font-medium">{t('offerTiers')}</p>
+          {tiers.map((tier, index) => (
+            <div
+              key={index}
+              className="border-border space-y-3 rounded-lg border p-3"
+            >
+              <p className="text-sm font-semibold">
+                {t(
+                  `offerTier${index === 0 ? 'Basic' : index === 1 ? 'Standard' : 'Pro'}`,
+                )}
+              </p>
+              <Field label={t('offerTierName')}>
+                <RichTextEditor
+                  multiline={false}
+                  value={tier.name}
+                  onChange={(name) => updateTier(index, { name })}
+                />
+              </Field>
+              <Field label={t('offerTierDescription')}>
+                <RichTextEditor
+                  value={tier.description}
+                  onChange={(description) => updateTier(index, { description })}
+                />
+              </Field>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label={t('offerPrice')}>
+                  <TextInput
+                    value={tier.price}
+                    onChange={(price) => updateTier(index, { price })}
+                  />
+                </Field>
+                <Field label={t('offerTierCurrency')}>
+                  <TextInput
+                    value={tier.currency}
+                    onChange={(currency) => updateTier(index, { currency })}
+                  />
+                </Field>
+              </div>
+              <Field label={t('offerTierOldPrice')}>
+                <TextInput
+                  value={tier.oldPrice}
+                  onChange={(oldPrice) => updateTier(index, { oldPrice })}
+                />
+              </Field>
+              <Field label={t('offerTierFeatures')}>
+                <ListEditor
+                  items={tier.features}
+                  onChange={(features) => updateTier(index, { features })}
+                  renderItem={(feature, update) => (
+                    <RichTextEditor
+                      multiline={false}
+                      value={feature}
+                      onChange={update}
+                    />
+                  )}
+                  createItem={() => ''}
+                  addLabel={t('addItem')}
+                />
+              </Field>
+              <Field label={t('offerTierBadge')}>
+                <TextInput
+                  value={tier.badge}
+                  onChange={(badge) => updateTier(index, { badge })}
+                />
+              </Field>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={tier.featured}
+                  onChange={(event) =>
+                    updateTier(index, { featured: event.target.checked })
+                  }
+                />
+                {t('offerTierFeatured')}
+              </label>
+              <Field label={t('offerTierButtonText')}>
+                <TextInput
+                  value={tier.buttonText}
+                  onChange={(buttonText) => updateTier(index, { buttonText })}
+                />
+              </Field>
+              <Field label={t('offerTierButtonUrl')}>
+                <TextInput
+                  value={tier.buttonUrl}
+                  placeholder="https://..."
+                  onChange={(buttonUrl) => updateTier(index, { buttonUrl })}
+                />
+              </Field>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   )
 }
 

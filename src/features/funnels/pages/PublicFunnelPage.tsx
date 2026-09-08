@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import { Navigate, useParams } from 'react-router'
 import { Card } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { BlockRenderer } from '@/features/funnels/components/BlockRenderer'
@@ -19,6 +20,7 @@ type PublicFunnelPageData = {
 }
 
 export function PublicFunnelPage() {
+  const { t } = useTranslation('funnels')
   const { slug, path } = useParams<{ slug: string; path: string }>()
   const [data, setData] = useState<PublicFunnelPageData | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -57,6 +59,29 @@ export function PublicFunnelPage() {
         <Spinner className="h-8 w-8" />
       </div>
     )
+
+  if (path === 'room') {
+    if (data.webinar_slug) {
+      return (
+        <Navigate
+          replace
+          to={`/w/${data.webinar_slug}/room${window.location.search}`}
+        />
+      )
+    }
+    return (
+      <div className="mx-auto max-w-3xl p-6">
+        <Card className="py-16 text-center">
+          <h1 className="text-xl font-semibold">
+            {t('webinarRoomUnavailable')}
+          </h1>
+          <p className="text-muted-foreground mt-2 text-sm">
+            {t('webinarRoomUnavailableDescription')}
+          </p>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <main
@@ -97,6 +122,7 @@ export function PublicFunnelPage() {
                   block={block}
                   availableBlockIds={data.blocks.map((item) => item.id)}
                   webinarId={data.webinar_id}
+                  funnelSlug={slug}
                   webinarSlug={data.webinar_slug}
                   webinarScheduledAt={data.webinar_scheduled_at}
                   webinarRegistrationMethod={data.webinar_registration_method}
