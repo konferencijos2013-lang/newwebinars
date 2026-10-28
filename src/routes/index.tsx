@@ -30,6 +30,7 @@ import { WebinarRoomPage } from '@/features/webinars/pages/WebinarRoomPage'
 import { RecordingsPage } from '@/features/recordings/pages/RecordingsPage'
 import { BillingPage } from '@/features/billing/pages/BillingPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
+import { InviteAcceptPage } from '@/features/settings/pages/InviteAcceptPage'
 import { IntegrationsPage } from '@/features/settings/pages/IntegrationsPage'
 import { TelegramPage } from '@/features/settings/pages/TelegramPage'
 import { AffiliatePage } from '@/features/affiliate/pages/AffiliatePage'
@@ -235,6 +236,7 @@ export function AppRoutes() {
           />
           <Route path="billing" element={<BillingPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="invite/:token" element={<InviteAcceptPage />} />
           <Route path="integrations" element={<IntegrationsPage />} />
           <Route path="telegram" element={<TelegramPage />} />
         </Route>

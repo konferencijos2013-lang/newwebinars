@@ -231,6 +231,8 @@ export interface Registration {
   utm_campaign: string | null
   referrer_url: string | null
   referral_code: string | null
+  payment_required: boolean
+  paid_at: string | null
   phone: string | null
   company: string | null
   telegram_username: string | null

@@ -10,6 +10,7 @@ import {
   getManyChatLinkOptions,
   getTelegramLinkOptions,
   markEnteredWaitingRoom,
+  startWebinarTicketCheckout,
   type ManyChatLinkOption,
   type TelegramLinkOption,
 } from '@/features/webinars/api/public'
@@ -64,6 +65,8 @@ function WaitingRoomRuntimeContent({
   const [manyChatError, setManyChatError] = useState<string | null>(null)
   const [telegramLinks, setTelegramLinks] = useState<TelegramLinkOption[]>([])
   const [telegramError, setTelegramError] = useState<string | null>(null)
+  const [paying, setPaying] = useState(false)
+  const [payError, setPayError] = useState<string | null>(null)
 
   useEffect(() => {
     let isActive = true
@@ -126,6 +129,18 @@ function WaitingRoomRuntimeContent({
     const id = window.setInterval(() => setNow(Date.now()), 1_000)
     return () => window.clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    if (!registration?.payment_required || registration.paid_at) return
+    const id = window.setInterval(() => {
+      void fetchRegistrationByToken(accessToken)
+        .then((next) => {
+          if (next.paid_at) setRegistration(next)
+        })
+        .catch(() => {})
+    }, 3000)
+    return () => window.clearInterval(id)
+  }, [accessToken, registration?.paid_at, registration?.payment_required])
 
   if (status === 'loading') {
     return (
@@ -236,9 +251,34 @@ function WaitingRoomRuntimeContent({
           </p>
         )}
 
-        <Button className="mt-8" disabled={!canEnter} onClick={enterRoom}>
-          {canEnter ? t('enterRoom') : t('roomNotOpen')}
-        </Button>
+        {registration.payment_required && !registration.paid_at ? (
+          <div className="mt-8">
+            <p className="text-muted-foreground mb-3 text-sm">
+              Prieš įeinant reikia apmokėti vietą.
+            </p>
+            <Button
+              isLoading={paying}
+              onClick={() => {
+                setPaying(true)
+                setPayError(null)
+                void startWebinarTicketCheckout(accessToken)
+                  .catch(() =>
+                    setPayError('Mokėjimo lango nepavyko atidaryti.'),
+                  )
+                  .finally(() => setPaying(false))
+              }}
+            >
+              Apmokėti ir įeiti
+            </Button>
+            {payError ? (
+              <p className="mt-3 text-sm text-red-600">{payError}</p>
+            ) : null}
+          </div>
+        ) : (
+          <Button className="mt-8" disabled={!canEnter} onClick={enterRoom}>
+            {canEnter ? t('enterRoom') : t('roomNotOpen')}
+          </Button>
+        )}
       </Card>
     </div>
   )

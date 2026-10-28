@@ -5,6 +5,7 @@ export interface ReminderRule {
   webinar_id: string
   integration_connection_id: string | null
   channel: 'email' | 'telegram' | 'manychat'
+  timing: 'before_start' | 'after_end'
   minutes_before: number
   subject: string | null
   body: string | null
@@ -17,7 +18,7 @@ export async function fetchReminderRules(webinarId: string) {
   const { data, error } = await supabase
     .from('reminder_rules')
     .select(
-      'id,webinar_id,integration_connection_id,channel,minutes_before,subject,body,is_enabled,created_at,updated_at',
+      'id,webinar_id,integration_connection_id,channel,timing,minutes_before,subject,body,is_enabled,created_at,updated_at',
     )
     .eq('webinar_id', webinarId)
     .order('minutes_before', { ascending: false })
@@ -29,6 +30,7 @@ export async function createReminderRule(input: {
   webinarId: string
   integrationConnectionId: string
   minutesBefore: number
+  timing?: 'before_start' | 'after_end'
   subject: string
   body: string
   channel?: 'email' | 'manychat' | 'telegram'
@@ -39,13 +41,14 @@ export async function createReminderRule(input: {
       webinar_id: input.webinarId,
       integration_connection_id: input.integrationConnectionId,
       channel: input.channel ?? 'email',
+      timing: input.timing ?? 'before_start',
       minutes_before: input.minutesBefore,
       subject: input.subject.trim() || null,
       body: input.body.trim() || null,
       is_enabled: true,
     })
     .select(
-      'id,webinar_id,integration_connection_id,channel,minutes_before,subject,body,is_enabled,created_at,updated_at',
+      'id,webinar_id,integration_connection_id,channel,timing,minutes_before,subject,body,is_enabled,created_at,updated_at',
     )
     .single()
   if (error) throw error
@@ -58,6 +61,7 @@ export async function updateReminderRule(
     Pick<
       ReminderRule,
       | 'integration_connection_id'
+      | 'timing'
       | 'minutes_before'
       | 'subject'
       | 'body'
@@ -70,7 +74,7 @@ export async function updateReminderRule(
     .update(patch)
     .eq('id', id)
     .select(
-      'id,webinar_id,integration_connection_id,channel,minutes_before,subject,body,is_enabled,created_at,updated_at',
+      'id,webinar_id,integration_connection_id,channel,timing,minutes_before,subject,body,is_enabled,created_at,updated_at',
     )
     .single()
   if (error) throw error

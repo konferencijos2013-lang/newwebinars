@@ -8,8 +8,13 @@ import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Card } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
-import { fetchWebinar, updateWebinar } from '@/features/webinars/api/webinars'
+import {
+  fetchWebinar,
+  setWebinarPassword,
+  updateWebinar,
+} from '@/features/webinars/api/webinars'
 import { ReminderRulesCard } from '@/features/webinars/components/ReminderRulesCard'
+import { WebinarInvitesCard } from '@/features/webinars/components/WebinarInvitesCard'
 import type { Webinar } from '@/shared/database.types'
 import { slugify } from '@/shared/utils/slug'
 
@@ -40,6 +45,7 @@ export function WebinarEditPage() {
     'public' | 'password_protected' | 'paid_access' | 'invited_only'
   >('public')
   const [priceCents, setPriceCents] = useState('')
+  const [roomPassword, setRoomPassword] = useState('')
   const [waitingRoom, setWaitingRoom] = useState(true)
   const [registrationMethod, setRegistrationMethod] = useState<
     'email' | 'telegram' | 'both'
@@ -88,6 +94,25 @@ export function WebinarEditPage() {
     setIsSaving(true)
     setError(null)
 
+    if (
+      accessMode === 'password_protected' &&
+      roomPassword.trim().length > 0 &&
+      roomPassword.trim().length < 4
+    ) {
+      setError('Slaptažodis turi būti bent 4 simbolių.')
+      setIsSaving(false)
+      return
+    }
+    if (
+      accessMode === 'password_protected' &&
+      !webinar.password_hash &&
+      roomPassword.trim().length < 4
+    ) {
+      setError('Nustatykite bent 4 simbolių slaptažodį.')
+      setIsSaving(false)
+      return
+    }
+
     try {
       await updateWebinar(webinar.id, {
         title: title.trim(),
@@ -105,6 +130,9 @@ export function WebinarEditPage() {
         registration_method: registrationMethod,
         early_entry_minutes: Number(earlyEntry) || 15,
       })
+      if (accessMode === 'password_protected' && roomPassword.trim()) {
+        await setWebinarPassword(webinar.id, roomPassword.trim())
+      }
       navigate(`/webinars/${webinar.id}`)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
@@ -252,6 +280,23 @@ export function WebinarEditPage() {
             </div>
           </div>
 
+          {accessMode === 'password_protected' && (
+            <div className="space-y-2">
+              <Label htmlFor="roomPassword">{t('roomPassword')}</Label>
+              <Input
+                id="roomPassword"
+                type="password"
+                value={roomPassword}
+                onChange={(e) => setRoomPassword(e.target.value)}
+                placeholder={
+                  webinar.password_hash
+                    ? 'Palikite tuščią, jei slaptažodžio nekeičiate'
+                    : ''
+                }
+              />
+            </div>
+          )}
+
           {accessMode === 'paid_access' && (
             <div className="space-y-2">
               <Label htmlFor="priceCents">{t('priceCents')}</Label>
@@ -318,6 +363,9 @@ export function WebinarEditPage() {
           </div>
         </form>
       </Card>
+      {accessMode === 'invited_only' ? (
+        <WebinarInvitesCard webinarId={webinar.id} />
+      ) : null}
       <ReminderRulesCard
         webinarId={webinar.id}
         accountId={webinar.account_id}

@@ -142,11 +142,44 @@ serve(async (req) => {
     if (event.type.startsWith('customer.subscription.')) {
       await syncSubscription(event.data.object as Stripe.Subscription)
     } else if (event.type === 'checkout.session.completed') {
-      const id = stripeId(
-        (event.data.object as Stripe.Checkout.Session).subscription,
-      )
-      if (id) await syncSubscription(await stripe.subscriptions.retrieve(id))
-      else handled = false
+      const session = event.data.object as Stripe.Checkout.Session
+      if (
+        session.metadata?.kind === 'webinar_ticket' &&
+        session.payment_status === 'paid'
+      ) {
+        const registrationId = session.metadata.registration_id
+        const { data: registration, error: registrationError } = await db
+          .from('registrations')
+          .select('id, webinar_id, paid_at')
+          .eq('id', registrationId)
+          .maybeSingle()
+        if (registrationError) throw registrationError
+        if (!registration) throw new Error('Ticket registration was not found')
+        const { data: webinar, error: webinarError } = await db
+          .from('webinars')
+          .select('price_cents')
+          .eq('id', registration.webinar_id)
+          .single()
+        if (webinarError) throw webinarError
+        if (session.amount_total !== webinar.price_cents) {
+          throw new Error('Ticket amount does not match the webinar price')
+        }
+        if (!registration.paid_at) {
+          const { error: paidError } = await db
+            .from('registrations')
+            .update({
+              paid_at: new Date().toISOString(),
+              payment_required: true,
+            })
+            .eq('id', registration.id)
+            .is('paid_at', null)
+          if (paidError) throw paidError
+        }
+      } else {
+        const id = stripeId(session.subscription)
+        if (id) await syncSubscription(await stripe.subscriptions.retrieve(id))
+        else handled = false
+      }
     } else if (event.type === 'invoice.paid') {
       const invoice = event.data.object as Stripe.Invoice
       const synced = await subscriptionForInvoice(invoice)

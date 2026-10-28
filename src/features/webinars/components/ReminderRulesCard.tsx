@@ -26,11 +26,21 @@ const DEFAULT_TELEGRAM_BODY =
 const DEFAULT_MANYCHAT_BODY =
   'Sveiki, {{name}}! Webinaras „{{webinar_title}}“ prasidės netrukus. Prisijungti: {{webinar_link}}'
 
-function formatOffset(minutes: number) {
-  if (minutes === 0) return 'Webinaro pradžios metu'
-  if (minutes % 1440 === 0) return `${minutes / 1440} d. prieš`
-  if (minutes % 60 === 0) return `${minutes / 60} val. prieš`
-  return `${minutes} min. prieš`
+const DEFAULT_AFTER_SUBJECT = 'Ačiū, kad dalyvavote: {{webinar_title}}'
+const DEFAULT_AFTER_BODY =
+  'Sveiki, {{name}},\n\nwebinaras „{{webinar_title}}“ jau baigėsi. Jei nespėjote pasiūlymo, jį rasite čia:\n{{webinar_link}}'
+
+function formatOffset(
+  minutes: number,
+  timing: 'before_start' | 'after_end' = 'before_start',
+) {
+  const when = timing === 'after_end' ? 'po pabaigos' : 'prieš pradžią'
+  if (minutes === 0) {
+    return timing === 'after_end' ? 'Iš karto po pabaigos' : 'Webinaro pradžios metu'
+  }
+  if (minutes % 1440 === 0) return `${minutes / 1440} d. ${when}`
+  if (minutes % 60 === 0) return `${minutes / 60} val. ${when}`
+  return `${minutes} min. ${when}`
 }
 
 export function ReminderRulesCard({
@@ -53,6 +63,9 @@ export function ReminderRulesCard({
     'email',
   )
   const [minutesBefore, setMinutesBefore] = useState('60')
+  const [timing, setTiming] = useState<'before_start' | 'after_end'>(
+    'before_start',
+  )
   const [subject, setSubject] = useState(DEFAULT_SUBJECT)
   const [body, setBody] = useState(DEFAULT_BODY)
 
@@ -124,6 +137,7 @@ export function ReminderRulesCard({
         webinarId,
         integrationConnectionId: connectionId,
         minutesBefore: offset,
+        timing,
         subject,
         body,
         channel,
@@ -156,7 +170,7 @@ export function ReminderRulesCard({
   async function removeRule(rule: ReminderRule) {
     if (
       !window.confirm(
-        `Pašalinti priminimą „${formatOffset(rule.minutes_before)}“?`,
+        `Pašalinti priminimą „${formatOffset(rule.minutes_before, rule.timing ?? 'before_start')}“?`,
       )
     )
       return
@@ -177,8 +191,11 @@ export function ReminderRulesCard({
           <div>
             <CardTitle>Priminimai</CardTitle>
             <CardDescription className="mt-1">
-              El. pašto, Telegram arba ManyChat priminimai registruotiems
-              dalyviams. Galite naudoti {'{{name}}'}, {'{{email}}'},{' '}
+              El. pašto, Telegram arba ManyChat žinutės registruotiems
+              dalyviams. Galima siųsti prieš pradžią arba po pabaigos. Jei
+              trukmė nenurodyta, laiškas po renginio išsiunčiamas praėjus
+              nurodytam laikui nuo pradžios. Galite naudoti {'{{name}}'},{' '}
+              {'{{email}}'},{' '}
               {'{{webinar_title}}'},{' {{webinar_link}}'} ir{' '}
               {'{{public_webinar_link}}'}, kurie bus pakeisti siunčiant.{' '}
               {'{{webinar_link}}'} yra asmeninė prisijungimo nuoroda, o{' '}
@@ -209,7 +226,7 @@ export function ReminderRulesCard({
 
       {adding && (
         <div className="mt-5 space-y-4 rounded-lg border p-4">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor="reminder-channel">Kanalas</Label>
               <Select
@@ -259,7 +276,32 @@ export function ReminderRulesCard({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reminder-minutes">Minučių iki webinaro</Label>
+              <Label htmlFor="reminder-timing">Kada siųsti</Label>
+              <Select
+                id="reminder-timing"
+                value={timing}
+                onChange={(event) => {
+                  const next = event.target.value as 'before_start' | 'after_end'
+                  setTiming(next)
+                  if (next === 'after_end' && channel === 'email') {
+                    setSubject(DEFAULT_AFTER_SUBJECT)
+                    setBody(DEFAULT_AFTER_BODY)
+                  } else if (next === 'before_start' && channel === 'email') {
+                    setSubject(DEFAULT_SUBJECT)
+                    setBody(DEFAULT_BODY)
+                  }
+                }}
+              >
+                <option value="before_start">Prieš pradžią</option>
+                <option value="after_end">Po pabaigos</option>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reminder-minutes">
+                {timing === 'after_end'
+                  ? 'Minučių po pabaigos'
+                  : 'Minučių iki pradžios'}
+              </Label>
               <Input
                 id="reminder-minutes"
                 type="number"
@@ -269,7 +311,7 @@ export function ReminderRulesCard({
               />
               <p className="text-muted-foreground text-xs">
                 {Number.isFinite(Number(minutesBefore))
-                  ? formatOffset(Number(minutesBefore))
+                  ? formatOffset(Number(minutesBefore), timing)
                   : 'Įveskite minutes'}
               </p>
             </div>
@@ -353,7 +395,7 @@ export function ReminderRulesCard({
             >
               <div>
                 <p className="font-medium">
-                  {formatOffset(rule.minutes_before)}
+                  {formatOffset(rule.minutes_before, rule.timing ?? 'before_start')}
                 </p>
                 <p className="text-muted-foreground mt-1 text-sm">
                   {rule.subject || 'Be temos'} ·{' '}

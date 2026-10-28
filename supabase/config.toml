@@ -411,6 +411,10 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 [functions.stripe-webhook]
 verify_jwt = false
 
+# Attendees pay with a registration access token, before they have an account.
+[functions.create-webinar-ticket-session]
+verify_jwt = false
+
 # Telegram authenticates this endpoint with its Bot API secret header.
 [functions.telegram-webhook]
 verify_jwt = false

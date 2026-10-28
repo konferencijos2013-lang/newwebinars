@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ArrowDown,
   ArrowUp,
+  GripVertical,
   Layers3,
   Monitor,
   PanelLeft,
@@ -71,6 +72,7 @@ export function FunnelEditor({
   const [templateError, setTemplateError] = useState<string | null>(null)
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null)
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop')
+  const [dragId, setDragId] = useState<string | null>(null)
   const [pageTheme, setPageTheme] = useState<Record<string, unknown>>(
     page.theme ?? {},
   )
@@ -158,25 +160,14 @@ export function FunnelEditor({
     [blocks, onChange, selectedId],
   )
 
-  const handleMoveBlock = useCallback(
-    async (id: string, direction: -1 | 1) => {
+  const persistOrder = useCallback(
+    async (reordered: FunnelBlock[]) => {
       if (saving) return
-      const currentIndex = blocks.findIndex((block) => block.id === id)
-      const targetIndex = currentIndex + direction
-      if (currentIndex < 0 || targetIndex < 0 || targetIndex >= blocks.length)
-        return
-
       const previous = blocks
-      const reordered = [...blocks]
-      ;[reordered[currentIndex], reordered[targetIndex]] = [
-        reordered[targetIndex],
-        reordered[currentIndex],
-      ]
       const normalized = reordered.map((block, index) => ({
         ...block,
         sort_order: index,
       }))
-
       setSaving(true)
       setBlocks(normalized)
       onChange?.(normalized)
@@ -195,6 +186,37 @@ export function FunnelEditor({
       }
     },
     [blocks, onChange, saving],
+  )
+
+  const handleMoveBlock = useCallback(
+    async (id: string, direction: -1 | 1) => {
+      const currentIndex = blocks.findIndex((block) => block.id === id)
+      const targetIndex = currentIndex + direction
+      if (currentIndex < 0 || targetIndex < 0 || targetIndex >= blocks.length)
+        return
+      const reordered = [...blocks]
+      ;[reordered[currentIndex], reordered[targetIndex]] = [
+        reordered[targetIndex],
+        reordered[currentIndex],
+      ]
+      await persistOrder(reordered)
+    },
+    [blocks, persistOrder],
+  )
+
+  const handleDropBlock = useCallback(
+    async (targetId: string) => {
+      if (!dragId || dragId === targetId) return
+      const from = blocks.findIndex((block) => block.id === dragId)
+      const to = blocks.findIndex((block) => block.id === targetId)
+      if (from < 0 || to < 0) return
+      const reordered = [...blocks]
+      const [moved] = reordered.splice(from, 1)
+      reordered.splice(to, 0, moved)
+      setDragId(null)
+      await persistOrder(reordered)
+    },
+    [blocks, dragId, persistOrder],
   )
 
   const handleUpdateBlock = useCallback(
@@ -478,6 +500,14 @@ export function FunnelEditor({
                         key={block.id}
                         role="button"
                         tabIndex={0}
+                        onDragOver={(event) => {
+                          event.preventDefault()
+                          event.dataTransfer.dropEffect = 'move'
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault()
+                          void handleDropBlock(block.id)
+                        }}
                         onClick={() => selectBlock(block.id)}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
@@ -516,6 +546,25 @@ export function FunnelEditor({
                               : 'group-focus-within:opacity-100 group-hover:opacity-100',
                           )}
                         >
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 cursor-grab p-0 shadow-sm active:cursor-grabbing"
+                            draggable
+                            aria-label={t('moveBlock', 'Perkelti bloką')}
+                            title={t('moveBlock', 'Perkelti bloką')}
+                            onDragStart={(event) => {
+                              event.stopPropagation()
+                              setDragId(block.id)
+                              event.dataTransfer.effectAllowed = 'move'
+                              event.dataTransfer.setData('text/plain', block.id)
+                            }}
+                            onDragEnd={() => setDragId(null)}
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <GripVertical className="h-4 w-4" />
+                          </Button>
                           <Button
                             type="button"
                             variant="outline"

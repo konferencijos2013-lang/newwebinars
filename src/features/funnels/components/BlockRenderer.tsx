@@ -15,7 +15,9 @@ import { backgroundStyle } from '@/features/funnels/pageTheme'
 import {
   getTelegramRegistrationIntentStatus,
   registerForWebinar,
+  registrationFailureMessage,
   startTelegramWebinarRegistration,
+  startWebinarTicketCheckout,
 } from '@/features/webinars/api/public'
 import { trackAnalyticsEvent } from '@/features/analytics/dataLayer'
 import { WaitingRoomContent } from '@/features/webinars/components/WaitingRoomContent'
@@ -136,6 +138,8 @@ type WebinarContext = {
   webinarSlug?: string | null
   webinarScheduledAt?: string | null
   webinarRegistrationMethod?: 'email' | 'telegram' | 'both' | null
+  webinarAccessMode?: string | null
+  webinarPriceCents?: number | null
 }
 
 function RegistrationForm({
@@ -150,6 +154,7 @@ function RegistrationForm({
   const { t } = useTranslation('public')
   const [email, setEmail] = useState('')
   const [fullName, setFullName] = useState('')
+  const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [token, setToken] = useState<string | null>(null)
@@ -199,7 +204,12 @@ function RegistrationForm({
         full_name: collectName ? fullName.trim() || null : null,
         referral_code: params.get('ref'),
         referrer_url: window.location.href,
+        password: password.trim() || null,
       })
+      if (registration.payment_required && !registration.paid_at) {
+        await startWebinarTicketCheckout(registration.access_token)
+        return
+      }
       setToken(registration.access_token)
       trackAnalyticsEvent('webinar_registration', {
         registration_method: 'email',
@@ -209,9 +219,7 @@ function RegistrationForm({
         lead_type: 'webinar_registration',
       })
     } catch (reason) {
-      setError(
-        reason instanceof Error ? reason.message : t('registrationFailed'),
-      )
+      setError(registrationFailureMessage(reason))
     } finally {
       setSubmitting(false)
     }
@@ -228,6 +236,7 @@ function RegistrationForm({
         full_name: collectName ? fullName.trim() || null : null,
         referral_code: params.get('ref'),
         referrer_url: window.location.href,
+        password: password.trim() || null,
       })
       setIntentId(intent.intent_id)
       window.open(intent.connect_url, '_blank', 'noopener,noreferrer')
@@ -278,6 +287,26 @@ function RegistrationForm({
           html={content.title}
           fallback={t('register')}
           className="mb-4 text-center text-2xl font-bold"
+        />
+      )}
+      {webinar.webinarAccessMode === 'paid_access' &&
+      webinar.webinarPriceCents ? (
+        <p className="text-muted-foreground text-center text-sm">
+          Įėjimas mokamas:{' '}
+          {(webinar.webinarPriceCents / 100).toLocaleString('lt-LT', {
+            style: 'currency',
+            currency: 'EUR',
+          })}
+        </p>
+      ) : null}
+      {webinar.webinarAccessMode === 'password_protected' && (
+        <input
+          disabled={disabled}
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="Slaptažodis"
+          className="border-border bg-background w-full rounded-xl border px-4 py-3 text-sm"
         />
       )}
       {collectName && (
@@ -812,6 +841,8 @@ export function BlockRenderer({
   webinarSlug,
   webinarScheduledAt,
   webinarRegistrationMethod,
+  webinarAccessMode,
+  webinarPriceCents,
   availableBlockIds = [],
 }: {
   block: FunnelBlock
@@ -821,6 +852,8 @@ export function BlockRenderer({
   webinarSlug?: string | null
   webinarScheduledAt?: string | null
   webinarRegistrationMethod?: 'email' | 'telegram' | 'both' | null
+  webinarAccessMode?: string | null
+  webinarPriceCents?: number | null
   availableBlockIds?: string[]
 }) {
   const sticky =
@@ -845,6 +878,8 @@ export function BlockRenderer({
           webinarSlug,
           webinarScheduledAt,
           webinarRegistrationMethod,
+          webinarAccessMode,
+          webinarPriceCents,
         }}
       />
     </div>

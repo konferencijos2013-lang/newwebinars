@@ -8,7 +8,10 @@ import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Card } from '@/components/ui/Card'
 import { useAccount } from '@/features/auth/hooks/useAccount'
-import { createWebinar } from '@/features/webinars/api/webinars'
+import {
+  createWebinar,
+  setWebinarPassword,
+} from '@/features/webinars/api/webinars'
 import { slugify } from '@/shared/utils/slug'
 
 function toIsoDateTime(value: string): string | null {
@@ -65,11 +68,19 @@ export function WebinarCreatePage() {
     setError(null)
 
     if (account.status !== 'ready') return
+    if (
+      accessMode === 'password_protected' &&
+      roomPassword.trim().length < 4
+    ) {
+      setError('Slaptažodis turi būti bent 4 simbolių.')
+      setIsSaving(false)
+      return
+    }
 
     try {
       const generatedSlug = slugify(slug || title)
 
-      await createWebinar({
+      const created = await createWebinar({
         account_id: account.account.id,
         title: title.trim(),
         slug: generatedSlug,
@@ -87,8 +98,15 @@ export function WebinarCreatePage() {
         registration_method: registrationMethod,
         early_entry_minutes: Number(earlyEntry) || 15,
       })
+      if (accessMode === 'password_protected') {
+        await setWebinarPassword(created.id, roomPassword.trim())
+      }
 
-      navigate('/webinars')
+      navigate(
+        accessMode === 'invited_only'
+          ? `/webinars/${created.id}/edit`
+          : '/webinars',
+      )
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setError(

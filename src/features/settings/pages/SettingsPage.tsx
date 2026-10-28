@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
 import { updateAccountDomains } from '@/features/settings/api/domains'
+import { TeamSettingsCard } from '@/features/settings/components/TeamSettingsCard'
 
 const subdomainPattern = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/
 const hostnamePattern = /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/
@@ -268,6 +269,7 @@ function DomainSettingsForm({
           </div>
         </div>
       </Card>
+      <TeamSettingsCard accountId={account.id} canManage={canManage} />
     </div>
   )
 }

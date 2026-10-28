@@ -108,6 +108,8 @@ export function FunnelPreviewPage() {
                   webinarSlug={webinar?.slug}
                   webinarScheduledAt={webinar?.scheduled_at}
                   webinarRegistrationMethod={webinar?.registration_method}
+                  webinarAccessMode={webinar?.access_mode}
+                  webinarPriceCents={webinar?.price_cents}
                   availableBlockIds={blocks.map((item) => item.id)}
                 />
               </div>

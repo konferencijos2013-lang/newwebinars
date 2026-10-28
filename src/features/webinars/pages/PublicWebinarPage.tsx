@@ -13,7 +13,9 @@ import {
   fetchWebinarBySlug,
   getTelegramRegistrationIntentStatus,
   registerForWebinar,
+  registrationFailureMessage,
   startTelegramWebinarRegistration,
+  startWebinarTicketCheckout,
 } from '@/features/webinars/api/public'
 import type { Webinar } from '@/shared/database.types'
 import { trackAnalyticsEvent } from '@/features/analytics/dataLayer'
@@ -26,6 +28,7 @@ export function PublicWebinarPage() {
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
   const [email, setEmail] = useState('')
   const [fullName, setFullName] = useState('')
+  const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [registrationToken, setRegistrationToken] = useState<string | null>(
     null,
@@ -94,6 +97,13 @@ export function PublicWebinarPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!webinar) return
+    if (
+      webinar.access_mode === 'password_protected' &&
+      password.trim().length < 4
+    ) {
+      setRegistrationError('Įveskite slaptažodį.')
+      return
+    }
     setIsSubmitting(true)
     setRegistrationError(null)
 
@@ -105,6 +115,7 @@ export function PublicWebinarPage() {
         referral_code: searchParams.get('ref') ?? undefined,
         referrer_url:
           typeof window !== 'undefined' ? window.location.href : null,
+        password: password.trim() || null,
       })
       trackAnalyticsEvent('webinar_registration', {
         registration_method: 'email',
@@ -113,10 +124,14 @@ export function PublicWebinarPage() {
       trackAnalyticsEvent('generate_lead', {
         lead_type: 'webinar_registration',
       })
+      if (reg.payment_required && !reg.paid_at) {
+        await startWebinarTicketCheckout(reg.access_token)
+        return
+      }
       setRegistrationToken(reg.access_token)
     } catch (err) {
       console.error(err)
-      setRegistrationError(t('registrationFailed'))
+      setRegistrationError(registrationFailureMessage(err))
     } finally {
       setIsSubmitting(false)
     }
@@ -124,6 +139,13 @@ export function PublicWebinarPage() {
 
   async function handleTelegramRegistration() {
     if (!webinar) return
+    if (
+      webinar.access_mode === 'password_protected' &&
+      password.trim().length < 4
+    ) {
+      setRegistrationError('Įveskite slaptažodį.')
+      return
+    }
     setIsSubmitting(true)
     setRegistrationError(null)
     try {
@@ -132,12 +154,17 @@ export function PublicWebinarPage() {
         full_name: fullName.trim() || null,
         referral_code: searchParams.get('ref') ?? undefined,
         referrer_url: window.location.href,
+        password: password.trim() || null,
       })
       setIntentId(intent.intent_id)
       window.open(intent.connect_url, '_blank', 'noopener,noreferrer')
     } catch (err) {
       console.error(err)
-      setRegistrationError(t('telegramStartFailed'))
+      setRegistrationError(
+        err instanceof Error && err.message.includes('ACCESS_')
+          ? registrationFailureMessage(err)
+          : t('telegramStartFailed'),
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -244,6 +271,32 @@ export function PublicWebinarPage() {
                 onChange={(e) => setFullName(e.target.value)}
               />
             </div>
+            {webinar.access_mode === 'password_protected' && (
+              <div className="space-y-2">
+                <Label htmlFor="roomPassword">{t('roomPassword', 'Slaptažodis')}</Label>
+                <Input
+                  id="roomPassword"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+              </div>
+            )}
+            {webinar.access_mode === 'paid_access' && webinar.price_cents ? (
+              <p className="text-muted-foreground text-sm">
+                Įėjimas mokamas:{' '}
+                {(webinar.price_cents / 100).toLocaleString('lt-LT', {
+                  style: 'currency',
+                  currency: 'EUR',
+                })}
+              </p>
+            ) : null}
+            {webinar.access_mode === 'invited_only' ? (
+              <p className="text-muted-foreground text-sm">
+                Registruotis gali tik pakviestas el. paštas.
+              </p>
+            ) : null}
             {(webinar.registration_method === 'email' ||
               webinar.registration_method === 'both') && (
               <form onSubmit={handleSubmit} className="space-y-4">

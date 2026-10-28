@@ -25,6 +25,8 @@ import {
   fetchChatScripts,
   markJoinedWebinar,
   deleteChatMessage,
+  recordAttendeeProgress,
+  startWebinarTicketCheckout,
 } from '@/features/webinars/api/public'
 import {
   fetchOffer,
@@ -113,6 +115,10 @@ export function WebinarRoomPage() {
             return
           }
           setRegistration(r)
+          if (r.payment_required && !r.paid_at) {
+            setStatus('ready')
+            return
+          }
           await markJoinedWebinar(token)
           trackAnalyticsEvent('webinar_join', {
             webinar_id: w.id,
@@ -161,6 +167,27 @@ export function WebinarRoomPage() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [items])
+
+  useEffect(() => {
+    if (
+      !token ||
+      !registration ||
+      (registration.payment_required && !registration.paid_at)
+    ) {
+      return
+    }
+    const send = () => {
+      void recordAttendeeProgress(token, elapsedRef.current, false).catch(
+        () => {},
+      )
+    }
+    send()
+    const id = window.setInterval(send, 15_000)
+    return () => {
+      window.clearInterval(id)
+      send()
+    }
+  }, [token, registration])
 
   useEffect(() => {
     if (!webinar?.id) return
@@ -488,6 +515,27 @@ export function WebinarRoomPage() {
     )
   }
 
+  if (
+    status === 'ready' &&
+    registration?.payment_required &&
+    !registration.paid_at
+  ) {
+    return (
+      <div className="mx-auto max-w-lg py-16 text-center">
+        <h1 className="text-2xl font-bold">{webinar?.title}</h1>
+        <p className="text-muted-foreground mt-3">
+          Vieta dar neapmokėta. Apmokėję galėsite įeiti į kambarį.
+        </p>
+        <Button
+          className="mt-6"
+          onClick={() => void startWebinarTicketCheckout(token)}
+        >
+          Apmokėti
+        </Button>
+      </div>
+    )
+  }
+
   if (status === 'error' || !webinar || (!registration && !isHostPreview)) {
     return (
       <div className="mx-auto max-w-2xl py-16 text-center">
@@ -572,12 +620,17 @@ export function WebinarRoomPage() {
               href={offer.target_url}
               target="_blank"
               rel="noreferrer"
-              onClick={() =>
+              onClick={() => {
                 trackAnalyticsEvent('webinar_cta_click', {
                   webinar_id: webinar.id,
                   cta_type: 'offer',
                 })
-              }
+                if (token) {
+                  void recordAttendeeProgress(token, elapsedRef.current, true).catch(
+                    () => {},
+                  )
+                }
+              }}
               className="bg-primary text-primary-foreground block w-full rounded-lg px-5 py-3 text-center font-semibold shadow-sm transition-opacity hover:opacity-90"
             >
               {offer.button_text}

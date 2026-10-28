@@ -1,46 +1,134 @@
-import { useTranslation } from 'react-i18next'
-import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
-import { Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
+import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
+import { Spinner } from '@/components/ui/Spinner'
+import { supabase } from '@/lib/supabase'
+
+type AffiliateDashboard = {
+  status: 'none' | 'ready'
+  name?: string
+  code?: string
+  clicks?: number
+  signups?: number
+  conversions?: number
+  earned_cents?: number
+  payable_cents?: number
+  commission_rate_bps?: number
+}
+
+const money = new Intl.NumberFormat('lt-LT', {
+  style: 'currency',
+  currency: 'EUR',
+})
+
+function euros(cents: number | undefined) {
+  return money.format((cents ?? 0) / 100)
+}
 
 export function AffiliatePage() {
-  const { t } = useTranslation('webinars')
+  const [dashboard, setDashboard] = useState<AffiliateDashboard | null>(null)
+  const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
+
+  useEffect(() => {
+    let active = true
+    void supabase.rpc('get_my_affiliate_dashboard').then(({ data, error }) => {
+      if (!active) return
+      if (error) {
+        setStatus('error')
+        return
+      }
+      setDashboard((data ?? { status: 'none' }) as AffiliateDashboard)
+      setStatus('ready')
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  if (status === 'loading') {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Spinner className="h-8 w-8" />
+      </div>
+    )
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="mx-auto max-w-3xl">
+        <Card>
+          <CardTitle>Partnerio duomenų nepavyko įkelti</CardTitle>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!dashboard || dashboard.status !== 'ready') {
+    return (
+      <div className="mx-auto max-w-3xl">
+        <h1 className="text-2xl font-bold tracking-tight">Partnerio kabinetas</h1>
+        <Card className="mt-6">
+          <CardTitle>Ši paskyra dar nėra patvirtintas partneris</CardTitle>
+          <CardDescription className="mt-2">
+            Paraišką galima pateikti viešame partnerių puslapyje. Kai
+            administratorius ją patvirtins, čia matysite paspaudimus,
+            registracijas ir uždarbį. Prisijunkite tuo pačiu el. paštu, kurį
+            nurodėte paraiškoje.
+          </CardDescription>
+          <Link
+            className="text-primary mt-4 inline-block text-sm font-medium"
+            to="/partners"
+          >
+            Pateikti paraišką
+          </Link>
+        </Card>
+      </div>
+    )
+  }
+
+  const link = `${window.location.origin}/r/${dashboard.code}`
 
   return (
     <div className="mx-auto max-w-5xl">
       <div className="mb-6">
-        <h1 className="text-foreground text-2xl font-bold tracking-tight">
-          {t('affiliate.title', 'Affiliate')}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {t('affiliate.subtitle', 'Refer NewWebinars and earn commission')}
+        <h1 className="text-2xl font-bold tracking-tight">Partnerio kabinetas</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          {dashboard.name} · komisija {(dashboard.commission_rate_bps ?? 0) / 100}%
         </p>
       </div>
-
-      <div className="grid gap-6 sm:grid-cols-4">
+      <Card>
+        <CardTitle className="text-base">Jūsų nuoroda</CardTitle>
+        <CardDescription className="mt-2 break-all">{link}</CardDescription>
+      </Card>
+      <div className="mt-6 grid gap-6 sm:grid-cols-4">
         <Card>
-          <CardTitle>{t('affiliate.clicks', 'Clicks')}</CardTitle>
-          <CardDescription className="mt-2">0</CardDescription>
+          <CardTitle>Paspaudimai</CardTitle>
+          <CardDescription className="mt-2 text-2xl font-semibold">
+            {dashboard.clicks ?? 0}
+          </CardDescription>
         </Card>
         <Card>
-          <CardTitle>{t('affiliate.signups', 'Signups')}</CardTitle>
-          <CardDescription className="mt-2">0</CardDescription>
+          <CardTitle>Registracijos</CardTitle>
+          <CardDescription className="mt-2 text-2xl font-semibold">
+            {dashboard.signups ?? 0}
+          </CardDescription>
         </Card>
         <Card>
-          <CardTitle>{t('affiliate.conversions', 'Conversions')}</CardTitle>
-          <CardDescription className="mt-2">0</CardDescription>
+          <CardTitle>Apmokėjimai</CardTitle>
+          <CardDescription className="mt-2 text-2xl font-semibold">
+            {dashboard.conversions ?? 0}
+          </CardDescription>
         </Card>
         <Card>
-          <CardTitle>{t('affiliate.earnings', 'Earnings')}</CardTitle>
-          <CardDescription className="mt-2">0</CardDescription>
+          <CardTitle>Uždarbis</CardTitle>
+          <CardDescription className="mt-2 text-2xl font-semibold">
+            {euros(dashboard.earned_cents)}
+          </CardDescription>
+          <p className="text-muted-foreground mt-2 text-xs">
+            Mokėtina suma: {euros(dashboard.payable_cents)}
+          </p>
         </Card>
       </div>
-
-      <Card className="mt-6 flex flex-col items-center justify-center py-12 text-center">
-        <Users className="text-muted-foreground mb-4 h-10 w-10" />
-        <CardTitle>
-          {t('affiliate.emptyTitle', 'Affiliate program coming soon')}
-        </CardTitle>
-      </Card>
     </div>
   )
 }

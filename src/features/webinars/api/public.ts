@@ -61,6 +61,7 @@ export async function startTelegramWebinarRegistration(input: {
   full_name?: string | null
   referrer_url?: string | null
   referral_code?: string | null
+  password?: string | null
 }) {
   const { data, error } = await supabase.rpc(
     'start_telegram_webinar_registration',
@@ -69,6 +70,7 @@ export async function startTelegramWebinarRegistration(input: {
       p_full_name: input.full_name ?? null,
       p_referrer_url: input.referrer_url ?? null,
       p_referral_code: input.referral_code ?? null,
+      p_password: input.password ?? null,
     },
   )
   if (error) throw error
@@ -94,6 +96,26 @@ export async function getTelegramRegistrationIntentStatus(intentId: string) {
     | undefined
 }
 
+export function registrationFailureMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+  if (message.includes('ACCESS_PASSWORD_INVALID')) {
+    return 'Neteisingas slaptažodis.'
+  }
+  if (message.includes('ACCESS_NOT_INVITED')) {
+    return 'Šis el. paštas nėra pakviestas į webinarą.'
+  }
+  if (message.includes('ACCESS_PRICE_REQUIRED')) {
+    return 'Mokama prieiga dar nesukonfigūruota.'
+  }
+  if (message.includes('already registered')) {
+    return 'Jūs jau užsiregistravote į šį webinarą.'
+  }
+  if (message.includes('participant limit')) {
+    return 'Registracija uždaryta arba vietų nebėra.'
+  }
+  return 'Nepavyko užsiregistruoti.'
+}
+
 export async function registerForWebinar(input: {
   webinar_id: string
   email: string
@@ -102,6 +124,7 @@ export async function registerForWebinar(input: {
   company?: string | null
   referrer_url?: string | null
   referral_code?: string | null
+  password?: string | null
 }) {
   const { data, error } = await supabase.rpc('register_for_webinar', {
     p_webinar_id: input.webinar_id,
@@ -111,6 +134,7 @@ export async function registerForWebinar(input: {
     p_company: input.company ?? null,
     p_referrer_url: input.referrer_url ?? null,
     p_referral_code: input.referral_code ?? null,
+    p_password: input.password ?? null,
   })
 
   if (error) throw error
@@ -170,6 +194,31 @@ export async function markEnteredWaitingRoom(accessToken: string) {
 
   if (error) throw error
   return data as Registration
+}
+
+export async function recordAttendeeProgress(
+  accessToken: string,
+  watchSeconds: number,
+  offerClicked = false,
+) {
+  const { error } = await supabase.rpc('record_attendee_progress', {
+    p_access_token: accessToken,
+    p_watch_seconds: Math.max(0, Math.floor(watchSeconds)),
+    p_offer_clicked: offerClicked,
+  })
+  if (error) throw error
+}
+
+export async function startWebinarTicketCheckout(accessToken: string) {
+  const { data, error } = await supabase.functions.invoke(
+    'create-webinar-ticket-session',
+    { body: { access_token: accessToken } },
+  )
+  if (error) throw error
+  const payload = data as { url?: string; already_paid?: boolean; error?: string }
+  if (payload.already_paid) return
+  if (!payload.url) throw new Error(payload.error ?? 'Checkout failed')
+  window.location.assign(payload.url)
 }
 
 export async function markJoinedWebinar(accessToken: string) {

@@ -3,11 +3,30 @@ import { useMatch } from 'react-router'
 import { supabase } from '@/lib/supabase'
 import type { Account, AccountMember } from '@/shared/database.types'
 
+export type AccountChoice = {
+  id: string
+  name: string
+  role: AccountMember['role']
+}
+
 type AccountState =
-  | { status: 'loading'; account: null; membership: null }
-  | { status: 'ready'; account: Account; membership: AccountMember }
-  | { status: 'empty'; account: null; membership: null }
-  | { status: 'error'; account: null; membership: null; error: Error }
+  | { status: 'loading'; account: null; membership: null; memberships: [] }
+  | {
+      status: 'ready'
+      account: Account
+      membership: AccountMember
+      memberships: AccountChoice[]
+    }
+  | { status: 'empty'; account: null; membership: null; memberships: [] }
+  | {
+      status: 'error'
+      account: null
+      membership: null
+      memberships: []
+      error: Error
+    }
+
+const ACCOUNT_STORAGE_KEY = 'newwebinars-account'
 
 export function useAccount() {
   const supportMatch = useMatch('/support/accounts/:accountId/*')
@@ -16,6 +35,7 @@ export function useAccount() {
     status: 'loading',
     account: null,
     membership: null,
+    memberships: [],
   })
 
   useEffect(() => {
@@ -30,12 +50,19 @@ export function useAccount() {
           .single()
         if (!isActive) return
         if (error) {
-          setState({ status: 'error', account: null, membership: null, error })
+          setState({
+            status: 'error',
+            account: null,
+            membership: null,
+            memberships: [],
+            error,
+          })
           return
         }
         setState({
           status: 'ready',
           account: data as Account,
+          memberships: [],
           membership: {
             account_id: supportAccountId,
             user_id: '',
@@ -50,7 +77,12 @@ export function useAccount() {
       const userId = sessionData.session?.user.id
       if (!userId) {
         if (isActive)
-          setState({ status: 'empty', account: null, membership: null })
+          setState({
+            status: 'empty',
+            account: null,
+            membership: null,
+            memberships: [],
+          })
         return
       }
 
@@ -61,19 +93,33 @@ export function useAccount() {
         .select('*, accounts(*)')
         .eq('user_id', userId)
         .order('joined_at', { ascending: true })
-        .limit(1)
+        .limit(20)
 
       if (!isActive) return
 
       if (error) {
         console.error('[useAccount] query error', error)
-        setState({ status: 'error', account: null, membership: null, error })
+        setState({
+          status: 'error',
+          account: null,
+          membership: null,
+          memberships: [],
+          error,
+        })
         return
       }
 
-      const first = data?.[0]
+      const rows = data ?? []
+      const preferredId = localStorage.getItem(ACCOUNT_STORAGE_KEY)
+      const first =
+        rows.find((row) => row.account_id === preferredId) ?? rows[0]
       if (!first) {
-        setState({ status: 'empty', account: null, membership: null })
+        setState({
+          status: 'empty',
+          account: null,
+          membership: null,
+          memberships: [],
+        })
         return
       }
 
@@ -81,6 +127,11 @@ export function useAccount() {
         status: 'ready',
         account: first.accounts as unknown as Account,
         membership: first as unknown as AccountMember,
+        memberships: rows.map((row) => ({
+          id: row.account_id,
+          name: (row.accounts as { name?: string } | null)?.name ?? 'Paskyra',
+          role: row.role,
+        })),
       })
     }
 

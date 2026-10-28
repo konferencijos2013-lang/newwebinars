@@ -115,6 +115,11 @@ export function AppShell() {
             icon={Film}
             label={t('navigation.recordings')}
           />
+          <SidebarNavLink
+            to={path('/analytics')}
+            icon={BarChart3}
+            label={t('navigation.analytics')}
+          />
           {!supportView ? (
             <SidebarNavLink
               to={path('/ai')}
@@ -127,6 +132,13 @@ export function AppShell() {
               to={path('/billing')}
               icon={BarChart3}
               label={t('navigation.billing')}
+            />
+          ) : null}
+          {!supportView ? (
+            <SidebarNavLink
+              to="/affiliate"
+              icon={Users}
+              label={t('navigation.affiliate')}
             />
           ) : null}
           {!supportView && user?.role === 'admin' ? (
@@ -168,10 +180,27 @@ export function AppShell() {
 
         <div className="border-t p-3">
           <div className="mb-3 flex items-center gap-3 px-3">
-            <div className="flex flex-col overflow-hidden">
+            <div className="flex w-full flex-col overflow-hidden">
               <span className="truncate text-sm font-medium">
                 {supportAccountLabel ?? user?.email ?? t('navigation.user')}
               </span>
+              {accountState.status === 'ready' &&
+              accountState.memberships.length > 1 ? (
+                <select
+                  className="border-input bg-background mt-2 h-8 w-full rounded-md border px-2 text-xs"
+                  value={accountState.account.id}
+                  onChange={(event) => {
+                    localStorage.setItem('newwebinars-account', event.target.value)
+                    window.location.assign('/dashboard')
+                  }}
+                >
+                  {accountState.memberships.map((membership) => (
+                    <option key={membership.id} value={membership.id}>
+                      {membership.name}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
             </div>
           </div>
           <div className="space-y-2 px-3">

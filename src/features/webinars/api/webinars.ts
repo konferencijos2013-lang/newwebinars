@@ -149,3 +149,11 @@ export async function deleteWebinar(id: string) {
   const { error } = await supabase.from('webinars').delete().eq('id', id)
   if (error) throw error
 }
+
+export async function setWebinarPassword(webinarId: string, password: string) {
+  const { error } = await supabase.rpc('set_webinar_password', {
+    p_webinar_id: webinarId,
+    p_password: password,
+  })
+  if (error) throw error
+}
