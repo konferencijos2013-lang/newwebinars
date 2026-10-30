@@ -36,6 +36,13 @@ describe('offer tiers', () => {
     expect(tiers.map((tier) => tier.featured)).toEqual([true, false, false])
   })
 
+  it('keeps a billing period beside the price', () => {
+    const tiers = normalizeOfferTiers({
+      tiers: [{ name: 'Standard', price: '49', period: '/mėn.' }],
+    })
+    expect(tiers[0]?.period).toBe('/mėn.')
+  })
+
   it('formats numeric prices and preserves descriptive prices', () => {
     expect(formatOfferPrice('49', 'EUR')).toMatch(/49/)
     expect(formatOfferPrice('€19/mėn.', 'EUR')).toBe('€19/mėn.')

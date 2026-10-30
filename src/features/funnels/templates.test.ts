@@ -8,11 +8,11 @@ import {
 } from './templates'
 
 describe('funnel templates', () => {
-  it('provides four localized templates for every editable step', () => {
-    expect(FUNNEL_TEMPLATES).toHaveLength(12)
-    expect(getFunnelTemplates('registration')).toHaveLength(4)
+  it('provides localized templates for every editable step', () => {
+    expect(FUNNEL_TEMPLATES).toHaveLength(16)
+    expect(getFunnelTemplates('registration')).toHaveLength(6)
     expect(getFunnelTemplates('waiting_room')).toHaveLength(4)
-    expect(getFunnelTemplates('offer')).toHaveLength(4)
+    expect(getFunnelTemplates('offer')).toHaveLength(6)
 
     for (const template of FUNNEL_TEMPLATES) {
       for (const language of FUNNEL_TEMPLATE_LANGUAGES) {
@@ -35,7 +35,7 @@ describe('funnel templates', () => {
     }
   })
 
-  it('uses four distinct offer compositions', () => {
+  it('uses distinct offer compositions', () => {
     const blockTypes = getFunnelTemplates('offer').map((template) =>
       template.blocks.en.map((block) => block.block_type),
     )
@@ -44,7 +44,34 @@ describe('funnel templates', () => {
       ['hero', 'video', 'offer', 'faq'],
       ['hero', 'image', 'offer', 'faq'],
       ['hero', 'offer', 'faq'],
+      ['hero', 'benefits', 'offer', 'faq'],
+      ['hero', 'countdown', 'offer', 'faq'],
     ])
+  })
+
+  it('reserves a host photo on portrait registration templates', () => {
+    const photoTemplates = getFunnelTemplates('registration').filter(
+      (template) =>
+        template.blocks.en.some(
+          (block) =>
+            block.block_type === 'webinar_hero' &&
+            block.content.showImage === true,
+        ),
+    )
+    expect(photoTemplates.map((template) => template.id)).toEqual([
+      'registration-portrait',
+      'registration-invite',
+    ])
+    for (const template of photoTemplates) {
+      for (const language of FUNNEL_TEMPLATE_LANGUAGES) {
+        const hero = template.blocks[language].find(
+          (block) => block.block_type === 'webinar_hero',
+        )
+        expect(hero?.content.imageUrl).toBe('')
+        expect(hero?.content.imageAlt).toBeTruthy()
+        expect(['stacked', 'split']).toContain(hero?.content.imageLayout)
+      }
+    }
   })
 
   it('provides exactly three normalized tiers and one featured tier', () => {

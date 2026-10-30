@@ -63,8 +63,25 @@ const registration = (
   hero: Record<FunnelTemplateLanguage, [string, string]>,
   benefits: Record<FunnelTemplateLanguage, string[]>,
   button: Record<FunnelTemplateLanguage, string>,
-) =>
-  localizedBlocks(
+  photo?: {
+    layout: 'stacked' | 'split'
+    widthDesktop: number
+    widthMobile: number
+    alt: Record<FunnelTemplateLanguage, string>
+  },
+) => {
+  const photoContent = (language: FunnelTemplateLanguage) =>
+    photo
+      ? {
+          showImage: true,
+          imageLayout: photo.layout,
+          imageUrl: '',
+          imageAlt: photo.alt[language],
+          imageWidthDesktop: photo.widthDesktop,
+          imageWidthMobile: photo.widthMobile,
+        }
+      : {}
+  return localizedBlocks(
     [
       block(
         'webinar_hero',
@@ -76,6 +93,7 @@ const registration = (
           buttonText: button.lt,
           buttonAction: 'registration',
           showCountdown: true,
+          ...photoContent('lt'),
         },
         { column_span: 12, width_mode: 'viewport' },
       ),
@@ -102,6 +120,7 @@ const registration = (
           buttonText: button.en,
           buttonAction: 'registration',
           showCountdown: true,
+          ...photoContent('en'),
         },
         { column_span: 12, width_mode: 'viewport' },
       ),
@@ -128,6 +147,7 @@ const registration = (
           buttonText: button.ru,
           buttonAction: 'registration',
           showCountdown: true,
+          ...photoContent('ru'),
         },
         { column_span: 12, width_mode: 'viewport' },
       ),
@@ -144,6 +164,7 @@ const registration = (
       }),
     ],
   )
+}
 
 const waiting = (
   title: Record<FunnelTemplateLanguage, string>,
@@ -200,7 +221,12 @@ export interface OfferTier {
 const offer = (
   heading: Record<FunnelTemplateLanguage, [string, string]>,
   prices: [string, string, string],
-  composition: 'long' | 'video' | 'product' | 'pricing',
+  composition:
+    'long' | 'video' | 'product' | 'pricing' | 'spotlight' | 'launch',
+  details?: {
+    period?: Record<FunnelTemplateLanguage, string>
+    oldPrices?: [string, string, string]
+  },
 ) => {
   const tiers = (language: FunnelTemplateLanguage): OfferTier[] => {
     const copy = {
@@ -263,7 +289,8 @@ const offer = (
       features: copy.features[index],
       featured: id === 'standard',
       currency: 'EUR',
-      oldPrice: '',
+      oldPrice: details?.oldPrices?.[index] ?? '',
+      period: details?.period?.[language] ?? '',
       badge:
         id === 'standard'
           ? language === 'lt'
@@ -291,6 +318,14 @@ const offer = (
           'Produkto pristatymas',
           'Visa metodika, įrankiai ir palaikymas vienoje programoje.',
         ],
+        spotlight: {
+          title: 'Kodėl šie planai',
+          items: [
+            'Aiški kaina be paslėptų mokesčių',
+            'Galite keisti planą vėliau',
+            '14 dienų pinigų grąžinimas',
+          ],
+        },
       },
       en: {
         long: [
@@ -305,6 +340,14 @@ const offer = (
           'Product showcase',
           'The complete method, tools, and support in one program.',
         ],
+        spotlight: {
+          title: 'Why these plans',
+          items: [
+            'Clear pricing with no hidden fees',
+            'Switch plans later',
+            '14-day money-back guarantee',
+          ],
+        },
       },
       ru: {
         long: [
@@ -319,6 +362,14 @@ const offer = (
           'Презентация продукта',
           'Методика, инструменты и поддержка в одной программе.',
         ],
+        spotlight: {
+          title: 'Почему эти тарифы',
+          items: [
+            'Понятная цена без скрытых платежей',
+            'Тариф можно сменить позже',
+            'Возврат денег в течение 14 дней',
+          ],
+        },
       },
     }[language]
     if (composition === 'video') {
@@ -339,6 +390,20 @@ const offer = (
     if (composition === 'long') {
       return block('text', {
         text: `<h2>${copy.long[0]}</h2><p>${copy.long[1]}</p>`,
+      })
+    }
+    if (composition === 'spotlight') {
+      return block('benefits', {
+        title: copy.spotlight.title,
+        items: copy.spotlight.items,
+      })
+    }
+    if (composition === 'launch') {
+      return block('countdown', {
+        mode: 'visitor',
+        duration_minutes: 20,
+        style: 'cards',
+        target: null,
       })
     }
     return null
@@ -534,6 +599,132 @@ export const FUNNEL_TEMPLATES = [
         ru: ['Без лишней теории', 'Чёткий план действий', 'Бесплатное участие'],
       },
       { lt: 'Prisijungti', en: 'Join the webinar', ru: 'Присоединиться' },
+    ),
+  },
+  {
+    id: 'registration-portrait',
+    step: 'registration',
+    name: {
+      lt: 'Su vedėjo nuotrauka',
+      en: 'Host photo',
+      ru: 'С фото ведущего',
+    },
+    description: {
+      lt: 'Nuotrauka viršuje, tada pavadinimas, laikas ir registracija.',
+      en: 'A host photo above the title, countdown, and registration.',
+      ru: 'Фото ведущего сверху, затем название, таймер и регистрация.',
+    },
+    theme: theme('#f7f8fa', '#ffffff', '#e6ebf2', 28),
+    blocks: registration(
+      {
+        lt: [
+          'Gyva sesija su vedėju',
+          'Prisijunkite ir išeikite su aiškiu kitos savaitės planu.',
+        ],
+        en: [
+          'A live session with your host',
+          'Join and leave with a clear plan for next week.',
+        ],
+        ru: [
+          'Живая сессия с ведущим',
+          'Подключитесь и уйдите с понятным планом на неделю.',
+        ],
+      },
+      {
+        lt: [
+          'Vedėjas prieš kamerą',
+          'Praktiniai pavyzdžiai',
+          'Atsakymai į jūsų klausimus',
+        ],
+        en: [
+          'Your host on camera',
+          'Practical examples',
+          'Answers to your questions',
+        ],
+        ru: [
+          'Ведущий в кадре',
+          'Практические примеры',
+          'Ответы на ваши вопросы',
+        ],
+      },
+      {
+        lt: 'Registruotis nemokamai',
+        en: 'Register for free',
+        ru: 'Зарегистрироваться бесплатно',
+      },
+      {
+        layout: 'stacked',
+        widthDesktop: 84,
+        widthMobile: 100,
+        alt: {
+          lt: 'Vedėjo nuotrauka',
+          en: 'Host photo',
+          ru: 'Фото ведущего',
+        },
+      },
+    ),
+  },
+  {
+    id: 'registration-invite',
+    step: 'registration',
+    name: {
+      lt: 'Asmeninis kvietimas',
+      en: 'Personal invite',
+      ru: 'Личное приглашение',
+    },
+    description: {
+      lt: 'Nuotrauka šalia teksto, telefone — viršuje.',
+      en: 'Photo beside the copy, and above it on a phone.',
+      ru: 'Фото рядом с текстом, на телефоне — сверху.',
+    },
+    theme: theme('#f5f3ff', '#ffffff', '#ddd6fe', 32),
+    blocks: registration(
+      {
+        lt: [
+          'Kvietimas būtent jums',
+          'Susipažinkite su vedėju ir rezervuokite vietą per minutę.',
+        ],
+        en: [
+          'An invitation just for you',
+          'Meet the host and reserve your seat in a minute.',
+        ],
+        ru: [
+          'Приглашение именно вам',
+          'Познакомьтесь с ведущим и забронируйте место за минуту.',
+        ],
+      },
+      {
+        lt: [
+          'Trumpas asmeninis įvadas',
+          'Konkreti nauda',
+          'Vieta rezervuojama iškart',
+        ],
+        en: [
+          'A short personal intro',
+          'A concrete outcome',
+          'Your seat is held immediately',
+        ],
+        ru: [
+          'Короткое личное вступление',
+          'Конкретная польза',
+          'Место бронируется сразу',
+        ],
+      },
+      {
+        lt: 'Rezervuoti vietą',
+        en: 'Reserve my seat',
+        ru: 'Забронировать место',
+      },
+      {
+        layout: 'split',
+        widthDesktop: 100,
+        widthMobile: 100,
+        alt: {
+          lt: 'Vedėjo portretas',
+          en: 'Host portrait',
+          ru: 'Портрет ведущего',
+        },
+      },
     ),
   },
   {
@@ -759,8 +950,11 @@ export const FUNNEL_TEMPLATES = [
           'Сообщество, инструменты и поддержка в одном месте.',
         ],
       },
-      ['€19/mėn.', '€49/mėn.', '€99/mėn.'],
+      ['19', '49', '99'],
       'product',
+      {
+        period: { lt: '/mėn.', en: '/mo', ru: '/мес.' },
+      },
     ),
   },
   {
@@ -794,6 +988,74 @@ export const FUNNEL_TEMPLATES = [
       },
       ['€490', '€1,490', '€3,900'],
       'pricing',
+    ),
+  },
+  {
+    id: 'offer-modern',
+    step: 'offer',
+    name: {
+      lt: 'Šiuolaikinė kainodara',
+      en: 'Modern pricing',
+      ru: 'Современные тарифы',
+    },
+    description: {
+      lt: 'Erdvūs planai: telefone po vieną, plačiame ekrane — greta.',
+      en: 'Spacious plans that stack on a phone and sit side by side on a wide screen.',
+      ru: 'Просторные тарифы: на телефоне друг под другом, на широком экране — рядом.',
+    },
+    theme: theme('#fafafa', '#ffffff', '#e4e4e7', 20),
+    blocks: offer(
+      {
+        lt: [
+          'Pasirinkite tempą, kuris tinka',
+          'Trys aiškūs planai. Kaina matoma iš karto.',
+        ],
+        en: [
+          'Choose the pace that fits',
+          'Three clear plans. The price is visible immediately.',
+        ],
+        ru: [
+          'Выберите подходящий темп',
+          'Три понятных тарифа. Цена видна сразу.',
+        ],
+      },
+      ['29', '79', '149'],
+      'spotlight',
+      { period: { lt: '/mėn.', en: '/mo', ru: '/мес.' } },
+    ),
+  },
+  {
+    id: 'offer-launch',
+    step: 'offer',
+    name: {
+      lt: 'Ribotas pasiūlymas',
+      en: 'Limited offer',
+      ru: 'Ограниченное предложение',
+    },
+    description: {
+      lt: 'Tamsi scena, sena kaina ir laikmatis skubai.',
+      en: 'A dark stage, a previous price, and a countdown.',
+      ru: 'Тёмный фон, старая цена и таймер.',
+    },
+    theme: theme('#111827', '#ffffff', '#fcd34d', 24),
+    blocks: offer(
+      {
+        lt: [
+          'Šiandienos kaina galioja ribotą laiką',
+          'Pasirinkite planą, kol galioja speciali kaina.',
+        ],
+        en: [
+          'Today’s price is only available for a limited time',
+          'Choose a plan while the special price lasts.',
+        ],
+        ru: [
+          'Сегодняшняя цена действует ограниченное время',
+          'Выберите тариф, пока действует специальная цена.',
+        ],
+      },
+      ['49', '129', '249'],
+      'launch',
+      { oldPrices: ['79', '199', '399'] },
     ),
   },
 ] as const satisfies readonly FunnelTemplateDefinition[]

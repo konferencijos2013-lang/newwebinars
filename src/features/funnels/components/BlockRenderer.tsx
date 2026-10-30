@@ -41,11 +41,13 @@ function Countdown({
   blockId,
   fallbackTarget,
   cards = false,
+  align = 'center',
 }: {
   content: Record<string, unknown>
   blockId: string
   fallbackTarget?: string | null
   cards?: boolean
+  align?: 'center' | 'start'
 }) {
   const [now, setNow] = useState(() => Date.now())
   const mode = content.mode === 'visitor' ? 'visitor' : 'fixed'
@@ -83,7 +85,10 @@ function Countdown({
   }
 
   return (
-    <div className="flex justify-center gap-2 sm:gap-3" aria-label="Countdown">
+    <div
+      className={`flex justify-center gap-2 sm:gap-3 ${align === 'start' ? '@3xl:justify-start' : ''}`}
+      aria-label="Countdown"
+    >
       {[
         [parts.days, 'D.'],
         [parts.hours, 'H.'],
@@ -389,43 +394,49 @@ function Offer({ content }: { content: Record<string, unknown> }) {
     )
   }
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="@container mx-auto max-w-6xl">
       <Rich
         html={content.title}
         fallback="Special offer"
         className="mb-8 text-center text-3xl font-bold"
       />
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid grid-cols-1 items-stretch gap-4 @xl:grid-cols-3">
         {tiers.map((tier, index) => {
           const href = safePublicUrl(tier.buttonUrl)
           const external = /^https?:\/\//i.test(href)
           const features = Array.isArray(tier.features) ? tier.features : []
+          const tierPeriodLabel = String(tier.period || '').trim()
           return (
             <article
               key={index}
-              className={`relative flex flex-col rounded-2xl border p-6 ${tier.featured ? 'border-primary ring-primary shadow-lg ring-2' : 'border-border'}`}
+              className={`flex min-w-0 flex-col rounded-2xl border p-5 ${tier.featured ? 'border-primary ring-primary shadow-lg ring-2' : 'border-border'}`}
             >
               {String(tier.badge || '').trim() && (
-                <span className="bg-primary text-primary-foreground absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-semibold">
+                <span className="bg-primary text-primary-foreground mb-3 inline-flex w-fit self-center rounded-full px-3 py-1 text-xs font-semibold">
                   {String(tier.badge)}
                 </span>
               )}
               <Rich
                 html={tier.name}
                 fallback={`Plan ${index + 1}`}
-                className="text-xl font-bold"
+                className="text-xl font-bold break-words"
               />
               <Rich
                 html={tier.description}
                 fallback=""
-                className="text-muted-foreground mt-2 text-sm"
+                className="text-muted-foreground mt-2 text-sm break-words"
               />
-              <div className="mt-5 flex items-baseline gap-2">
-                <span className="text-3xl font-bold">
+              <div className="mt-5 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="max-w-full text-3xl leading-none font-bold break-words @xl:text-2xl">
                   {formatOfferPrice(tier.price, tier.currency)}
                 </span>
+                {tierPeriodLabel && (
+                  <span className="text-sm font-semibold opacity-70">
+                    {tierPeriodLabel}
+                  </span>
+                )}
                 {String(tier.oldPrice || '').trim() && (
-                  <span className="text-muted-foreground line-through">
+                  <span className="text-muted-foreground text-sm line-through">
                     {formatOfferPrice(tier.oldPrice, tier.currency)}
                   </span>
                 )}
@@ -433,12 +444,12 @@ function Offer({ content }: { content: Record<string, unknown> }) {
               {features.length > 0 && (
                 <ul className="mt-6 flex-1 space-y-3 text-left">
                   {features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex gap-2">
+                    <li key={featureIndex} className="flex min-w-0 gap-2">
                       <Check className="text-primary mt-0.5 h-4 w-4 shrink-0" />
                       <Rich
                         html={feature}
                         fallback=""
-                        className="[&_a]:underline"
+                        className="min-w-0 break-words [&_a]:underline"
                       />
                     </li>
                   ))}
@@ -467,13 +478,18 @@ function WebinarHero({
   content,
   webinar,
   availableBlockIds,
+  isPreview,
 }: {
   block: FunnelBlock
   content: Record<string, unknown>
   webinar: WebinarContext
   availableBlockIds: Set<string>
+  isPreview: boolean
 }) {
+  const { t } = useTranslation('funnels')
   const imageUrl = safePublicUrl(content.imageUrl, '')
+  const showImage = content.showImage === true
+  const imageLayout = content.imageLayout === 'split' ? 'split' : 'stacked'
   const imageWidthDesktop = Math.min(
     100,
     Math.max(25, Number(content.imageWidthDesktop ?? 100)),
@@ -504,73 +520,114 @@ function WebinarHero({
         ? new Date(webinar.webinarScheduledAt).toLocaleString()
         : ''),
   )
-  return (
-    <section className="px-4 py-8 text-center sm:px-8 sm:py-12">
-      <div className="mx-auto max-w-4xl">
-        {imageUrl && (
+  const photoAlt = String(content.imageAlt || '')
+  const showPhotoFrame = Boolean(imageUrl) || (showImage && isPreview)
+  const photo =
+    showImage && showPhotoFrame ? (
+      <div
+        style={imageStyle}
+        className={
+          imageLayout === 'split'
+            ? 'mx-auto mb-7 aspect-[4/5] w-full max-w-sm overflow-hidden rounded-[2rem] bg-slate-200/80 shadow-sm @3xl:mx-0 @3xl:mb-0 @3xl:max-w-none'
+            : 'mx-auto mb-7 aspect-[16/10] w-[var(--funnel-image-mobile-width)] max-w-full overflow-hidden rounded-[2rem] bg-slate-200/80 shadow-sm sm:w-[var(--funnel-image-desktop-width)]'
+        }
+      >
+        {imageUrl ? (
           <img
             src={imageUrl}
-            alt={String(content.imageAlt || '')}
-            style={imageStyle}
-            className="mx-auto mb-7 h-auto w-[var(--funnel-image-mobile-width)] max-w-full rounded-[2rem] object-contain shadow-sm sm:w-[var(--funnel-image-desktop-width)]"
+            alt={photoAlt}
+            className="h-full w-full object-cover"
           />
-        )}
-        {typeof content.eyebrow === 'string' && content.eyebrow.trim() && (
-          <Rich
-            html={content.eyebrow}
-            fallback="Free webinar"
-            className="mb-3 text-xs font-semibold tracking-[0.22em] uppercase opacity-70"
-          />
-        )}
-        <Rich
-          html={content.title}
-          fallback="Webinar title"
-          className="text-3xl leading-tight font-bold sm:text-5xl"
-        />
-        <Rich
-          html={content.subtitle}
-          fallback="Join us for a live session"
-          className="mx-auto mt-3 max-w-2xl text-base opacity-75 sm:text-lg"
-        />
-        {(dateLabel ||
-          (typeof content.badge === 'string' && content.badge.trim())) && (
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm font-semibold">
-            {dateLabel && (
-              <span className="inline-flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" /> {dateLabel}
-              </span>
-            )}
-            {typeof content.badge === 'string' && content.badge.trim() && (
-              <span className="rounded-full bg-white/50 px-3 py-1">
-                {String(content.badge)}
-              </span>
-            )}
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center text-slate-500">
+            <User className="h-12 w-12" />
+            <span className="text-xs font-medium">
+              {t('heroPhotoPlaceholder', {
+                defaultValue: 'Upload a host photo',
+              })}
+            </span>
           </div>
         )}
-        {content.showCountdown !== false && (
-          <div className="mt-6">
-            <Countdown
-              content={content}
-              blockId={block.id}
-              fallbackTarget={webinar.webinarScheduledAt}
-              cards
+      </div>
+    ) : imageUrl ? (
+      <img
+        src={imageUrl}
+        alt={photoAlt}
+        style={imageStyle}
+        className="mx-auto mb-7 h-auto w-[var(--funnel-image-mobile-width)] max-w-full rounded-[2rem] object-contain shadow-sm sm:w-[var(--funnel-image-desktop-width)]"
+      />
+    ) : null
+  return (
+    <section className="@container px-4 py-8 sm:px-8 sm:py-12">
+      <div
+        className={
+          imageLayout === 'split' && showPhotoFrame
+            ? 'mx-auto grid max-w-5xl items-center gap-8 text-center @3xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] @3xl:text-left'
+            : 'mx-auto max-w-4xl text-center'
+        }
+      >
+        {photo}
+        <div>
+          {typeof content.eyebrow === 'string' && content.eyebrow.trim() && (
+            <Rich
+              html={content.eyebrow}
+              fallback="Free webinar"
+              className="mb-3 text-xs font-semibold tracking-[0.22em] uppercase opacity-70"
             />
-          </div>
-        )}
-        <a
-          href={buttonHref}
-          target={isExternalButton ? '_blank' : undefined}
-          rel={isExternalButton ? 'noopener noreferrer' : undefined}
-          onClick={(event) => {
-            if (isExternalButton) return
-            event.preventDefault()
-            const target = document.querySelector(buttonHref)
-            target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }}
-          className="mt-7 inline-flex min-w-64 items-center justify-center rounded-full bg-[#78a653] px-8 py-4 font-bold text-white shadow-lg"
-        >
-          {String(content.buttonText || 'Register for free')} ↓
-        </a>
+          )}
+          <Rich
+            html={content.title}
+            fallback="Webinar title"
+            className="text-3xl leading-tight font-bold sm:text-5xl"
+          />
+          <Rich
+            html={content.subtitle}
+            fallback="Join us for a live session"
+            className={`mx-auto mt-3 max-w-2xl text-base opacity-75 sm:text-lg ${imageLayout === 'split' ? '@3xl:mx-0' : ''}`}
+          />
+          {(dateLabel ||
+            (typeof content.badge === 'string' && content.badge.trim())) && (
+            <div
+              className={`mt-5 flex flex-wrap items-center justify-center gap-3 text-sm font-semibold ${imageLayout === 'split' ? '@3xl:justify-start' : ''}`}
+            >
+              {dateLabel && (
+                <span className="inline-flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" /> {dateLabel}
+                </span>
+              )}
+              {typeof content.badge === 'string' && content.badge.trim() && (
+                <span className="rounded-full bg-white/50 px-3 py-1">
+                  {String(content.badge)}
+                </span>
+              )}
+            </div>
+          )}
+          {content.showCountdown !== false && (
+            <div className="mt-6">
+              <Countdown
+                content={content}
+                blockId={block.id}
+                fallbackTarget={webinar.webinarScheduledAt}
+                cards
+                align={imageLayout === 'split' ? 'start' : 'center'}
+              />
+            </div>
+          )}
+          <a
+            href={buttonHref}
+            target={isExternalButton ? '_blank' : undefined}
+            rel={isExternalButton ? 'noopener noreferrer' : undefined}
+            onClick={(event) => {
+              if (isExternalButton) return
+              event.preventDefault()
+              const target = document.querySelector(buttonHref)
+              target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+            className="mt-7 inline-flex min-w-64 items-center justify-center rounded-full bg-[#78a653] px-8 py-4 font-bold text-white shadow-lg"
+          >
+            {String(content.buttonText || 'Register for free')} ↓
+          </a>
+        </div>
       </div>
     </section>
   )
@@ -598,6 +655,7 @@ function BlockContent({
           content={content}
           webinar={webinar}
           availableBlockIds={availableBlockIds}
+          isPreview={isPreview}
         />
       )
     case 'hero':

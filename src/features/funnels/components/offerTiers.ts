@@ -9,6 +9,7 @@ export type OfferTier = {
   featured: boolean
   buttonText: unknown
   buttonUrl: unknown
+  period: unknown
 }
 
 export function formatOfferPrice(value: unknown, currency: unknown) {
@@ -52,5 +53,6 @@ export function normalizeOfferTiers(
     featured: index === featuredIndex,
     buttonText: tier.buttonText,
     buttonUrl: tier.buttonUrl,
+    period: tier.period,
   }))
 }

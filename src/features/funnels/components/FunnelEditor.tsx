@@ -388,6 +388,13 @@ export function FunnelEditor({
                   style={backgroundStyle(template.theme)}
                 >
                   <span className="mx-auto block h-full max-w-[85%] rounded-md border border-black/10 bg-white/80 p-2 shadow-sm">
+                    {template.blocks.some(
+                      (block) =>
+                        block.block_type === 'webinar_hero' &&
+                        block.content.showImage === true,
+                    ) && (
+                      <span className="mb-2 block h-7 rounded-md bg-slate-300/80" />
+                    )}
                     <span className="mb-2 block h-2 w-2/3 rounded bg-slate-800/70" />
                     <span className="mb-1 block h-1.5 w-full rounded bg-slate-400/50" />
                     <span className="mb-3 block h-1.5 w-4/5 rounded bg-slate-400/50" />
@@ -1266,6 +1273,7 @@ type OfferTier = {
   price: string
   currency: string
   oldPrice: string
+  period: string
   features: string[]
   badge: string
   featured: boolean
@@ -1280,6 +1288,7 @@ const DEFAULT_OFFER_TIERS: OfferTier[] = ['Basic', 'Standard', 'Pro'].map(
     price: '',
     currency: 'EUR',
     oldPrice: '',
+    period: '',
     features: [],
     badge: '',
     featured: name === 'Standard',
@@ -1297,6 +1306,7 @@ function normalizeOfferTier(
     ...value,
     features: Array.isArray(value.features) ? value.features : [],
     featured: value.featured === true,
+    period: typeof value.period === 'string' ? value.period : '',
   }
 }
 
@@ -1390,6 +1400,13 @@ function OfferBlockEditor({
                 <TextInput
                   value={tier.oldPrice}
                   onChange={(oldPrice) => updateTier(index, { oldPrice })}
+                />
+              </Field>
+              <Field label={t('offerTierPeriod')}>
+                <TextInput
+                  value={tier.period}
+                  placeholder={t('offerTierPeriodPlaceholder')}
+                  onChange={(period) => updateTier(index, { period })}
                 />
               </Field>
               <Field label={t('offerTierFeatures')}>
