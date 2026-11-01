@@ -15,6 +15,7 @@ type AttendanceRow = {
   joined_webinar_at: string | null
   watch_time_seconds: number
   offer_clicked_at: string | null
+  offer_paid_at: string | null
   paid_at: string | null
 }
 
@@ -49,7 +50,9 @@ export function AnalyticsPage() {
         return
       }
       const list = webinars ?? []
-      setTitles(Object.fromEntries(list.map((webinar) => [webinar.id, webinar.title])))
+      setTitles(
+        Object.fromEntries(list.map((webinar) => [webinar.id, webinar.title])),
+      )
       if (list.length === 0) {
         setRows([])
         setStatus('ready')
@@ -58,7 +61,7 @@ export function AnalyticsPage() {
       const { data, error } = await supabase
         .from('registrations')
         .select(
-          'id, webinar_id, email, full_name, registered_at, entered_waiting_room_at, joined_webinar_at, watch_time_seconds, offer_clicked_at, paid_at',
+          'id, webinar_id, email, full_name, registered_at, entered_waiting_room_at, joined_webinar_at, watch_time_seconds, offer_clicked_at, offer_paid_at, paid_at',
         )
         .in(
           'webinar_id',
@@ -82,7 +85,10 @@ export function AnalyticsPage() {
   const summary = useMemo(() => {
     const joined = rows.filter((row) => row.joined_webinar_at).length
     const clicked = rows.filter((row) => row.offer_clicked_at).length
-    const watched = rows.reduce((sum, row) => sum + (row.watch_time_seconds || 0), 0)
+    const watched = rows.reduce(
+      (sum, row) => sum + (row.watch_time_seconds || 0),
+      0,
+    )
     return {
       registrations: rows.length,
       joined,
@@ -187,7 +193,11 @@ export function AnalyticsPage() {
                         {formatWatch(row.watch_time_seconds || 0)}
                       </td>
                       <td className="p-2">
-                        {row.offer_clicked_at ? 'Paspaudė' : '—'}
+                        {row.offer_paid_at
+                          ? 'Apmokėjo'
+                          : row.offer_clicked_at
+                            ? 'Paspaudė'
+                            : '—'}
                         {row.paid_at ? ' · apmokėta' : ''}
                       </td>
                     </tr>

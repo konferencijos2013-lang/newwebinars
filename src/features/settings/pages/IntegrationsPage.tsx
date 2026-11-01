@@ -30,6 +30,7 @@ import {
   type IntegrationConnection,
   type IntegrationProvider,
 } from '@/features/settings/api/integrations'
+import { PaymentProviderCard } from '@/features/settings/components/PaymentProviderCard'
 
 export function IntegrationsPage() {
   const accountState = useAccount()
@@ -143,6 +144,13 @@ function IntegrationSettings({
         </div>
       ) : (
         <>
+          <PaymentProviderCard
+            accountId={accountId}
+            connections={connections}
+            disabled={!canManage}
+            onSave={save}
+            onChanged={load}
+          />
           <BrevoForm
             connection={existing('brevo')}
             disabled={!canManage}

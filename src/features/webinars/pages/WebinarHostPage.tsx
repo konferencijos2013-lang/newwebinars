@@ -617,14 +617,14 @@ export function WebinarHostPage() {
           <Card>
             <CardTitle className="text-base">Pardavimo mygtukas</CardTitle>
             <CardDescription className="mt-1">
-              {offer?.target_url
+              {offer?.target_url || offer?.price_cents
                 ? `Dalyviams: ${offer.button_text}`
                 : 'Pirmiausia nustatykite mygtuką čato scenarijaus puslapyje.'}
             </CardDescription>
             <Button
               className="mt-4 w-full"
               variant={liveCtaVisible ? 'outline' : 'default'}
-              disabled={!offer?.target_url}
+              disabled={!offer?.target_url && !offer?.price_cents}
               isLoading={isUpdatingCta}
               onClick={() => void toggleCta()}
             >

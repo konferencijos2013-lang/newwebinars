@@ -24,6 +24,7 @@ import { FunnelCreatePage } from '@/features/funnels/pages/FunnelCreatePage'
 import { FunnelEditorPage } from '@/features/funnels/pages/FunnelEditorPage'
 import { PublicFunnelPage } from '@/features/funnels/pages/PublicFunnelPage'
 import { FunnelPreviewPage } from '@/features/funnels/pages/FunnelPreviewPage'
+import { OfferPaymentReturnPage } from '@/features/billing/pages/OfferPaymentReturnPage'
 import { PublicWebinarPage } from '@/features/webinars/pages/PublicWebinarPage'
 import { WaitingRoomPage } from '@/features/webinars/pages/WaitingRoomPage'
 import { WebinarRoomPage } from '@/features/webinars/pages/WebinarRoomPage'
@@ -62,6 +63,7 @@ export function AppRoutes() {
         <Route path="r/:code" element={<PartnerReferralRedirectPage />} />
         {/* Public webinar funnel pages (no marketing wrapper) */}
         <Route path="f/:slug/:path" element={<PublicFunnelPage />} />
+        <Route path="pay/offer" element={<OfferPaymentReturnPage />} />
         <Route path="w/:slug" element={<PublicWebinarPage />} />
         <Route path="w/:slug/waiting-room" element={<WaitingRoomPage />} />
         <Route path="w/:slug/room" element={<WebinarRoomPage />} />

@@ -418,3 +418,10 @@ verify_jwt = false
 # Telegram authenticates this endpoint with its Bot API secret header.
 [functions.telegram-webhook]
 verify_jwt = false
+
+# Attendees start offer checkout with a registration token. Paysera calls back without a user session.
+[functions.create-offer-checkout]
+verify_jwt = false
+
+[functions.paysera-callback]
+verify_jwt = false

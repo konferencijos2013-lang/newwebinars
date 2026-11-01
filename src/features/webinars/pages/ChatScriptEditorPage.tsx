@@ -31,6 +31,7 @@ import {
   updateChatScript,
 } from '@/features/webinars/api/chatScripts'
 import { fetchWebinar } from '@/features/webinars/api/webinars'
+import { eurosToCents } from '@/features/billing/offerPayment'
 import { supabase } from '@/lib/supabase'
 import type {
   ChatScriptSenderRole,
@@ -71,6 +72,7 @@ export function ChatScriptEditorPage() {
   const [offerTitle, setOfferTitle] = useState('')
   const [offerButtonText, setOfferButtonText] = useState('')
   const [offerUrl, setOfferUrl] = useState('')
+  const [offerPrice, setOfferPrice] = useState('')
   const [offerActive, setOfferActive] = useState(true)
   const [newCtaTime, setNewCtaTime] = useState(0)
   const [newCtaAction, setNewCtaAction] = useState<'show' | 'hide'>('show')
@@ -101,6 +103,9 @@ export function ChatScriptEditorPage() {
     setOfferTitle(nextOffer?.title ?? '')
     setOfferButtonText(nextOffer?.button_text ?? '')
     setOfferUrl(nextOffer?.target_url ?? '')
+    setOfferPrice(
+      nextOffer?.price_cents ? (nextOffer.price_cents / 100).toFixed(2) : '',
+    )
     setOfferActive(nextOffer?.active ?? true)
   }, [id])
 
@@ -215,13 +220,20 @@ export function ChatScriptEditorPage() {
   }
 
   async function saveCtaSettings() {
+    const priceCents = offerPrice.trim() ? eurosToCents(offerPrice) : null
     if (
       !id ||
       !offerTitle.trim() ||
       !offerButtonText.trim() ||
-      !offerUrl.trim()
-    )
+      (!offerUrl.trim() && !priceCents)
+    ) {
+      setError('Įrašykite pavadinimą, mygtuko tekstą ir nuorodą arba kainą.')
       return
+    }
+    if (offerPrice.trim() && !priceCents) {
+      setError('Kaina turi būti eurais, pavyzdžiui 19 arba 19,90.')
+      return
+    }
     setError(null)
     try {
       const updated = await Promise.all([
@@ -230,7 +242,8 @@ export function ChatScriptEditorPage() {
           title: offerTitle.trim(),
           description: null,
           button_text: offerButtonText.trim(),
-          target_url: offerUrl.trim(),
+          target_url: offerUrl.trim() || null,
+          price_cents: priceCents,
           active: offerActive,
         }),
         updateWebinar(id, {
@@ -310,7 +323,7 @@ export function ChatScriptEditorPage() {
           Vienas mygtukas rodomas po webinaro video. Evergreen laiko veiksmai
           valdo jo matomumą.
         </CardDescription>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
           <Input
             placeholder="Pasiūlymo pavadinimas"
             value={offerTitle}
@@ -322,12 +335,23 @@ export function ChatScriptEditorPage() {
             onChange={(e) => setOfferButtonText(e.target.value)}
           />
           <Input
+            inputMode="decimal"
+            placeholder="Kaina, EUR"
+            value={offerPrice}
+            onChange={(e) => setOfferPrice(e.target.value)}
+          />
+          <Input
             type="url"
             placeholder="https://produkto-puslapis.lt"
             value={offerUrl}
             onChange={(e) => setOfferUrl(e.target.value)}
           />
         </div>
+        <p className="text-muted-foreground mt-2 text-xs">
+          Jei nurodyta kaina, dalyvis moka pasirinktu būdu iš Integracijų.
+          Nuoroda atidaroma po apmokėjimo. Be kainos mygtukas tik atidaro
+          nuorodą.
+        </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm">
             <input

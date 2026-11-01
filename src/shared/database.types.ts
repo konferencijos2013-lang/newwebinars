@@ -174,6 +174,7 @@ export interface WebinarOffer {
   description: string | null
   button_text: string
   target_url: string | null
+  price_cents: number | null
   display_at_seconds: number | null
   active: boolean
   created_at: string
@@ -222,6 +223,7 @@ export interface Registration {
   saw_offer_at: string | null
   saw_offer_clicked_at: string | null
   offer_clicked_at: string | null
+  offer_paid_at: string | null
   chat_blocked_at: string | null
   chat_blocked_by: string | null
   removed_from_webinar_at: string | null

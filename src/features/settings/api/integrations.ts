@@ -1,7 +1,16 @@
 import { supabase } from '@/lib/supabase'
 
 export type IntegrationProvider =
-  'brevo' | 'resend' | 'smtp' | 'manychat' | 'telegram'
+  | 'brevo'
+  | 'resend'
+  | 'smtp'
+  | 'manychat'
+  | 'telegram'
+  | 'paysera'
+  | 'stripe'
+  | 'paypal'
+
+export type OfferPaymentProvider = 'paysera' | 'stripe' | 'paypal'
 export type IntegrationStatus = 'active' | 'disabled' | 'error'
 
 export interface IntegrationConnection {
@@ -27,6 +36,27 @@ export async function fetchIntegrationConnections(accountId: string) {
     .order('provider')
   if (error) throw error
   return (data ?? []) as IntegrationConnection[]
+}
+
+export async function fetchAccountPaymentProvider(accountId: string) {
+  const { data, error } = await supabase
+    .from('account_payment_settings')
+    .select('provider')
+    .eq('account_id', accountId)
+    .maybeSingle()
+  if (error) throw error
+  return (data?.provider ?? null) as OfferPaymentProvider | null
+}
+
+export async function selectAccountPaymentProvider(
+  accountId: string,
+  provider: OfferPaymentProvider,
+) {
+  const { error } = await supabase.rpc('set_account_payment_provider', {
+    p_account_id: accountId,
+    p_provider: provider,
+  })
+  if (error) throw error
 }
 
 export async function saveIntegrationConnection(input: {

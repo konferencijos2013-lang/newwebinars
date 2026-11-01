@@ -26,6 +26,7 @@ import {
   markJoinedWebinar,
   deleteChatMessage,
   recordAttendeeProgress,
+  startOfferCheckout,
   startWebinarTicketCheckout,
 } from '@/features/webinars/api/public'
 import {
@@ -75,6 +76,8 @@ export function WebinarRoomPage() {
   const [busyAction, setBusyAction] = useState<string | null>(null)
   const [chatError, setChatError] = useState<string | null>(null)
   const [isMuted, setIsMuted] = useState(true)
+  const [offerPaying, setOfferPaying] = useState(false)
+  const [offerPayError, setOfferPayError] = useState<string | null>(null)
   const scriptsRef = useRef<WebinarChatScript[]>([])
   const itemsRef = useRef<ChatDisplayItem[]>([])
   const messageItemsRef = useRef<ChatDisplayItem[]>([])
@@ -615,27 +618,81 @@ export function WebinarRoomPage() {
               </div>
             )}
           </div>
-          {shouldShowCta && offer?.active && offer.target_url && (
-            <a
-              href={offer.target_url}
-              target="_blank"
-              rel="noreferrer"
-              onClick={() => {
-                trackAnalyticsEvent('webinar_cta_click', {
-                  webinar_id: webinar.id,
-                  cta_type: 'offer',
-                })
-                if (token) {
-                  void recordAttendeeProgress(token, elapsedRef.current, true).catch(
-                    () => {},
-                  )
-                }
-              }}
-              className="bg-primary text-primary-foreground block w-full rounded-lg px-5 py-3 text-center font-semibold shadow-sm transition-opacity hover:opacity-90"
-            >
-              {offer.button_text}
-            </a>
-          )}
+          {shouldShowCta &&
+            offer?.active &&
+            ((offer.price_cents ?? 0) > 0 || offer.target_url) && (
+              <div>
+                {(offer.price_cents ?? 0) > 0 ? (
+                  <button
+                    type="button"
+                    disabled={offerPaying}
+                    onClick={() => {
+                      trackAnalyticsEvent('webinar_cta_click', {
+                        webinar_id: webinar.id,
+                        cta_type: 'offer',
+                      })
+                      if (!token) {
+                        setOfferPayError('Apmokėjimą gali pradėti tik dalyvis.')
+                        return
+                      }
+                      setOfferPaying(true)
+                      setOfferPayError(null)
+                      void recordAttendeeProgress(
+                        token,
+                        elapsedRef.current,
+                        true,
+                      ).catch(() => {})
+                      void startOfferCheckout(token).catch((reason) => {
+                        setOfferPayError(
+                          reason instanceof Error
+                            ? reason.message
+                            : 'Mokėjimo lango nepavyko atidaryti.',
+                        )
+                        setOfferPaying(false)
+                      })
+                    }}
+                    className="bg-primary text-primary-foreground block w-full rounded-lg px-5 py-3 text-center font-semibold shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
+                  >
+                    {offer.button_text}
+                  </button>
+                ) : (
+                  <a
+                    href={offer.target_url ?? '#'}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => {
+                      trackAnalyticsEvent('webinar_cta_click', {
+                        webinar_id: webinar.id,
+                        cta_type: 'offer',
+                      })
+                      if (token) {
+                        void recordAttendeeProgress(
+                          token,
+                          elapsedRef.current,
+                          true,
+                        ).catch(() => {})
+                      }
+                    }}
+                    className="bg-primary text-primary-foreground block w-full rounded-lg px-5 py-3 text-center font-semibold shadow-sm transition-opacity hover:opacity-90"
+                  >
+                    {offer.button_text}
+                  </a>
+                )}
+                {(offer.price_cents ?? 0) > 0 ? (
+                  <p className="text-muted-foreground mt-2 text-center text-sm">
+                    {(offer.price_cents! / 100).toLocaleString('lt-LT', {
+                      style: 'currency',
+                      currency: 'EUR',
+                    })}
+                  </p>
+                ) : null}
+                {offerPayError ? (
+                  <p className="mt-2 text-center text-sm text-red-600">
+                    {offerPayError}
+                  </p>
+                ) : null}
+              </div>
+            )}
         </div>
 
         <div className="border-border flex flex-col rounded-lg border">

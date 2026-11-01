@@ -215,10 +215,63 @@ export async function startWebinarTicketCheckout(accessToken: string) {
     { body: { access_token: accessToken } },
   )
   if (error) throw error
-  const payload = data as { url?: string; already_paid?: boolean; error?: string }
+  const payload = data as {
+    url?: string
+    already_paid?: boolean
+    error?: string
+  }
   if (payload.already_paid) return
   if (!payload.url) throw new Error(payload.error ?? 'Checkout failed')
   window.location.assign(payload.url)
+}
+
+async function invokeOfferCheckout(body: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke(
+    'create-offer-checkout',
+    { body },
+  )
+  if (error) {
+    const response = (error as { context?: Response }).context
+    if (response) {
+      const payload = (await response
+        .clone()
+        .json()
+        .catch(() => null)) as {
+        error?: string
+      } | null
+      if (payload?.error) throw new Error(payload.error)
+    }
+    throw error
+  }
+  if (data?.error) throw new Error(String(data.error))
+  return data as {
+    url?: string
+    status?: 'pending' | 'paid' | 'cancelled'
+    continue_url?: string | null
+  }
+}
+
+export async function startOfferCheckout(accessToken: string) {
+  const payload = await invokeOfferCheckout({ access_token: accessToken })
+  if (!payload.url) throw new Error('Mokėjimo lango nepavyko atidaryti.')
+  window.location.assign(payload.url)
+}
+
+export async function confirmOfferCheckout(input: {
+  orderId: string
+  sessionId?: string | null
+  paypalOrderId?: string | null
+}) {
+  const payload = await invokeOfferCheckout({
+    action: 'confirm',
+    order_id: input.orderId,
+    session_id: input.sessionId,
+    paypal_order_id: input.paypalOrderId,
+  })
+  return {
+    status: payload.status ?? 'pending',
+    continue_url: payload.continue_url ?? null,
+  }
 }
 
 export async function markJoinedWebinar(accessToken: string) {

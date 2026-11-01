@@ -35,6 +35,7 @@ export async function saveOffer(
     | 'description'
     | 'button_text'
     | 'target_url'
+    | 'price_cents'
     | 'active'
   >,
 ) {
