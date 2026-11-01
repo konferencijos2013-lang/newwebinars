@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Bell, Mail, MessageCircle, Plus, Trash2 } from 'lucide-react'
+import { Bell, Mail, MessageCircle, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -81,6 +81,10 @@ export function ReminderRulesCard({
   >('before_start')
   const [subject, setSubject] = useState(DEFAULT_SUBJECT)
   const [body, setBody] = useState(DEFAULT_BODY)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editSubject, setEditSubject] = useState('')
+  const [editBody, setEditBody] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
 
   const manyChatConnections = connections.filter(
     (connection) =>
@@ -225,6 +229,33 @@ export function ReminderRulesCard({
       setError(reason instanceof Error ? reason.message : String(reason))
     } finally {
       setGenerating(false)
+    }
+  }
+
+  function startEdit(rule: ReminderRule) {
+    setAdding(false)
+    setEditingId(rule.id)
+    setEditSubject(rule.subject ?? '')
+    setEditBody(rule.body ?? '')
+    setError(null)
+  }
+
+  async function saveEdit(rule: ReminderRule) {
+    setSavingEdit(true)
+    setError(null)
+    try {
+      const changed = await updateReminderRule(rule.id, {
+        subject: editSubject.trim() || null,
+        body: editBody.trim() || null,
+      })
+      setRules((current) =>
+        current.map((item) => (item.id === changed.id ? changed : item)),
+      )
+      setEditingId(null)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason))
+    } finally {
+      setSavingEdit(false)
     }
   }
 
@@ -487,43 +518,93 @@ export function ReminderRulesCard({
       ) : (
         <div className="mt-5 space-y-3">
           {rules.map((rule) => (
-            <div
-              key={rule.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4"
-            >
-              <div>
-                <p className="font-medium">
-                  {formatOffset(rule.minutes_before, rule.timing ?? 'before_start')}
-                  {' · '}
-                  {audienceLabel(rule.audience)}
-                </p>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  {rule.subject || 'Be temos'} ·{' '}
-                  {connections.find(
-                    (connection) =>
-                      connection.id === rule.integration_connection_id,
-                  )?.display_name || 'Integracija nepasirinkta'}
-                </p>
+            <div key={rule.id} className="rounded-lg border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-medium">
+                    {formatOffset(
+                      rule.minutes_before,
+                      rule.timing ?? 'before_start',
+                    )}
+                    {' · '}
+                    {audienceLabel(rule.audience)}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {rule.subject || 'Be temos'} ·{' '}
+                    {connections.find(
+                      (connection) =>
+                        connection.id === rule.integration_connection_id,
+                    )?.display_name || 'Integracija nepasirinkta'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={rule.is_enabled}
+                      onChange={() => void toggleRule(rule)}
+                    />
+                    Įjungtas
+                  </label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label="Redaguoti priminimą"
+                    onClick={() => startEdit(rule)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label="Pašalinti priminimą"
+                    onClick={() => void removeRule(rule)}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={rule.is_enabled}
-                    onChange={() => void toggleRule(rule)}
-                  />
-                  Įjungtas
-                </label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  aria-label="Pašalinti priminimą"
-                  onClick={() => void removeRule(rule)}
-                >
-                  <Trash2 className="h-4 w-4 text-red-600" />
-                </Button>
-              </div>
+              {editingId === rule.id && (
+                <div className="mt-4 space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor={`edit-subject-${rule.id}`}>Tema</Label>
+                    <Input
+                      id={`edit-subject-${rule.id}`}
+                      value={editSubject}
+                      onChange={(event) => setEditSubject(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`edit-body-${rule.id}`}>Tekstas</Label>
+                    <Textarea
+                      id={`edit-body-${rule.id}`}
+                      rows={6}
+                      value={editBody}
+                      onChange={(event) => setEditBody(event.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      isLoading={savingEdit}
+                      onClick={() => void saveEdit(rule)}
+                    >
+                      Išsaugoti tekstą
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditingId(null)}
+                    >
+                      Atšaukti
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
