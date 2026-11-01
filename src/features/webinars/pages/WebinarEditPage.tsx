@@ -370,6 +370,7 @@ export function WebinarEditPage() {
         webinarId={webinar.id}
         accountId={webinar.account_id}
         scheduledAt={webinar.scheduled_at}
+        durationMinutes={durationMinutes}
       />
     </div>
   )

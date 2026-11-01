@@ -14,6 +14,7 @@ import {
   createReminderRule,
   deleteReminderRule,
   fetchReminderRules,
+  STANDARD_REMINDERS,
   updateReminderRule,
   type ReminderRule,
 } from '@/features/webinars/api/reminders'
@@ -32,8 +33,11 @@ const DEFAULT_AFTER_BODY =
 
 function formatOffset(
   minutes: number,
-  timing: 'before_start' | 'after_end' = 'before_start',
+  timing: 'before_start' | 'after_start' | 'after_end' = 'before_start',
 ) {
+  if (timing === 'after_start') {
+    return minutes === 0 ? 'Pradžios metu' : `${minutes} min. po pradžios`
+  }
   const when = timing === 'after_end' ? 'po pabaigos' : 'prieš pradžią'
   if (minutes === 0) {
     return timing === 'after_end' ? 'Iš karto po pabaigos' : 'Webinaro pradžios metu'
@@ -43,14 +47,22 @@ function formatOffset(
   return `${minutes} min. ${when}`
 }
 
+function audienceLabel(audience: ReminderRule['audience'] | undefined) {
+  if (audience === 'attended') return 'dalyvavusiems'
+  if (audience === 'missed') return 'nedalyvavusiems'
+  return 'visiems'
+}
+
 export function ReminderRulesCard({
   webinarId,
   accountId,
   scheduledAt,
+  durationMinutes,
 }: {
   webinarId: string
   accountId: string
   scheduledAt: string | null
+  durationMinutes?: string | null
 }) {
   const [rules, setRules] = useState<ReminderRule[]>([])
   const [connections, setConnections] = useState<IntegrationConnection[]>([])
@@ -58,14 +70,15 @@ export function ReminderRulesCard({
   const [error, setError] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [connectionId, setConnectionId] = useState('')
   const [channel, setChannel] = useState<'email' | 'manychat' | 'telegram'>(
     'email',
   )
   const [minutesBefore, setMinutesBefore] = useState('60')
-  const [timing, setTiming] = useState<'before_start' | 'after_end'>(
-    'before_start',
-  )
+  const [timing, setTiming] = useState<
+    'before_start' | 'after_start' | 'after_end'
+  >('before_start')
   const [subject, setSubject] = useState(DEFAULT_SUBJECT)
   const [body, setBody] = useState(DEFAULT_BODY)
 
@@ -153,6 +166,68 @@ export function ReminderRulesCard({
     }
   }
 
+  async function generateStandard() {
+    const targets = [
+      emailConnections[0]
+        ? { channel: 'email' as const, connectionId: emailConnections[0].id }
+        : null,
+      telegramConnections[0]
+        ? {
+            channel: 'telegram' as const,
+            connectionId: telegramConnections[0].id,
+          }
+        : null,
+    ].filter((item) => item !== null)
+    if (targets.length === 0) {
+      setError(
+        'Pirmiausia prijunkite el. pašto arba Telegram integraciją puslapyje „Integracijos“.',
+      )
+      return
+    }
+    setGenerating(true)
+    setError(null)
+    try {
+      const created: ReminderRule[] = []
+      for (const target of targets) {
+        for (const reminder of STANDARD_REMINDERS) {
+          const exists = rules.some(
+            (rule) =>
+              rule.channel === target.channel &&
+              rule.timing === reminder.timing &&
+              rule.minutes_before === reminder.minutes &&
+              (rule.audience ?? 'all') === reminder.audience,
+          )
+          if (exists) continue
+          created.push(
+            await createReminderRule({
+              webinarId,
+              integrationConnectionId: target.connectionId,
+              channel: target.channel,
+              minutesBefore: reminder.minutes,
+              timing: reminder.timing,
+              audience: reminder.audience,
+              subject: reminder.subject,
+              body:
+                target.channel === 'email' ? reminder.body : reminder.shortBody,
+            }),
+          )
+        }
+      }
+      if (created.length === 0) {
+        setError('Standartiniai priminimai jau sukurti.')
+      }
+      setRules((current) =>
+        [...current, ...created].sort(
+          (a, b) => b.minutes_before - a.minutes_before,
+        ),
+      )
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason))
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   async function toggleRule(rule: ReminderRule) {
     setError(null)
     try {
@@ -204,10 +279,20 @@ export function ReminderRulesCard({
           </div>
         </div>
         {!adding && (
-          <Button type="button" size="sm" onClick={() => setAdding(true)}>
-            <Plus className="h-4 w-4" />
-            Pridėti priminimą
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              isLoading={generating}
+              onClick={() => void generateStandard()}
+            >
+              Sukurti standartinius
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => setAdding(true)}>
+              <Plus className="h-4 w-4" />
+              Pridėti priminimą
+            </Button>
+          </div>
         )}
       </div>
 
@@ -216,6 +301,12 @@ export function ReminderRulesCard({
           Pirmiausia nustatykite webinaro pradžios datą ir išsaugokite
           pakeitimus. Tuomet sistema galės apskaičiuoti priminimų siuntimo
           laiką.
+        </p>
+      )}
+      {!durationMinutes && (
+        <p className="mt-4 rounded-md bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
+          Nenurodyta trukmė, todėl laiškai po pabaigos bus skaičiuojami nuo
+          pradžios. Įrašykite trukmę ir išsaugokite vebinarą.
         </p>
       )}
       {error && (
@@ -281,7 +372,10 @@ export function ReminderRulesCard({
                 id="reminder-timing"
                 value={timing}
                 onChange={(event) => {
-                  const next = event.target.value as 'before_start' | 'after_end'
+                  const next = event.target.value as
+                    | 'before_start'
+                    | 'after_start'
+                    | 'after_end'
                   setTiming(next)
                   if (next === 'after_end' && channel === 'email') {
                     setSubject(DEFAULT_AFTER_SUBJECT)
@@ -293,6 +387,7 @@ export function ReminderRulesCard({
                 }}
               >
                 <option value="before_start">Prieš pradžią</option>
+                <option value="after_start">Po pradžios</option>
                 <option value="after_end">Po pabaigos</option>
               </Select>
             </div>
@@ -300,7 +395,9 @@ export function ReminderRulesCard({
               <Label htmlFor="reminder-minutes">
                 {timing === 'after_end'
                   ? 'Minučių po pabaigos'
-                  : 'Minučių iki pradžios'}
+                  : timing === 'after_start'
+                    ? 'Minučių po pradžios'
+                    : 'Minučių iki pradžios'}
               </Label>
               <Input
                 id="reminder-minutes"
@@ -383,8 +480,9 @@ export function ReminderRulesCard({
         </p>
       ) : rules.length === 0 && !adding ? (
         <p className="text-muted-foreground mt-5 text-sm">
-          Priminimų dar nėra. Dažniausiai nustatomi 24 val., 1 val. ir 10 min.
-          iki webinaro.
+          Priminimų dar nėra. Standartiniai laikai: 1 para, 1 valanda ir 15 min.
+          prieš pradžią, 5 min. po pradžios, tada laiškas dalyvavusiems ir
+          nedalyvavusiems.
         </p>
       ) : (
         <div className="mt-5 space-y-3">
@@ -396,6 +494,8 @@ export function ReminderRulesCard({
               <div>
                 <p className="font-medium">
                   {formatOffset(rule.minutes_before, rule.timing ?? 'before_start')}
+                  {' · '}
+                  {audienceLabel(rule.audience)}
                 </p>
                 <p className="text-muted-foreground mt-1 text-sm">
                   {rule.subject || 'Be temos'} ·{' '}

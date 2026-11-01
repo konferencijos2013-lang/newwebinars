@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import nodemailer from 'npm:nodemailer@6.9.16'
+import { formatNextReplay } from '../../../src/features/webinars/nextReplay.ts'
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -192,6 +193,73 @@ serve(async (req) => {
       )
       if (secretError || !credential)
         throw new Error('Integration credential is unavailable')
+      const { data: ruleRow } = await db
+        .from('reminder_rules')
+        .select('audience')
+        .eq('id', job.rule_id)
+        .maybeSingle()
+      const { data: followup } = await db.rpc('reminder_followup_context', {
+        p_registration_id: job.registration_id,
+      })
+      const context = (followup ?? {}) as {
+        attended?: boolean
+        offer_link?: string | null
+        webinar_type?: 'live' | 'automated'
+        schedule_type?: string | null
+        recurrence_rule?: string | null
+        timezone?: string | null
+        session_starts_at?: string | null
+        next_fixed_start?: string | null
+      }
+      const audience = ruleRow?.audience ?? 'all'
+      const attended = context.attended === true
+      if (
+        (audience === 'attended' && !attended) ||
+        (audience === 'missed' && attended)
+      ) {
+        await db.rpc('complete_reminder_delivery', {
+          p_queue_id: job.queue_id,
+          p_status: 'skipped',
+          p_provider_response: null,
+          p_error_message: 'Reminder audience does not include this participant.',
+        })
+        skipped++
+        continue
+      }
+      let daysOfWeek: number[] | null = null
+      let scheduledTime: string | null = null
+      if (context.recurrence_rule) {
+        try {
+          const rule = JSON.parse(context.recurrence_rule) as {
+            daysOfWeek?: number[]
+            time?: string
+          }
+          daysOfWeek = Array.isArray(rule.daysOfWeek) ? rule.daysOfWeek : null
+          scheduledTime = rule.time ?? null
+        } catch {
+          daysOfWeek = null
+        }
+      }
+      const nextSession =
+        formatNextReplay({
+          webinarType: context.webinar_type === 'automated' ? 'automated' : 'live',
+          scheduleType: context.schedule_type,
+          daysOfWeek,
+          time: scheduledTime,
+          timezone: context.timezone,
+          sessionStartsAt: context.session_starts_at,
+          nextFixedStart: context.next_fixed_start,
+        }) ?? ''
+      if (audience === 'missed' && !nextSession) {
+        await db.rpc('complete_reminder_delivery', {
+          p_queue_id: job.queue_id,
+          p_status: 'skipped',
+          p_provider_response: null,
+          p_error_message: 'No next session time is available for this webinar.',
+        })
+        skipped++
+        continue
+      }
       const host = job.public_hostname || 'newwebinars.com'
       const publicWebinarLink = `https://${host}/${job.webinar_slug}`
       const webinarLink = `${publicWebinarLink}/waiting-room?token=${job.access_token}`
@@ -201,6 +269,8 @@ serve(async (req) => {
         webinar_title: job.webinar_title ?? '',
         webinar_link: webinarLink,
         public_webinar_link: publicWebinarLink,
+        offer_link: context.offer_link || webinarLink,
+        next_session: nextSession,
       }
       const subject =
         render(job.subject, values) || `Reminder: ${values.webinar_title}`
