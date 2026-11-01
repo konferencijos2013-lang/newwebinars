@@ -171,6 +171,8 @@
   "offerTierPeriod": "Период",
   "offerTierPeriodPlaceholder": "/мес.",
   "heroPhotoPlaceholder": "Загрузите фото ведущего",
+  "heroPhotoChoose": "Выбрать фото",
+  "heroPhotoReplace": "Заменить фото",
   "offerTierFeatures": "Возможности",
   "offerTierBadge": "Метка",
   "offerTierFeatured": "Рекомендуемый тариф",

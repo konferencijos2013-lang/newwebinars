@@ -609,6 +609,32 @@ export function FunnelEditor({
                           block={block}
                           isPreview
                           availableBlockIds={blocks.map((item) => item.id)}
+                          onActivateImage={() => selectBlock(block.id)}
+                          onReplaceImage={
+                            block.block_type === 'webinar_hero' ||
+                            block.block_type === 'image'
+                              ? async (file) => {
+                                  selectBlock(block.id)
+                                  const url = await uploadFunnelImage(
+                                    accountId,
+                                    file,
+                                  )
+                                  const content = {
+                                    ...(block.content as Record<
+                                      string,
+                                      unknown
+                                    >),
+                                  }
+                                  if (block.block_type === 'webinar_hero') {
+                                    content.imageUrl = url
+                                    content.showImage = true
+                                  } else {
+                                    content.url = url
+                                  }
+                                  await handleUpdateBlock(block.id, { content })
+                                }
+                              : undefined
+                          }
                         />
                       </div>
                     )
@@ -634,8 +660,9 @@ export function FunnelEditor({
 
           <aside className="border-border bg-card hidden min-h-0 overflow-y-auto rounded-xl border p-4 shadow-sm lg:block">
             <div className="space-y-8">
+              {selectedBlock ? settingsContent : null}
               {pageSettingsContent}
-              {settingsContent}
+              {selectedBlock ? null : settingsContent}
             </div>
           </aside>
         </div>
@@ -673,8 +700,9 @@ export function FunnelEditor({
                   <BlockToolbar onAdd={handleAdd} />
                 ) : (
                   <div className="space-y-8">
+                    {selectedBlock ? settingsContent : null}
                     {pageSettingsContent}
-                    {settingsContent}
+                    {selectedBlock ? null : settingsContent}
                   </div>
                 )}
               </div>
@@ -840,6 +868,26 @@ function BlockEditor({
 
   return (
     <div className="space-y-4">
+      {block.block_type === 'webinar_hero' && (
+        <ImageBlockFields
+          accountId={accountId}
+          url={(content.imageUrl as string) ?? ''}
+          alt={(content.imageAlt as string) ?? ''}
+          widthDesktop={Number(content.imageWidthDesktop ?? 100)}
+          widthMobile={Number(content.imageWidthMobile ?? 100)}
+          onChange={(patch) => {
+            const heroPatch: Record<string, unknown> = {}
+            if ('url' in patch) heroPatch.imageUrl = patch.url
+            if ('alt' in patch) heroPatch.imageAlt = patch.alt
+            if ('widthDesktop' in patch)
+              heroPatch.imageWidthDesktop = patch.widthDesktop
+            if ('widthMobile' in patch)
+              heroPatch.imageWidthMobile = patch.widthMobile
+            if (patch.url) heroPatch.showImage = true
+            set(heroPatch)
+          }}
+        />
+      )}
       <Field label={t('blockWidth')}>
         <select
           className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
@@ -905,23 +953,6 @@ function BlockEditor({
               onChange={(subtitle) => set({ subtitle })}
             />
           </Field>
-          <ImageBlockFields
-            accountId={accountId}
-            url={(content.imageUrl as string) ?? ''}
-            alt={(content.imageAlt as string) ?? ''}
-            widthDesktop={Number(content.imageWidthDesktop ?? 100)}
-            widthMobile={Number(content.imageWidthMobile ?? 100)}
-            onChange={(patch) => {
-              const heroPatch: Record<string, unknown> = {}
-              if ('url' in patch) heroPatch.imageUrl = patch.url
-              if ('alt' in patch) heroPatch.imageAlt = patch.alt
-              if ('widthDesktop' in patch)
-                heroPatch.imageWidthDesktop = patch.widthDesktop
-              if ('widthMobile' in patch)
-                heroPatch.imageWidthMobile = patch.widthMobile
-              set(heroPatch)
-            }}
-          />
           <Field label={t('heroDateLabel')}>
             <TextInput
               value={(content.dateLabel as string) ?? ''}

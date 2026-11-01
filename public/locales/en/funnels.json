@@ -171,6 +171,8 @@
   "offerTierPeriod": "Period",
   "offerTierPeriodPlaceholder": "/mo",
   "heroPhotoPlaceholder": "Upload a host photo",
+  "heroPhotoChoose": "Choose a photo",
+  "heroPhotoReplace": "Replace photo",
   "offerTierFeatures": "Features",
   "offerTierBadge": "Badge",
   "offerTierFeatured": "Featured tier",

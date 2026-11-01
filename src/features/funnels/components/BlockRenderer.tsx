@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import DOMPurify from 'dompurify'
 import {
@@ -473,18 +473,95 @@ function Offer({ content }: { content: Record<string, unknown> }) {
   )
 }
 
+function EditorImagePicker({
+  className,
+  style,
+  label,
+  onFile,
+  onActivate,
+  children,
+}: {
+  className?: string
+  style?: React.CSSProperties
+  label: string
+  onFile: (file: File) => Promise<void>
+  onActivate?: () => void
+  children: ReactNode
+}) {
+  const { t } = useTranslation('funnels')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  return (
+    <div
+      className={`relative cursor-pointer ${className ?? ''}`}
+      style={style}
+      role="button"
+      tabIndex={0}
+      onClick={(event) => {
+        event.stopPropagation()
+        if (event.target === inputRef.current) return
+        onActivate?.()
+        if (!uploading) inputRef.current?.click()
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return
+        event.stopPropagation()
+        event.preventDefault()
+        onActivate?.()
+        if (!uploading) inputRef.current?.click()
+      }}
+    >
+      {children}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="sr-only"
+        disabled={uploading}
+        onClick={(event) => event.stopPropagation()}
+        onChange={(event) => {
+          const file = event.target.files?.[0]
+          event.target.value = ''
+          if (!file) return
+          setUploading(true)
+          setError(null)
+          void onFile(file)
+            .catch((err: unknown) => {
+              setError(err instanceof Error ? err.message : String(err))
+            })
+            .finally(() => setUploading(false))
+        }}
+      />
+      <span className="pointer-events-none absolute inset-x-3 bottom-3 rounded-full bg-slate-900/80 px-3 py-1.5 text-center text-xs font-semibold text-white">
+        {uploading ? t('imageUploading') : label}
+      </span>
+      {error && (
+        <span className="absolute inset-x-3 top-3 rounded-md bg-red-600 px-2 py-1 text-center text-xs text-white">
+          {error}
+        </span>
+      )}
+    </div>
+  )
+}
+
 function WebinarHero({
   block,
   content,
   webinar,
   availableBlockIds,
   isPreview,
+  onReplaceImage,
+  onActivateImage,
 }: {
   block: FunnelBlock
   content: Record<string, unknown>
   webinar: WebinarContext
   availableBlockIds: Set<string>
   isPreview: boolean
+  onReplaceImage?: (file: File) => Promise<void>
+  onActivateImage?: () => void
 }) {
   const { t } = useTranslation('funnels')
   const imageUrl = safePublicUrl(content.imageUrl, '')
@@ -522,33 +599,43 @@ function WebinarHero({
   )
   const photoAlt = String(content.imageAlt || '')
   const showPhotoFrame = Boolean(imageUrl) || (showImage && isPreview)
+  const photoFrameClass =
+    imageLayout === 'split'
+      ? 'mx-auto mb-7 aspect-[4/5] w-full max-w-sm overflow-hidden rounded-[2rem] bg-slate-200/80 shadow-sm @3xl:mx-0 @3xl:mb-0 @3xl:max-w-none'
+      : 'mx-auto mb-7 aspect-[16/10] w-[var(--funnel-image-mobile-width)] max-w-full overflow-hidden rounded-[2rem] bg-slate-200/80 shadow-sm sm:w-[var(--funnel-image-desktop-width)]'
+  const photoContent = imageUrl ? (
+    <img src={imageUrl} alt={photoAlt} className="h-full w-full object-cover" />
+  ) : (
+    <div className="flex h-full flex-col items-center justify-center gap-2 px-4 pb-10 text-center text-slate-500">
+      <User className="h-12 w-12" />
+      <span className="text-xs font-medium">
+        {t('heroPhotoPlaceholder', {
+          defaultValue: 'Upload a host photo',
+        })}
+      </span>
+    </div>
+  )
   const photo =
     showImage && showPhotoFrame ? (
-      <div
-        style={imageStyle}
-        className={
-          imageLayout === 'split'
-            ? 'mx-auto mb-7 aspect-[4/5] w-full max-w-sm overflow-hidden rounded-[2rem] bg-slate-200/80 shadow-sm @3xl:mx-0 @3xl:mb-0 @3xl:max-w-none'
-            : 'mx-auto mb-7 aspect-[16/10] w-[var(--funnel-image-mobile-width)] max-w-full overflow-hidden rounded-[2rem] bg-slate-200/80 shadow-sm sm:w-[var(--funnel-image-desktop-width)]'
-        }
-      >
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={photoAlt}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center text-slate-500">
-            <User className="h-12 w-12" />
-            <span className="text-xs font-medium">
-              {t('heroPhotoPlaceholder', {
-                defaultValue: 'Upload a host photo',
-              })}
-            </span>
-          </div>
-        )}
-      </div>
+      onReplaceImage ? (
+        <EditorImagePicker
+          style={imageStyle}
+          className={photoFrameClass}
+          label={
+            imageUrl
+              ? t('heroPhotoReplace', { defaultValue: 'Replace photo' })
+              : t('heroPhotoChoose', { defaultValue: 'Choose a photo' })
+          }
+          onFile={onReplaceImage}
+          onActivate={onActivateImage}
+        >
+          {photoContent}
+        </EditorImagePicker>
+      ) : (
+        <div style={imageStyle} className={photoFrameClass}>
+          {photoContent}
+        </div>
+      )
     ) : imageUrl ? (
       <img
         src={imageUrl}
@@ -638,12 +725,17 @@ function BlockContent({
   isPreview = false,
   webinar,
   availableBlockIds,
+  onReplaceImage,
+  onActivateImage,
 }: {
   block: FunnelBlock
   isPreview?: boolean
   webinar: WebinarContext
   availableBlockIds: Set<string>
+  onReplaceImage?: (file: File) => Promise<void>
+  onActivateImage?: () => void
 }) {
+  const { t } = useTranslation('funnels')
   const content = (block.content as Record<string, unknown>) || {}
   const common = isPreview ? 'p-6 rounded-lg' : 'p-4'
 
@@ -656,6 +748,8 @@ function BlockContent({
           webinar={webinar}
           availableBlockIds={availableBlockIds}
           isPreview={isPreview}
+          onReplaceImage={onReplaceImage}
+          onActivateImage={onActivateImage}
         />
       )
     case 'hero':
@@ -712,6 +806,15 @@ function BlockContent({
               style={imageStyle}
               className="mx-auto h-auto w-[var(--funnel-image-mobile-width)] max-w-full rounded-lg object-contain sm:w-[var(--funnel-image-desktop-width)]"
             />
+          ) : onReplaceImage ? (
+            <EditorImagePicker
+              className="bg-muted text-muted-foreground flex aspect-video items-center justify-center overflow-hidden rounded-lg"
+              label={t('heroPhotoChoose', { defaultValue: 'Choose a photo' })}
+              onFile={onReplaceImage}
+              onActivate={onActivateImage}
+            >
+              <ImageIcon className="h-12 w-12" />
+            </EditorImagePicker>
           ) : (
             <div className="bg-muted text-muted-foreground flex aspect-video items-center justify-center rounded-lg">
               <ImageIcon className="h-12 w-12" />
@@ -902,6 +1005,8 @@ export function BlockRenderer({
   webinarAccessMode,
   webinarPriceCents,
   availableBlockIds = [],
+  onReplaceImage,
+  onActivateImage,
 }: {
   block: FunnelBlock
   isPreview?: boolean
@@ -913,6 +1018,8 @@ export function BlockRenderer({
   webinarAccessMode?: string | null
   webinarPriceCents?: number | null
   availableBlockIds?: string[]
+  onReplaceImage?: (file: File) => Promise<void>
+  onActivateImage?: () => void
 }) {
   const sticky =
     block.block_type === 'cta' && block.settings?.sticky_mobile === true
@@ -930,6 +1037,8 @@ export function BlockRenderer({
         block={block}
         isPreview={isPreview}
         availableBlockIds={new Set(availableBlockIds)}
+        onReplaceImage={onReplaceImage}
+        onActivateImage={onActivateImage}
         webinar={{
           webinarId,
           funnelSlug,
