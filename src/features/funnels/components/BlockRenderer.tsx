@@ -24,6 +24,13 @@ import { WaitingRoomContent } from '@/features/webinars/components/WaitingRoomCo
 import { safePublicUrl } from './safePublicUrl'
 import { formatOfferPrice, normalizeOfferTiers } from './offerTiers'
 
+function cssColor(value: unknown) {
+  const color = String(value ?? '').trim()
+  return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(color)
+    ? color
+    : ''
+}
+
 function remainingTime(target: number, now: number) {
   const total = Number.isFinite(target)
     ? Math.max(0, Math.ceil((target - now) / 1_000))
@@ -710,7 +717,12 @@ function WebinarHero({
               const target = document.querySelector(buttonHref)
               target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            className="mt-7 inline-flex min-w-64 items-center justify-center rounded-full bg-[#78a653] px-8 py-4 font-bold text-white shadow-lg"
+            className={`mt-7 inline-flex min-w-64 items-center justify-center rounded-full px-8 py-4 font-bold text-white shadow-lg ${cssColor(content.buttonColor) ? '' : 'bg-[#78a653]'}`}
+            style={
+              cssColor(content.buttonColor)
+                ? { backgroundColor: cssColor(content.buttonColor) }
+                : undefined
+            }
           >
             {String(content.buttonText || 'Register for free')} ↓
           </a>
@@ -889,17 +901,37 @@ function BlockContent({
       )
     case 'speaker': {
       const photo = safePublicUrl(content.imageUrl, '')
+      const portrait = photo ? (
+        <img
+          src={photo}
+          alt={String(content.imageAlt || content.name || '')}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <span className="flex h-full w-full items-center justify-center">
+          <User className="text-muted-foreground h-10 w-10" />
+        </span>
+      )
       return (
         <div className={common}>
           <div className="mx-auto flex max-w-xl items-center gap-4">
-            {photo ? (
-              <img
-                src={photo}
-                alt={String(content.name || '')}
-                className="h-20 w-20 rounded-full object-cover"
-              />
+            {onReplaceImage ? (
+              <EditorImagePicker
+                className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-slate-200"
+                label={
+                  photo
+                    ? t('heroPhotoReplace', { defaultValue: 'Replace photo' })
+                    : t('heroPhotoChoose', { defaultValue: 'Choose a photo' })
+                }
+                onFile={onReplaceImage}
+                onActivate={onActivateImage}
+              >
+                {portrait}
+              </EditorImagePicker>
             ) : (
-              <User className="text-muted-foreground h-10 w-10" />
+              <div className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-slate-200">
+                {portrait}
+              </div>
             )}
             <div>
               <p className="font-semibold">
@@ -929,19 +961,36 @@ function BlockContent({
           </div>
         </div>
       )
-    case 'cta':
+    case 'cta': {
+      const buttonColor = cssColor(content.buttonColor)
       return (
         <div className={common}>
           <div className="text-center">
+            {typeof content.title === 'string' && content.title.trim() ? (
+              <Rich
+                html={content.title}
+                fallback=""
+                className="text-2xl font-bold"
+              />
+            ) : null}
+            {typeof content.subtitle === 'string' && content.subtitle.trim() ? (
+              <Rich
+                html={content.subtitle}
+                fallback=""
+                className="mx-auto mt-2 max-w-xl text-sm opacity-80"
+              />
+            ) : null}
             <a
               href={safePublicUrl(content.url)}
-              className="bg-primary text-primary-foreground inline-block rounded-full px-8 py-3 font-semibold"
+              className={`mt-5 inline-block rounded-full px-8 py-3 font-semibold ${buttonColor ? 'text-white' : 'bg-primary text-primary-foreground'}`}
+              style={buttonColor ? { backgroundColor: buttonColor } : undefined}
             >
               <Rich html={content.text} fallback="Get access now" />
             </a>
           </div>
         </div>
       )
+    }
     case 'offer':
       return (
         <div className={common}>
@@ -1031,7 +1080,18 @@ export function BlockRenderer({
           ? 'sticky bottom-0 z-40 overflow-hidden rounded-lg md:static'
           : 'overflow-hidden rounded-lg'
       }
-      style={backgroundStyle(block.settings as Record<string, unknown>)}
+      style={{
+        ...backgroundStyle(block.settings as Record<string, unknown>),
+        ...(cssColor(
+          (block.settings as Record<string, unknown> | undefined)?.text_color,
+        )
+          ? {
+              color: cssColor(
+                (block.settings as Record<string, unknown>).text_color,
+              ),
+            }
+          : {}),
+      }}
     >
       <BlockContent
         block={block}

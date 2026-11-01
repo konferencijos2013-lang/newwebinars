@@ -9,8 +9,8 @@ import {
 
 describe('funnel templates', () => {
   it('provides localized templates for every editable step', () => {
-    expect(FUNNEL_TEMPLATES).toHaveLength(16)
-    expect(getFunnelTemplates('registration')).toHaveLength(6)
+    expect(FUNNEL_TEMPLATES).toHaveLength(18)
+    expect(getFunnelTemplates('registration')).toHaveLength(8)
     expect(getFunnelTemplates('waiting_room')).toHaveLength(4)
     expect(getFunnelTemplates('offer')).toHaveLength(6)
 
@@ -61,6 +61,8 @@ describe('funnel templates', () => {
     expect(photoTemplates.map((template) => template.id)).toEqual([
       'registration-portrait',
       'registration-invite',
+      'registration-invitation-navy',
+      'registration-invitation-warm',
     ])
     for (const template of photoTemplates) {
       for (const language of FUNNEL_TEMPLATE_LANGUAGES) {
@@ -72,6 +74,29 @@ describe('funnel templates', () => {
         expect(['stacked', 'split']).toContain(hero?.content.imageLayout)
       }
     }
+  })
+
+  it('uses one long invitation structure in two color palettes', () => {
+    const invitations = [
+      'registration-invitation-navy',
+      'registration-invitation-warm',
+    ].map((id) => FUNNEL_TEMPLATES.find((template) => template.id === id))
+    const sequences = invitations.map((template) =>
+      template?.blocks.lt.map((item) => item.block_type),
+    )
+    expect(sequences[0]).toEqual([
+      'webinar_hero',
+      'text',
+      'text',
+      'text',
+      'speaker',
+      'cta',
+      'faq',
+      'registration_form',
+    ])
+    expect(sequences[1]).toEqual(sequences[0])
+    expect(invitations[0]?.blocks.lt[0]?.content.buttonColor).toBe('#dc2626')
+    expect(invitations[1]?.blocks.lt[0]?.content.buttonColor).toBe('#c2410c')
   })
 
   it('provides exactly three normalized tiers and one featured tier', () => {

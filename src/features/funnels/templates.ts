@@ -166,6 +166,206 @@ const registration = (
   )
 }
 
+const longInvitation = (palette: {
+  hero: string
+  text: string
+  button: string
+}) => {
+  const page = (language: FunnelTemplateLanguage) => {
+    const copy = {
+      lt: {
+        eyebrow: 'Nemokamas vakaras',
+        title: 'Pamatykite, kas iš tiesų stabdo',
+        subtitle:
+          'Kai jaučiate, kad rezultatas stringa, bet nematote kur. Per vieną sesiją parodysime, kur žiūrėti pirmiausia.',
+        button: 'Noriu pamatyti savo situaciją',
+        date: 'Ketvirtadienis · 19:00–21:00',
+        badge: 'Nuotoliu, nemokamai',
+        storyTitle: 'Kodėl paviršinis žvilgsnis nepakanka',
+        story:
+          'Dažnai taisome tai, kas krenta į akis. Tikroji kliūtis lieka šalia. Šioje sesijoje eisime nuo simptomo prie priežasties.',
+        lessonsTitle: 'Trys dalykai, kuriuos pamatysite',
+        lessons: [
+          'Kur dingsta laikas ir pinigai',
+          'Kuris signalas yra tikras, o kuris tik triukšmas',
+          'Ką padaryti per artimiausias 7 dienas',
+        ],
+        audienceTitle: 'Kam skirta',
+        audience:
+          'Tiems, kurie jau turi veiklą ir nori matyti, kas ją stabdo. Netinka, jei ieškote bendros motyvacijos be konkretaus plano.',
+        speakerName: 'Vedėjo vardas',
+        speakerBio:
+          'Pakeiskite šį tekstą: kuo užsiimate, kiek laiko ir kokį rezultatą žmonės pasiekia su jumis.',
+        ctaTitle: 'Pasiruoškite lapą ir pieštuką',
+        ctaNote: 'Užsirašysite vieną žingsnį, ne dešimt idėjų.',
+        formTitle: 'Rezervuokite savo vietą',
+        success: 'Registracija sėkminga! Patikrinkite savo el. paštą.',
+        faq: [
+          {
+            question: 'Ar dalyvavimas mokamas?',
+            answer: 'Ne. Sesija nemokama.',
+          },
+          {
+            question: 'Ar bus įrašas?',
+            answer: 'Taip, jį atsiųsime registruotiems dalyviams.',
+          },
+          {
+            question: 'Kiek trunka?',
+            answer: 'Apie dvi valandas.',
+          },
+        ],
+      },
+      en: {
+        eyebrow: 'A free evening',
+        title: 'See what is actually holding you back',
+        subtitle:
+          'You can feel the result stalling, but not where. In one session we will show you where to look first.',
+        button: 'I want to see my situation',
+        date: 'Thursday · 19:00–21:00',
+        badge: 'Online, free',
+        storyTitle: 'Why a surface look is not enough',
+        story:
+          'We often fix what is easiest to see. The real obstacle sits beside it. This session goes from the symptom to the cause.',
+        lessonsTitle: 'Three things you will see',
+        lessons: [
+          'Where time and money disappear',
+          'Which signal is real, and which is noise',
+          'What to do in the next 7 days',
+        ],
+        audienceTitle: 'Who it is for',
+        audience:
+          'For people who already have a business and want to see what slows it down. Not a fit if you want general motivation without a plan.',
+        speakerName: 'Host name',
+        speakerBio:
+          'Replace this text with what you do, how long you have done it, and the result people get with you.',
+        ctaTitle: 'Bring a page and a pen',
+        ctaNote: 'You will write down one step, not ten ideas.',
+        formTitle: 'Reserve your seat',
+        success: 'You are registered! Check your inbox for details.',
+        faq: [
+          {
+            question: 'Is it free?',
+            answer: 'Yes. The session is free to attend.',
+          },
+          {
+            question: 'Will there be a recording?',
+            answer: 'Yes. Registered attendees receive it.',
+          },
+          {
+            question: 'How long is it?',
+            answer: 'About two hours.',
+          },
+        ],
+      },
+      ru: {
+        eyebrow: 'Бесплатный вечер',
+        title: 'Увидьте, что на самом деле тормозит',
+        subtitle:
+          'Результат стоит, а причина не видна. За одну сессию покажем, куда смотреть в первую очередь.',
+        button: 'Хочу увидеть свою ситуацию',
+        date: 'Четверг · 19:00–21:00',
+        badge: 'Онлайн, бесплатно',
+        storyTitle: 'Почему поверхностного взгляда мало',
+        story:
+          'Мы часто чиним то, что бросается в глаза. Настоящая помеха остаётся рядом. На сессии пройдём от симптома к причине.',
+        lessonsTitle: 'Три вещи, которые вы увидите',
+        lessons: [
+          'Куда уходят время и деньги',
+          'Какой сигнал настоящий, а какой — шум',
+          'Что сделать в ближайшие 7 дней',
+        ],
+        audienceTitle: 'Для кого',
+        audience:
+          'Для тех, у кого уже есть дело и кто хочет увидеть, что его тормозит. Не подойдёт, если нужна общая мотивация без плана.',
+        speakerName: 'Имя ведущего',
+        speakerBio:
+          'Замените текст: чем вы занимаетесь, как долго и какого результата люди достигают с вами.',
+        ctaTitle: 'Приготовьте лист и ручку',
+        ctaNote: 'Запишете один шаг, а не десять идей.',
+        formTitle: 'Забронируйте место',
+        success: 'Вы зарегистрированы! Проверьте почту.',
+        faq: [
+          {
+            question: 'Это бесплатно?',
+            answer: 'Да. Участие бесплатное.',
+          },
+          {
+            question: 'Будет ли запись?',
+            answer: 'Да, её получат зарегистрированные участники.',
+          },
+          {
+            question: 'Сколько длится?',
+            answer: 'Около двух часов.',
+          },
+        ],
+      },
+    }[language]
+    const band = {
+      background_type: 'color',
+      background_color: palette.hero,
+      text_color: palette.text,
+    }
+    return [
+      block(
+        'webinar_hero',
+        {
+          eyebrow: copy.eyebrow,
+          title: copy.title,
+          subtitle: copy.subtitle,
+          dateLabel: copy.date,
+          badge: copy.badge,
+          buttonText: copy.button,
+          buttonColor: palette.button,
+          buttonAction: 'registration',
+          showCountdown: false,
+          showImage: true,
+          imageLayout: 'split',
+          imageUrl: '',
+          imageAlt: copy.speakerName,
+          imageWidthDesktop: 100,
+          imageWidthMobile: 100,
+        },
+        { column_span: 12, width_mode: 'viewport', ...band },
+      ),
+      block('text', {
+        text: `<h2>${copy.storyTitle}</h2><p>${copy.story}</p>`,
+      }),
+      block('text', {
+        text: `<h2>${copy.lessonsTitle}</h2><ol>${copy.lessons.map((item) => `<li>${item}</li>`).join('')}</ol>`,
+      }),
+      block('text', {
+        text: `<h2>${copy.audienceTitle}</h2><p>${copy.audience}</p>`,
+      }),
+      block('speaker', {
+        name: copy.speakerName,
+        bio: copy.speakerBio,
+        imageUrl: '',
+        imageAlt: copy.speakerName,
+      }),
+      block(
+        'cta',
+        {
+          title: copy.ctaTitle,
+          subtitle: copy.ctaNote,
+          text: copy.button,
+          url: '#registration',
+          buttonColor: palette.button,
+        },
+        band,
+      ),
+      block('faq', { items: copy.faq }),
+      block('registration_form', {
+        title: copy.formTitle,
+        buttonText: copy.button,
+        collectName: true,
+        registrationMethod: 'inherit',
+        successMessage: copy.success,
+      }),
+    ]
+  }
+  return localizedBlocks(page('lt'), page('en'), page('ru'))
+}
+
 const waiting = (
   title: Record<FunnelTemplateLanguage, string>,
   text: Record<FunnelTemplateLanguage, string>,
@@ -726,6 +926,46 @@ export const FUNNEL_TEMPLATES = [
         },
       },
     ),
+  },
+  {
+    id: 'registration-invitation-navy',
+    step: 'registration',
+    name: {
+      lt: 'Naktinis kvietimas',
+      en: 'Night invitation',
+      ru: 'Ночной анонс',
+    },
+    description: {
+      lt: 'Ilgas kvietimas: nuotrauka, istorija, vedėjas ir klausimai. Tamsiai mėlyna su raudonu mygtuku.',
+      en: 'A long invitation with photo, story, host, and questions. Navy with a red button.',
+      ru: 'Длинный анонс: фото, история, ведущий и вопросы. Тёмно-синий с красной кнопкой.',
+    },
+    theme: theme('#e7eef6', '#ffffff', '#d5e0ec', 16),
+    blocks: longInvitation({
+      hero: '#0c2340',
+      text: '#f8fafc',
+      button: '#dc2626',
+    }),
+  },
+  {
+    id: 'registration-invitation-warm',
+    step: 'registration',
+    name: {
+      lt: 'Šiltas kvietimas',
+      en: 'Warm invitation',
+      ru: 'Тёплый анонс',
+    },
+    description: {
+      lt: 'Ta pati ilgo kvietimo struktūra. Tamsi ruda su oranžiniu mygtuku.',
+      en: 'The same long invitation, in dark brown with an orange button.',
+      ru: 'Та же длинная структура. Тёмно-коричневый фон и оранжевая кнопка.',
+    },
+    theme: theme('#f3ebe3', '#fffdfb', '#e7d9c8', 16),
+    blocks: longInvitation({
+      hero: '#3f2a22',
+      text: '#fff7ed',
+      button: '#c2410c',
+    }),
   },
   {
     id: 'waiting-calm',

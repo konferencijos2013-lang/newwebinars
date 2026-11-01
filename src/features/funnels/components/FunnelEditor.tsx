@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ArrowDown,
   ArrowUp,
+  ChevronDown,
   GripVertical,
   Layers3,
   Monitor,
@@ -72,6 +73,15 @@ export function FunnelEditor({
   const [templateError, setTemplateError] = useState<string | null>(null)
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null)
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop')
+  const [templatesOpen, setTemplatesOpen] = useState(() => {
+    try {
+      return (
+        window.localStorage.getItem('newwebinars:page-templates-open') !== '0'
+      )
+    } catch {
+      return true
+    }
+  })
   const [dragId, setDragId] = useState<string | null>(null)
   const [pageTheme, setPageTheme] = useState<Record<string, unknown>>(
     page.theme ?? {},
@@ -361,67 +371,117 @@ export function FunnelEditor({
     <div className="relative space-y-4">
       {templates.length > 0 && (
         <section aria-labelledby="funnel-templates-title">
-          <div className="mb-3">
-            <h2 id="funnel-templates-title" className="text-sm font-semibold">
-              {t('pageTemplates', { defaultValue: 'Page templates' })}
-            </h2>
-            <p className="text-muted-foreground text-xs">
-              {t('pageTemplatesHint', {
-                defaultValue:
-                  'Choose a design to replace this page’s theme and blocks.',
-              })}
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {templates.map((template, index) => (
-              <button
-                key={template.id}
-                type="button"
-                className="border-border bg-card hover:border-primary/50 overflow-hidden rounded-xl border text-left transition-colors disabled:opacity-50"
-                disabled={!onApplyTemplate || applyingTemplateId !== null}
-                onClick={() =>
-                  void handleApplyTemplate(template.id as FunnelTemplateId)
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 id="funnel-templates-title" className="text-sm font-semibold">
+                {t('pageTemplates', { defaultValue: 'Page templates' })}
+              </h2>
+              {templatesOpen && (
+                <p className="text-muted-foreground text-xs">
+                  {t('pageTemplatesHint', {
+                    defaultValue:
+                      'Choose a design to replace this page’s theme and blocks.',
+                  })}
+                </p>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-expanded={templatesOpen}
+              aria-controls="funnel-templates-panel"
+              onClick={() => {
+                const next = !templatesOpen
+                setTemplatesOpen(next)
+                try {
+                  window.localStorage.setItem(
+                    'newwebinars:page-templates-open',
+                    next ? '1' : '0',
+                  )
+                } catch {
+                  /* preference is optional */
                 }
-              >
-                <span
-                  className="block h-24 p-3"
-                  style={backgroundStyle(template.theme)}
-                >
-                  <span className="mx-auto block h-full max-w-[85%] rounded-md border border-black/10 bg-white/80 p-2 shadow-sm">
-                    {template.blocks.some(
-                      (block) =>
-                        block.block_type === 'webinar_hero' &&
-                        block.content.showImage === true,
-                    ) && (
-                      <span className="mb-2 block h-7 rounded-md bg-slate-300/80" />
-                    )}
-                    <span className="mb-2 block h-2 w-2/3 rounded bg-slate-800/70" />
-                    <span className="mb-1 block h-1.5 w-full rounded bg-slate-400/50" />
-                    <span className="mb-3 block h-1.5 w-4/5 rounded bg-slate-400/50" />
-                    <span
-                      className={cn(
-                        'block h-3 w-1/2 rounded',
-                        index % 2 ? 'bg-indigo-500' : 'bg-emerald-500',
-                      )}
-                    />
-                  </span>
-                </span>
-                <span className="block p-3">
-                  <span className="block text-sm font-semibold">
-                    {template.name}
-                  </span>
-                  <span className="text-muted-foreground mt-1 block text-xs">
-                    {template.description}
-                  </span>
-                  {applyingTemplateId === template.id && (
-                    <span className="text-primary mt-2 block text-xs">
-                      {t('applyingTemplate', { defaultValue: 'Applying…' })}
-                    </span>
-                  )}
-                </span>
-              </button>
-            ))}
+              }}
+            >
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 transition-transform',
+                  templatesOpen ? '' : '-rotate-90',
+                )}
+              />
+              {templatesOpen
+                ? t('templatesCollapse', { defaultValue: 'Collapse' })
+                : t('templatesExpand', { defaultValue: 'Expand' })}
+            </Button>
           </div>
+          {templatesOpen && (
+            <div
+              id="funnel-templates-panel"
+              className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+            >
+              {templates.map((template, index) => (
+                <button
+                  key={template.id}
+                  type="button"
+                  className="border-border bg-card hover:border-primary/50 overflow-hidden rounded-xl border text-left transition-colors disabled:opacity-50"
+                  disabled={!onApplyTemplate || applyingTemplateId !== null}
+                  onClick={() =>
+                    void handleApplyTemplate(template.id as FunnelTemplateId)
+                  }
+                >
+                  <span
+                    className="block h-24 p-3"
+                    style={backgroundStyle(template.theme)}
+                  >
+                    <span className="mx-auto block h-full max-w-[85%] rounded-md border border-black/10 bg-white/80 p-2 shadow-sm">
+                      {template.blocks.some(
+                        (block) =>
+                          block.block_type === 'webinar_hero' &&
+                          block.content.showImage === true,
+                      ) && (
+                        <span className="mb-2 block h-7 rounded-md bg-slate-300/80" />
+                      )}
+                      <span className="mb-2 block h-2 w-2/3 rounded bg-slate-800/70" />
+                      <span className="mb-1 block h-1.5 w-full rounded bg-slate-400/50" />
+                      <span className="mb-3 block h-1.5 w-4/5 rounded bg-slate-400/50" />
+                      <span
+                        className="block h-3 w-1/2 rounded"
+                        style={{
+                          backgroundColor:
+                            typeof template.blocks.find(
+                              (item) => item.block_type === 'webinar_hero',
+                            )?.content.buttonColor === 'string'
+                              ? String(
+                                  template.blocks.find(
+                                    (item) =>
+                                      item.block_type === 'webinar_hero',
+                                  )?.content.buttonColor,
+                                )
+                              : index % 2
+                                ? '#6366f1'
+                                : '#10b981',
+                        }}
+                      />
+                    </span>
+                  </span>
+                  <span className="block p-3">
+                    <span className="block text-sm font-semibold">
+                      {template.name}
+                    </span>
+                    <span className="text-muted-foreground mt-1 block text-xs">
+                      {template.description}
+                    </span>
+                    {applyingTemplateId === template.id && (
+                      <span className="text-primary mt-2 block text-xs">
+                        {t('applyingTemplate', { defaultValue: 'Applying…' })}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
           {templateError && (
             <p className="text-destructive mt-2 text-sm">{templateError}</p>
           )}
@@ -612,7 +672,8 @@ export function FunnelEditor({
                           onActivateImage={() => selectBlock(block.id)}
                           onReplaceImage={
                             block.block_type === 'webinar_hero' ||
-                            block.block_type === 'image'
+                            block.block_type === 'image' ||
+                            block.block_type === 'speaker'
                               ? async (file) => {
                                   selectBlock(block.id)
                                   const url = await uploadFunnelImage(
@@ -625,11 +686,13 @@ export function FunnelEditor({
                                       unknown
                                     >),
                                   }
-                                  if (block.block_type === 'webinar_hero') {
-                                    content.imageUrl = url
-                                    content.showImage = true
-                                  } else {
+                                  if (block.block_type === 'image') {
                                     content.url = url
+                                  } else {
+                                    content.imageUrl = url
+                                    if (block.block_type === 'webinar_hero') {
+                                      content.showImage = true
+                                    }
                                   }
                                   await handleUpdateBlock(block.id, { content })
                                 }
@@ -972,6 +1035,18 @@ function BlockEditor({
               onChange={(buttonText) => set({ buttonText })}
             />
           </Field>
+          <Field label={t('buttonColor')}>
+            <input
+              type="color"
+              className="border-border bg-background h-9 w-full rounded-md border px-1"
+              value={
+                /^#[0-9a-fA-F]{6}$/.test(String(content.buttonColor ?? ''))
+                  ? String(content.buttonColor)
+                  : '#78a653'
+              }
+              onChange={(event) => set({ buttonColor: event.target.value })}
+            />
+          </Field>
           <Field label={t('heroButtonAction')}>
             <select
               className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm"
@@ -1204,6 +1279,19 @@ function BlockEditor({
       )}
       {block.block_type === 'speaker' && (
         <>
+          <ImageBlockFields
+            accountId={accountId}
+            url={(content.imageUrl as string) ?? ''}
+            alt={(content.imageAlt as string) ?? ''}
+            widthDesktop={100}
+            widthMobile={100}
+            onChange={(patch) => {
+              const speakerPatch: Record<string, unknown> = {}
+              if ('url' in patch) speakerPatch.imageUrl = patch.url
+              if ('alt' in patch) speakerPatch.imageAlt = patch.alt
+              set(speakerPatch)
+            }}
+          />
           <Field label={t('speakerName')}>
             <TextInput
               value={(content.name as string) ?? ''}
@@ -1229,11 +1317,36 @@ function BlockEditor({
       )}
       {block.block_type === 'cta' && (
         <>
+          <Field label={t('ctaHeading')}>
+            <RichTextEditor
+              multiline={false}
+              value={(content.title as string) ?? ''}
+              onChange={(title) => set({ title })}
+            />
+          </Field>
+          <Field label={t('ctaNote')}>
+            <RichTextEditor
+              value={(content.subtitle as string) ?? ''}
+              onChange={(subtitle) => set({ subtitle })}
+            />
+          </Field>
           <Field label={t('ctaText')}>
             <RichTextEditor
               multiline={false}
               value={(content.text as string) ?? ''}
               onChange={(text) => set({ text })}
+            />
+          </Field>
+          <Field label={t('buttonColor')}>
+            <input
+              type="color"
+              className="border-border bg-background h-9 w-full rounded-md border px-1"
+              value={
+                /^#[0-9a-fA-F]{6}$/.test(String(content.buttonColor ?? ''))
+                  ? String(content.buttonColor)
+                  : '#4f46e5'
+              }
+              onChange={(event) => set({ buttonColor: event.target.value })}
             />
           </Field>
           <Field label={t('ctaUrl')}>
