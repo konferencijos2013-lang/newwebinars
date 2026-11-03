@@ -1,41 +1,47 @@
 {
   "hero": {
-    "headline": "Webinarai, kurie parduoda",
-    "subheadline": "NewWebinars padeda vesti tiesioginius ir automatizuotus webinarus, rinkti registracijas, įtraukti dalyvius ir pristatyti pasiūlymus — viskas vienoje vietoje.",
+    "headline": "Vebinaras, kuris pats parduoda",
+    "subheadline": "Vienas įrašas sukasi pats, čatas kalbasi su sale, o mokėjimas eina tiesiai vedėjui. Lietuvių, rusų arba anglų kalba.",
     "ctaPrimary": "Pradėti nemokamai",
     "ctaSecondary": "Kaip tai veikia",
     "note": "Nemokama pradžia · Kortelė nereikalinga",
     "liveLabel": "TIESIOGIAI",
-    "eyebrow": "Webinarų platforma augančiam verslui"
+    "eyebrow": "Evergreen vebinarai",
+    "chatTitle": "Automatinis čatas",
+    "participant": "Dalyvis",
+    "badge": "DI skaidrėms ir čatui",
+    "statLabel": "Mokėjimas",
+    "statValue": "Vedėjui",
+    "chat": ["Puiki mintis!", "Parodykite pasiūlymą", "Kur mokėti?"]
   },
   "features": {
     "eyebrow": "Funkcijos",
-    "title": "Viskas, ko reikia profesionaliems webinarams",
-    "subtitle": "Nuo pirmo paspaudimo iki paskutinio priminimo.",
+    "title": "Vienas įrašas. Gyvas čatas. Mokėjimas vedėjui.",
+    "subtitle": "Pardavimų kambarys, kuris veikia ir tada, kai jūs ne prie ekrano.",
     "items": [
       {
-        "title": "Tiesioginiai ir automatizuoti webinarai",
-        "description": "Rengite tiesiogines transliacijas arba visą parą veikiančius automatizuotus webinarus."
+        "title": "Evergreen vebinaras",
+        "description": "Vienas įrašas sukasi nustatytu laiku, pasirinktomis dienomis arba kai žmogus pats užsiregistruoja."
       },
       {
-        "title": "Prekės ženklą atspindintys registracijos puslapiai",
-        "description": "Kiekvienam webinarui pritaikomi, konversijai optimizuoti registracijos puslapiai."
+        "title": "Automatinis čatas",
+        "description": "Žinutės pasirodo pagal vaizdo minutes. Gyvą pokalbį galima perkelti į scenarijų, o DI paruošia juodraštį."
       },
       {
-        "title": "Laukimo kambarys ir tiesioginė transliacija",
-        "description": "Puikiai suplanuota patirtis prieš renginį ir atskira erdvė pačiai transliacijai."
+        "title": "Mokėjimas vedėjui",
+        "description": "Pasiūlymas pasirodo nustatytą minutę. Dalyvis moka per Paysera, Stripe arba PayPal į jūsų sąskaitą."
       },
       {
-        "title": "Integruotas pokalbis ir pasiūlymai",
-        "description": "Bendraukite su auditorija ir pristatykite pasiūlymus neišeidami iš transliacijos kambario."
+        "title": "DI skaidrėms ir čatui",
+        "description": "Paruoškite skaidrių tekstą, laišką ir automatinio čato scenarijų vienoje vietoje."
       },
       {
-        "title": "Priminimai ir laiškai po renginio",
-        "description": "Automatizuoti el. laiškų scenarijai, kad dalyviai nepraleistų nė vieno svarbaus momento."
+        "title": "Priminimai trimis kalbomis",
+        "description": "Laiškai prieš renginį, kai jau prasidėjo, ir po jo. Lietuvių, anglų arba rusų kalba."
       },
       {
-        "title": "Išsami dalyvių statistika",
-        "description": "Matykite, kas užsiregistravo, prisijungė, žiūrėjo ir spaudė nuorodas."
+        "title": "Kas žiūrėjo ir kas sumokėjo",
+        "description": "Matote registraciją, žiūrėjimo laiką, pasiūlymo paspaudimą ir apmokėjimą."
       }
     ]
   },
@@ -44,22 +50,22 @@
     "title": "Kaip tai veikia",
     "steps": [
       {
-        "title": "Sukurkite webinarą",
-        "description": "Nustatykite temą, laiką ir prekės ženklo stilių per kelias minutes."
+        "title": "Įkelkite įrašą",
+        "description": "DI padeda paruošti čato scenarijų ir skaidrių tekstą."
       },
       {
-        "title": "Pasidalykite nuoroda",
-        "description": "Išsiųskite viešą registracijos nuorodą savo auditorijai."
+        "title": "Nustatykite laiką",
+        "description": "Evergreen grafikas arba gyva transliacija. Pasirinkite auditorijos kalbą."
       },
       {
-        "title": "Bendraukite ir parduokite",
-        "description": "Veskite webinarą, atsakykite į klausimus ir pristatykite savo pasiūlymą."
+        "title": "Paleiskite pardavimą",
+        "description": "Kambarys kalbasi pats, pasiūlymas pasirodo laiku, pinigai eina jums."
       }
     ]
   },
   "cta": {
-    "title": "Pasiruošę surengti savo pirmąjį webinarą?",
-    "subtitle": "Pradėkite nemokamai šiandien ir atnaujinkite planą, kai prireiks daugiau galimybių.",
+    "title": "Paleiskite vebinarą, kuris parduoda be jūsų",
+    "subtitle": "Vienas įrašas, gyvas čatas ir mokėjimas vedėjui. Pradėkite nemokamai.",
     "button": "Pradėti dabar"
   },
   "pricing": {

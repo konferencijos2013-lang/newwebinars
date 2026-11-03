@@ -30,7 +30,7 @@ export function Hero() {
               </span>
               {t('hero.eyebrow')}
             </div>
-            <h1 className="mt-7 text-5xl leading-[0.98] font-bold tracking-[-0.055em] sm:text-6xl lg:text-[4.7rem]">
+            <h1 className="mt-7 text-4xl leading-[1.02] font-bold tracking-[-0.045em] sm:text-5xl lg:text-6xl">
               {t('hero.headline').split(' ').slice(0, -1).join(' ')}{' '}
               <span className="from-primary bg-gradient-to-r via-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
                 {t('hero.headline').split(' ').slice(-1)}
@@ -96,25 +96,22 @@ export function Hero() {
                   <div className="border-l border-white/10 bg-[#17192a] p-3 sm:p-4">
                     <div className="mb-4 flex items-center gap-2 text-xs font-semibold text-white">
                       <MessageCircle className="h-4 w-4 text-violet-400" />
-                      Live chat
+                      {t('hero.chatTitle')}
                     </div>
-                    {[
-                      ['AM', 'Amazing insight!'],
-                      ['JK', 'Can you show us?'],
-                      ['LS', 'This is great 👏'],
-                    ].map(([name, message], index) => (
+                    {(t('hero.chat', { returnObjects: true }) as string[]).map(
+                      (message, index) => (
                       <div
-                        key={name}
+                        key={message}
                         className="mb-3 rounded-xl bg-white/[0.06] p-2.5"
                       >
                         <div className="flex items-center gap-2">
                           <span
                             className={`flex h-6 w-6 items-center justify-center rounded-full text-[8px] font-bold text-white ${index === 1 ? 'bg-cyan-500' : 'bg-violet-500'}`}
                           >
-                            {name}
+                            {message.slice(0, 1)}
                           </span>
                           <span className="hidden text-[10px] text-white/45 sm:inline">
-                            Participant
+                            {t('hero.participant')}
                           </span>
                         </div>
                         <p className="mt-2 text-[10px] leading-4 text-white/75">
@@ -131,15 +128,15 @@ export function Hero() {
                 <BarChart3 className="h-5 w-5" />
               </span>
               <div>
-                <div className="text-muted-foreground text-xs">Conversion</div>
-                <div className="text-lg font-bold">
-                  24.8% <span className="text-xs text-emerald-500">↑ 8.2%</span>
+                <div className="text-muted-foreground text-xs">
+                  {t('hero.statLabel')}
                 </div>
+                <div className="text-lg font-bold">{t('hero.statValue')}</div>
               </div>
             </div>
             <div className="bg-card absolute -top-6 -right-3 hidden items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold shadow-xl sm:flex">
               <Sparkles className="text-primary h-4 w-4" />
-              All-in-one
+              {t('hero.badge')}
             </div>
           </div>
         </div>

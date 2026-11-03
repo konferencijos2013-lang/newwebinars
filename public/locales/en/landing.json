@@ -1,41 +1,47 @@
 {
   "hero": {
-    "headline": "Webinars that convert",
-    "subheadline": "NewWebinars helps you host live and automated webinars, capture registrations, engage attendees, and drive offers — all in one place.",
+    "headline": "A webinar that sells itself",
+    "subheadline": "One recording runs on its own, the chat talks with the room, and payment goes straight to the host. In Lithuanian, Russian, or English.",
     "ctaPrimary": "Get started free",
     "ctaSecondary": "See how it works",
     "note": "Free to start · No card required",
     "liveLabel": "LIVE",
-    "eyebrow": "The webinar platform for growing businesses"
+    "eyebrow": "Evergreen webinars",
+    "chatTitle": "Automatic chat",
+    "participant": "Attendee",
+    "badge": "AI for slides and chat",
+    "statLabel": "Payment",
+    "statValue": "To the host",
+    "chat": ["Great point!", "Show the offer", "Where do I pay?"]
   },
   "features": {
     "eyebrow": "Features",
-    "title": "Everything you need to run professional webinars",
-    "subtitle": "From first click to final follow-up.",
+    "title": "One recording. A live chat. Payment to the host.",
+    "subtitle": "A sales room that keeps working when you are away from the screen.",
     "items": [
       {
-        "title": "Live & automated webinars",
-        "description": "Run real-time sessions or evergreen automated events that work around the clock."
+        "title": "Evergreen webinar",
+        "description": "One recording runs at a set time, on chosen days, or when someone registers."
       },
       {
-        "title": "Branded registration pages",
-        "description": "Customisable, conversion-friendly sign-up pages for every webinar."
+        "title": "Automatic chat",
+        "description": "Messages appear on the video timeline. A live conversation can become the script, and AI drafts it."
       },
       {
-        "title": "Waiting room & live room",
-        "description": "A polished pre-event experience and a dedicated space for delivery."
+        "title": "Payment to the host",
+        "description": "The offer appears at a set minute. Attendees pay through your Paysera, Stripe, or PayPal account."
       },
       {
-        "title": "Built-in chat & offers",
-        "description": "Engage your audience and present offers without leaving the room."
+        "title": "AI for slides and chat",
+        "description": "Draft slide copy, an email, and the automatic chat script in one place."
       },
       {
-        "title": "Reminders & follow-ups",
-        "description": "Automated email sequences so attendees never miss the moment."
+        "title": "Reminders in three languages",
+        "description": "Messages before the event, when it has started, and after it ends. Lithuanian, English, or Russian."
       },
       {
-        "title": "Insightful attendance tracking",
-        "description": "See who registered, joined, watched, and clicked."
+        "title": "Who watched and who paid",
+        "description": "See registration, watch time, offer clicks, and payments."
       }
     ]
   },
@@ -44,22 +50,22 @@
     "title": "How it works",
     "steps": [
       {
-        "title": "Create your webinar",
-        "description": "Set the topic, schedule, and brand in minutes."
+        "title": "Upload the recording",
+        "description": "AI helps draft the chat script and the slide copy."
       },
       {
-        "title": "Share your page",
-        "description": "Send your public registration link to your audience."
+        "title": "Set the time",
+        "description": "An evergreen schedule or a live broadcast. Choose the audience language."
       },
       {
-        "title": "Engage & convert",
-        "description": "Deliver the webinar, answer questions, and present your offer."
+        "title": "Start the sale",
+        "description": "The room talks on its own, the offer appears on time, and the money goes to you."
       }
     ]
   },
   "cta": {
-    "title": "Ready to run your first webinar?",
-    "subtitle": "Start free today and upgrade when you need more power.",
+    "title": "Launch a webinar that sells without you",
+    "subtitle": "One recording, a live chat, and payment to the host. Start free.",
     "button": "Get started"
   },
   "pricing": {
