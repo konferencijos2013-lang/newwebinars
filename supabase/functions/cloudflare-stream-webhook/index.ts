@@ -121,6 +121,10 @@ serve(async (req) => {
         .update({ cf_stream_status: 'live' })
         .eq('id', webinar.id)
 
+      await supabaseAdmin.rpc('mark_broadcast_started', {
+        p_webinar_id: webinar.id,
+      })
+
       await supabaseAdmin
         .from('webinar_live_sessions')
         .update({ status: 'live', started_at: now })

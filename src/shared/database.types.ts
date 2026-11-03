@@ -141,6 +141,8 @@ export interface Webinar {
   password_hash: string | null
   price_cents: number | null
   stream_provider: StreamProvider
+  broadcast_started_at: string | null
+  broadcast_ended_at: string | null
   youtube_live_url: string | null
   cf_live_input_uid: string | null
   cf_stream_status: CfStreamStatus

@@ -371,6 +371,9 @@ export function WebinarEditPage() {
         accountId={webinar.account_id}
         scheduledAt={webinar.scheduled_at}
         durationMinutes={durationMinutes}
+        followBroadcast={
+          webinar.type === 'live' && webinar.stream_provider !== 'youtube'
+        }
       />
     </div>
   )

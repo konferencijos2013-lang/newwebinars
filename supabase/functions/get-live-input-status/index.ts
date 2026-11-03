@@ -149,6 +149,12 @@ serve(async (req) => {
         ? `https://${customerSubdomain}.cloudflarestream.com/${result.uid}/manifest/video.mpd`
         : null)
 
+    if (nextStatus === 'live') {
+      await supabaseAdmin.rpc('mark_broadcast_started', {
+        p_webinar_id: webinarId,
+      })
+    }
+
     // Always sync the database/notify clients when the status changes.
     if (
       nextStatus !== webinar.cf_stream_status ||

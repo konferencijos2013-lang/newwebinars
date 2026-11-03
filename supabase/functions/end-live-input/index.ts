@@ -135,6 +135,10 @@ serve(async (req) => {
       })
     }
 
+    await supabaseAdmin.rpc('mark_broadcast_ended', {
+      p_webinar_id: webinar_id,
+    })
+
     await supabaseAdmin
       .from('webinars')
       .update({

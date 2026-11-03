@@ -58,11 +58,13 @@ export function ReminderRulesCard({
   accountId,
   scheduledAt,
   durationMinutes,
+  followBroadcast = false,
 }: {
   webinarId: string
   accountId: string
   scheduledAt: string | null
   durationMinutes?: string | null
+  followBroadcast?: boolean
 }) {
   const [rules, setRules] = useState<ReminderRule[]>([])
   const [connections, setConnections] = useState<IntegrationConnection[]>([])
@@ -298,14 +300,13 @@ export function ReminderRulesCard({
             <CardTitle>Priminimai</CardTitle>
             <CardDescription className="mt-1">
               El. pašto, Telegram arba ManyChat žinutės registruotiems
-              dalyviams. Galima siųsti prieš pradžią arba po pabaigos. Jei
-              trukmė nenurodyta, laiškas po renginio išsiunčiamas praėjus
-              nurodytam laikui nuo pradžios. Galite naudoti {'{{name}}'},{' '}
-              {'{{email}}'},{' '}
-              {'{{webinar_title}}'},{' {{webinar_link}}'} ir{' '}
-              {'{{public_webinar_link}}'}, kurie bus pakeisti siunčiant.{' '}
-              {'{{webinar_link}}'} yra asmeninė prisijungimo nuoroda, o{' '}
-              {'{{public_webinar_link}}'} – viešas registracijos puslapis.
+              dalyviams. Laiškai prieš pradžią eina pagal suplanuotą laiką.{' '}
+              {followBroadcast
+                ? 'Laiškas po pradžios išsiunčiamas, kai paleidžiama vaizdo transliacija. Laiškai po vebinaro išsiunčiami, kai transliacija sustabdoma.'
+                : 'Laiškai po pradžios ir po pabaigos naudoja trukmę. Jei trukmės nėra, laiškas po pabaigos skaičiuojamas nuo pradžios.'}{' '}
+              Galite naudoti {'{{name}}'}, {'{{email}}'}, {'{{webinar_title}}'},{' '}
+              {'{{webinar_link}}'}, {'{{public_webinar_link}}'}, {'{{offer_link}}'}{' '}
+              ir {'{{next_session}}'}.
             </CardDescription>
           </div>
         </div>
@@ -334,7 +335,7 @@ export function ReminderRulesCard({
           laiką.
         </p>
       )}
-      {!durationMinutes && (
+      {!followBroadcast && !durationMinutes && (
         <p className="mt-4 rounded-md bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
           Nenurodyta trukmė, todėl laiškai po pabaigos bus skaičiuojami nuo
           pradžios. Įrašykite trukmę ir išsaugokite vebinarą.
