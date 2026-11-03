@@ -12,6 +12,18 @@ const json = (body: unknown, status = 200) =>
     status,
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
   })
+function uuidList(value: unknown) {
+  if (value == null) return null
+  if (!Array.isArray(value)) return 'invalid' as const
+  if (value.length === 0) return null
+  if (
+    value.length > 20 ||
+    value.some((id) => typeof id !== 'string' || !UUID_PATTERN.test(id))
+  )
+    return 'invalid' as const
+  return [...new Set(value)]
+}
+
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -144,6 +156,10 @@ serve(async (req) => {
     const audience = payload.audience
     const requestKey = payload.request_key
     const contactIds = payload.contact_ids
+    const includeTagIds = uuidList(payload.include_tag_ids)
+    const excludeTagIds = uuidList(payload.exclude_tag_ids)
+    if (includeTagIds === 'invalid' || excludeTagIds === 'invalid')
+      return json({ error: 'Invalid tags' }, 400)
     const imagePath =
       typeof payload.image_path === 'string' ? payload.image_path : null
     const scheduledFor =
@@ -217,6 +233,8 @@ serve(async (req) => {
         p_image_path: imagePath,
         p_contact_ids: uniqueContactIds,
         p_scheduled_for: scheduledFor,
+        p_include_tag_ids: audience === 'all' ? includeTagIds : null,
+        p_exclude_tag_ids: audience === 'all' ? excludeTagIds : null,
       },
     )
     if (enqueueError || !broadcastId)

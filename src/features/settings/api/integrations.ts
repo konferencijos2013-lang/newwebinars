@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { searchTelegramContacts } from '@/features/settings/api/contactTags'
 
 export type IntegrationProvider =
   | 'brevo'
@@ -118,6 +119,7 @@ export interface TelegramContact {
   broadcast_opted_in_at: string | null
   first_seen_at: string
   last_seen_at: string
+  tagIds: string[]
 }
 
 export interface TelegramContactPage {
@@ -134,40 +136,16 @@ export async function fetchTelegramContacts(input: {
   pageSize?: number
   search?: string
   eligibleOnly?: boolean
-}): Promise<TelegramContactPage> {
+  includeTagIds?: string[]
+  excludeTagIds?: string[]
+}): Promise<TelegramContactPage & { eligible: number }> {
   const page = Math.max(0, input.page ?? 0)
   const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
-  const from = page * pageSize
-  let query = supabase
-    .from('telegram_contacts')
-    .select(
-      'id,integration_connection_id,chat_id,telegram_user_id,username,first_name,last_name,language_code,status,broadcast_opted_in_at,first_seen_at,last_seen_at',
-      { count: 'exact' },
-    )
-    .eq('account_id', input.accountId)
-    .eq('integration_connection_id', input.connectionId)
-
-  if (input.eligibleOnly) {
-    query = query
-      .eq('status', 'active')
-      .not('broadcast_opted_in_at', 'is', null)
-  }
-  const search = (input.search ?? '')
-    .trim()
-    .replace(/[%_,().]/g, '')
-    .slice(0, 100)
-  if (search) {
-    query = query.or(
-      `username.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%,telegram_user_id.ilike.%${search}%`,
-    )
-  }
-  const { data, error, count } = await query
-    .order('last_seen_at', { ascending: false })
-    .range(from, from + pageSize - 1)
-  if (error) throw error
+  const result = await searchTelegramContacts({ ...input, page, pageSize })
   return {
-    contacts: (data ?? []) as TelegramContact[],
-    total: count ?? 0,
+    contacts: result.contacts as TelegramContact[],
+    total: result.total,
+    eligible: result.eligible,
     page,
     pageSize,
   }
@@ -176,16 +154,16 @@ export async function fetchTelegramContacts(input: {
 export async function fetchTelegramContactCount(
   accountId: string,
   connectionId: string,
+  tags?: { includeTagIds?: string[]; excludeTagIds?: string[] },
 ) {
-  const { count, error } = await supabase
-    .from('telegram_contacts')
-    .select('id', { count: 'exact', head: true })
-    .eq('account_id', accountId)
-    .eq('integration_connection_id', connectionId)
-    .eq('status', 'active')
-    .not('broadcast_opted_in_at', 'is', null)
-  if (error) throw error
-  return count ?? 0
+  const result = await searchTelegramContacts({
+    accountId,
+    connectionId,
+    includeTagIds: tags?.includeTagIds,
+    excludeTagIds: tags?.excludeTagIds,
+    pageSize: 1,
+  })
+  return result.eligible
 }
 
 export async function uploadTelegramBroadcastImage(
@@ -244,6 +222,8 @@ export async function createTelegramBroadcast(input: {
   message: string
   audience: 'all' | 'selected'
   contactIds?: string[]
+  includeTagIds?: string[]
+  excludeTagIds?: string[]
   requestKey: string
   imagePath?: string | null
   scheduledFor?: string | null
@@ -257,6 +237,8 @@ export async function createTelegramBroadcast(input: {
     image_path: input.imagePath ?? null,
     scheduled_for: input.scheduledFor ?? null,
     contact_ids: input.audience === 'selected' ? input.contactIds : undefined,
+    include_tag_ids: input.audience === 'all' ? input.includeTagIds ?? [] : [],
+    exclude_tag_ids: input.audience === 'all' ? input.excludeTagIds ?? [] : [],
   })
   return result.broadcast
 }

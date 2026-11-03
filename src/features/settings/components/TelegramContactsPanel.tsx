@@ -15,6 +15,17 @@ import {
   parseTelegramContactsCsv,
   telegramContactsToCsv,
 } from '@/features/settings/telegramContactsCsv'
+import {
+  createContactTag,
+  deleteContactTag,
+  fetchContactTags,
+  setContactTag,
+  type ContactTag,
+} from '@/features/settings/api/contactTags'
+import {
+  ContactTagFilters,
+  ContactTagPicker,
+} from '@/features/settings/components/ContactTagControls'
 
 const PAGE_SIZE = 20
 
@@ -48,6 +59,9 @@ export function TelegramContactsPanel({
   const [page, setPage] = useState(0)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+  const [tags, setTags] = useState<ContactTag[]>([])
+  const [includeTagIds, setIncludeTagIds] = useState<string[]>([])
+  const [excludeTagIds, setExcludeTagIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
@@ -65,6 +79,8 @@ export function TelegramContactsPanel({
         page,
         pageSize: PAGE_SIZE,
         search,
+        includeTagIds,
+        excludeTagIds,
       })
       setContacts(result.contacts)
       setTotal(result.total)
@@ -73,11 +89,26 @@ export function TelegramContactsPanel({
     } finally {
       setLoading(false)
     }
-  }, [accountId, connectionId, page, search])
+  }, [accountId, connectionId, page, search, includeTagIds, excludeTagIds])
 
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    let active = true
+    void fetchContactTags(accountId)
+      .then((loaded) => {
+        if (active) setTags(loaded)
+      })
+      .catch((reason) => {
+        if (active)
+          setError(reason instanceof Error ? reason.message : String(reason))
+      })
+    return () => {
+      active = false
+    }
+  }, [accountId])
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -173,11 +204,41 @@ export function TelegramContactsPanel({
   return (
     <Card>
       <CardTitle>Boto kontaktai</CardTitle>
-      <CardDescription className="mt-1">
-        Čia kaupiami žmonės, kurie parašė botui arba užsiregistravo per jį.
-        Žinutę galima išsiųsti tik tam, kas yra atidaręs šį botą. Užblokuotas
-        kontaktas nebegaus pranešimų ir botas jam nebeatsakys.
-      </CardDescription>
+        <CardDescription className="mt-1">
+          Čia kaupiami žmonės, kurie parašė botui arba užsiregistravo per jį.
+          Žinutę galima išsiųsti tik tam, kas yra atidaręs šį botą. Užblokuotas
+          kontaktas nebegaus pranešimų ir botas jam nebeatsakys. Tegai bendri su
+          el. pašto baze.
+        </CardDescription>
+        <ContactTagFilters
+          tags={tags}
+          includeIds={includeTagIds}
+          excludeIds={excludeTagIds}
+          disabled={disabled}
+          onChange={(includeIds, excludeIds) => {
+            setPage(0)
+            setIncludeTagIds(includeIds)
+            setExcludeTagIds(excludeIds)
+          }}
+          onCreate={async (name) => {
+            const created = await createContactTag(accountId, name)
+            setTags((current) =>
+              [...current, created].sort((a, b) => a.name.localeCompare(b.name)),
+            )
+          }}
+          onDelete={async (tag) => {
+            await deleteContactTag(tag.id)
+            setTags((current) => current.filter((item) => item.id !== tag.id))
+            setIncludeTagIds((current) => current.filter((id) => id !== tag.id))
+            setExcludeTagIds((current) => current.filter((id) => id !== tag.id))
+            setContacts((current) =>
+              current.map((contact) => ({
+                ...contact,
+                tagIds: contact.tagIds.filter((id) => id !== tag.id),
+              })),
+            )
+          }}
+        />
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <form
           className="flex min-w-64 flex-1 gap-2"
@@ -262,6 +323,32 @@ export function TelegramContactsPanel({
                     {contact.username && (
                       <p className="text-muted-foreground">@{contact.username}</p>
                     )}
+                    <ContactTagPicker
+                      tags={tags}
+                      tagIds={contact.tagIds ?? []}
+                      disabled={disabled}
+                      onToggle={(tagId, assigned) => {
+                        void setContactTag({
+                          kind: 'telegram',
+                          contactId: contact.id,
+                          tagId,
+                          assigned,
+                        }).then(() => {
+                          setContacts((current) =>
+                            current.map((item) =>
+                              item.id === contact.id
+                                ? {
+                                    ...item,
+                                    tagIds: assigned
+                                      ? [...(item.tagIds ?? []), tagId]
+                                      : (item.tagIds ?? []).filter((id) => id !== tagId),
+                                  }
+                                : item,
+                            ),
+                          )
+                        })
+                      }}
+                    />
                   </td>
                   <td className="p-2">{contact.chat_id}</td>
                   <td className="p-2">{statusLabel(contact.status)}</td>

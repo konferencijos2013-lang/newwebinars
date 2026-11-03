@@ -38,6 +38,18 @@
     "admin": "Administration",
     "partners": "Partners"
   },
+  "tags": {
+    "has": "Has a tag",
+    "hasHint": "At least one of the selected tags. For example, attended the webinar.",
+    "lacks": "Does not have a tag",
+    "lacksHint": "None of the selected tags. This finds people who were not at the webinar.",
+    "none": "No tags yet.",
+    "placeholder": "New tag, for example attended",
+    "create": "Add tag",
+    "remove": "Delete “{{name}}”",
+    "deleteConfirm": "Delete the tag “{{name}}” from every contact?",
+    "add": "+ Tag"
+  },
   "dashboard": {
     "title": "Dashboard",
     "open": "Open",

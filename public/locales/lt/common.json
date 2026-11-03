@@ -38,6 +38,18 @@
     "admin": "Administravimas",
     "partners": "Partneriai"
   },
+  "tags": {
+    "has": "Turi tegą",
+    "hasHint": "Bent vieną iš pasirinktų. Pavyzdžiui, buvo vebinare.",
+    "lacks": "Neturi tego",
+    "lacksHint": "Nė vieno iš pasirinktų. Taip randami tie, kurių vebinare nebuvo.",
+    "none": "Tegų dar nėra.",
+    "placeholder": "Naujas tegas, pvz. buvo vebinare",
+    "create": "Pridėti tegą",
+    "remove": "Ištrinti „{{name}}“",
+    "deleteConfirm": "Ištrinti tegą „{{name}}“ nuo visų kontaktų?",
+    "add": "+ Tegas"
+  },
   "dashboard": {
     "title": "Kabinetas",
     "open": "Atidaryti",

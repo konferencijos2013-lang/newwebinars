@@ -11,7 +11,6 @@ import { useAccount } from '@/features/auth/hooks/useAccount'
 import {
   createEmailBroadcast,
   deleteEmailContact,
-  fetchActiveEmailContactCount,
   fetchAllEmailContacts,
   fetchEmailContacts,
   fetchLatestEmailBroadcast,
@@ -20,6 +19,17 @@ import {
   type EmailBroadcast,
   type EmailContact,
 } from '@/features/settings/api/emailContacts'
+import {
+  createContactTag,
+  deleteContactTag,
+  fetchContactTags,
+  setContactTag,
+  type ContactTag,
+} from '@/features/settings/api/contactTags'
+import {
+  ContactTagFilters,
+  ContactTagPicker,
+} from '@/features/settings/components/ContactTagControls'
 import {
   fetchIntegrationConnections,
   type IntegrationConnection,
@@ -49,6 +59,9 @@ export function MailPage() {
   const [page, setPage] = useState(0)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+  const [tags, setTags] = useState<ContactTag[]>([])
+  const [includeTagIds, setIncludeTagIds] = useState<string[]>([])
+  const [excludeTagIds, setExcludeTagIds] = useState<string[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [audience, setAudience] = useState<'all' | 'selected'>('all')
   const [subject, setSubject] = useState('')
@@ -73,19 +86,18 @@ export function MailPage() {
 
   const loadContacts = useCallback(async () => {
     if (!accountId) return
-    const [result, active] = await Promise.all([
-      fetchEmailContacts({
-        accountId,
-        page,
-        pageSize: PAGE_SIZE,
-        search,
-      }),
-      fetchActiveEmailContactCount(accountId),
-    ])
+    const result = await fetchEmailContacts({
+      accountId,
+      page,
+      pageSize: PAGE_SIZE,
+      search,
+      includeTagIds,
+      excludeTagIds,
+    })
     setContacts(result.contacts)
     setTotal(result.total)
-    setActiveTotal(active)
-  }, [accountId, page, search])
+    setActiveTotal(result.active)
+  }, [accountId, page, search, includeTagIds, excludeTagIds])
 
   useEffect(() => {
     if (!accountId) return
@@ -94,9 +106,11 @@ export function MailPage() {
     void Promise.all([
       fetchIntegrationConnections(accountId),
       fetchLatestEmailBroadcast(accountId),
+      fetchContactTags(accountId),
     ])
-      .then(([items, latest]) => {
+      .then(([items, latest, loadedTags]) => {
         if (!active) return
+        setTags(loadedTags)
         const emailConnections = items.filter(
           (item) =>
             EMAIL_PROVIDERS.includes(item.provider) && item.status === 'active',
@@ -160,6 +174,8 @@ export function MailPage() {
         message,
         audience,
         contactIds: audience === 'selected' ? selectedIds : undefined,
+        includeTagIds,
+        excludeTagIds,
         requestKey: requestKeyRef.current,
       })
       requestKeyRef.current = null
@@ -358,6 +374,36 @@ export function MailPage() {
               setMessage(event.target.value)
             }}
           />
+          <ContactTagFilters
+            tags={tags}
+            includeIds={includeTagIds}
+            excludeIds={excludeTagIds}
+            disabled={disabled || running}
+            onChange={(includeIds, excludeIds) => {
+              requestKeyRef.current = null
+              setPage(0)
+              setIncludeTagIds(includeIds)
+              setExcludeTagIds(excludeIds)
+            }}
+            onCreate={async (name) => {
+              const created = await createContactTag(accountId, name)
+              setTags((current) =>
+                [...current, created].sort((a, b) => a.name.localeCompare(b.name)),
+              )
+            }}
+            onDelete={async (tag) => {
+              await deleteContactTag(tag.id)
+              setTags((current) => current.filter((item) => item.id !== tag.id))
+              setIncludeTagIds((current) => current.filter((id) => id !== tag.id))
+              setExcludeTagIds((current) => current.filter((id) => id !== tag.id))
+              setContacts((current) =>
+                current.map((contact) => ({
+                  ...contact,
+                  tagIds: contact.tagIds.filter((id) => id !== tag.id),
+                })),
+              )
+            }}
+          />
           <div className="mt-3 flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2">
               <input
@@ -515,6 +561,32 @@ export function MailPage() {
                       {contact.full_name && (
                         <p className="text-muted-foreground">{contact.full_name}</p>
                       )}
+                      <ContactTagPicker
+                        tags={tags}
+                        tagIds={contact.tagIds}
+                        disabled={disabled}
+                        onToggle={(tagId, assigned) => {
+                          void setContactTag({
+                            kind: 'email',
+                            contactId: contact.id,
+                            tagId,
+                            assigned,
+                          }).then(() => {
+                            setContacts((current) =>
+                              current.map((item) =>
+                                item.id === contact.id
+                                  ? {
+                                      ...item,
+                                      tagIds: assigned
+                                        ? [...item.tagIds, tagId]
+                                        : item.tagIds.filter((id) => id !== tagId),
+                                    }
+                                  : item,
+                              ),
+                            )
+                          })
+                        }}
+                      />
                     </td>
                     <td className="p-2">{t(contact.status)}</td>
                     <td className="p-2">

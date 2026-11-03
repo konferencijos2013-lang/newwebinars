@@ -143,6 +143,18 @@ async function sendSmtp(
   })
 }
 
+function uuidList(value: unknown) {
+  if (value == null) return null
+  if (!Array.isArray(value)) return 'invalid' as const
+  if (value.length === 0) return null
+  if (
+    value.length > 20 ||
+    value.some((id) => typeof id !== 'string' || !UUID_PATTERN.test(id))
+  )
+    return 'invalid' as const
+  return [...new Set(value)]
+}
+
 const BROADCAST_COLUMNS =
   'id,status,recipient_count,sent_count,failed_count,blocked_count,created_at,completed_at,subject'
 
@@ -185,6 +197,10 @@ serve(async (req) => {
     const audience = payload.audience
     const requestKey = payload.request_key
     const contactIds = payload.contact_ids
+    const includeTagIds = uuidList(payload.include_tag_ids)
+    const excludeTagIds = uuidList(payload.exclude_tag_ids)
+    if (includeTagIds === 'invalid' || excludeTagIds === 'invalid')
+      return json({ error: 'Invalid tags' }, 400)
     if (typeof connectionId !== 'string' || !UUID_PATTERN.test(connectionId))
       return json({ error: 'Invalid email connection' }, 400)
     if (typeof requestKey !== 'string' || !UUID_PATTERN.test(requestKey))
@@ -234,6 +250,8 @@ serve(async (req) => {
         p_request_key: requestKey,
         p_contact_ids:
           audience === 'selected' ? [...new Set(contactIds as string[])] : null,
+        p_include_tag_ids: audience === 'all' ? includeTagIds : null,
+        p_exclude_tag_ids: audience === 'all' ? excludeTagIds : null,
       },
     )
     if (enqueueError || !broadcastId)

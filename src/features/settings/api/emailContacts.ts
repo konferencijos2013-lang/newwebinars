@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { searchEmailContacts } from '@/features/settings/api/contactTags'
 
 export interface EmailContact {
   id: string
@@ -7,6 +8,7 @@ export interface EmailContact {
   status: 'active' | 'blocked' | 'unsubscribed'
   source: 'registration' | 'import'
   last_seen_at: string
+  tagIds: string[]
 }
 
 export interface EmailBroadcast {
@@ -26,28 +28,16 @@ export async function fetchEmailContacts(input: {
   page?: number
   pageSize?: number
   search?: string
+  includeTagIds?: string[]
+  excludeTagIds?: string[]
 }) {
   const page = Math.max(0, input.page ?? 0)
   const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
-  const from = page * pageSize
-  let query = supabase
-    .from('email_contacts')
-    .select('id,email,full_name,status,source,last_seen_at', { count: 'exact' })
-    .eq('account_id', input.accountId)
-  const search = (input.search ?? '')
-    .trim()
-    .replace(/[%_,()]/g, '')
-    .slice(0, 100)
-  if (search) {
-    query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`)
-  }
-  const { data, error, count } = await query
-    .order('last_seen_at', { ascending: false })
-    .range(from, from + pageSize - 1)
-  if (error) throw error
+  const result = await searchEmailContacts({ ...input, page, pageSize })
   return {
-    contacts: (data ?? []) as EmailContact[],
-    total: count ?? 0,
+    contacts: result.contacts as EmailContact[],
+    total: result.total,
+    active: result.active,
     page,
     pageSize,
   }
@@ -130,6 +120,8 @@ export async function createEmailBroadcast(input: {
   message: string
   audience: 'all' | 'selected'
   contactIds?: string[]
+  includeTagIds?: string[]
+  excludeTagIds?: string[]
   requestKey: string
 }) {
   const { data, error } = await supabase.functions.invoke('send-email-broadcast', {
@@ -141,6 +133,10 @@ export async function createEmailBroadcast(input: {
       audience: input.audience,
       request_key: input.requestKey,
       contact_ids: input.audience === 'selected' ? input.contactIds : undefined,
+      include_tag_ids:
+        input.audience === 'all' ? input.includeTagIds ?? [] : [],
+      exclude_tag_ids:
+        input.audience === 'all' ? input.excludeTagIds ?? [] : [],
     },
   })
   if (error) {

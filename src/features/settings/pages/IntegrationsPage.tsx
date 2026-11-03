@@ -30,6 +30,13 @@ import {
   type IntegrationConnection,
   type IntegrationProvider,
 } from '@/features/settings/api/integrations'
+import {
+  createContactTag,
+  deleteContactTag,
+  fetchContactTags,
+  type ContactTag,
+} from '@/features/settings/api/contactTags'
+import { ContactTagFilters } from '@/features/settings/components/ContactTagControls'
 import { PaymentProviderCard } from '@/features/settings/components/PaymentProviderCard'
 
 export function IntegrationsPage() {
@@ -557,6 +564,9 @@ export function TelegramForm({
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const uploadedImagePathRef = useRef<string | null>(null)
   const [audience, setAudience] = useState<'selected' | 'all'>('selected')
+  const [tags, setTags] = useState<ContactTag[]>([])
+  const [includeTagIds, setIncludeTagIds] = useState<string[]>([])
+  const [excludeTagIds, setExcludeTagIds] = useState<string[]>([])
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([])
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
@@ -570,6 +580,18 @@ export function TelegramForm({
   const sendRequestKeyRef = useRef<string | null>(null)
   const pageSize = 20
 
+  useEffect(() => {
+    let active = true
+    void fetchContactTags(accountId)
+      .then((loaded) => {
+        if (active) setTags(loaded)
+      })
+      .catch(() => undefined)
+    return () => {
+      active = false
+    }
+  }, [accountId])
+
   const loadContacts = useCallback(async () => {
     if (!connection) return
     setLoadingContacts(true)
@@ -582,8 +604,13 @@ export function TelegramForm({
           pageSize,
           search: contactSearch,
           eligibleOnly: true,
+          includeTagIds,
+          excludeTagIds,
         }),
-        fetchTelegramContactCount(accountId, connection.id),
+        fetchTelegramContactCount(accountId, connection.id, {
+          includeTagIds,
+          excludeTagIds,
+        }),
       ])
       setContacts(result.contacts)
       setContactTotal(result.total)
@@ -593,7 +620,7 @@ export function TelegramForm({
     } finally {
       setLoadingContacts(false)
     }
-  }, [accountId, connection, contactPage, contactSearch])
+  }, [accountId, connection, contactPage, contactSearch, includeTagIds, excludeTagIds])
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadContacts(), 0)
@@ -716,6 +743,8 @@ export function TelegramForm({
         imagePath,
         scheduledFor,
         contactIds: audience === 'selected' ? selectedContactIds : undefined,
+        includeTagIds,
+        excludeTagIds,
       })
       setBroadcast(created)
       setBroadcasts((current) => [created, ...current].slice(0, 20))
@@ -992,6 +1021,30 @@ export function TelegramForm({
               </p>
             )}
           </div>
+          <ContactTagFilters
+            tags={tags}
+            includeIds={includeTagIds}
+            excludeIds={excludeTagIds}
+            disabled={disabled || broadcastActive}
+            onChange={(includeIds, excludeIds) => {
+              sendRequestKeyRef.current = null
+              setContactPage(0)
+              setIncludeTagIds(includeIds)
+              setExcludeTagIds(excludeIds)
+            }}
+            onCreate={async (name) => {
+              const created = await createContactTag(accountId, name)
+              setTags((current) =>
+                [...current, created].sort((a, b) => a.name.localeCompare(b.name)),
+              )
+            }}
+            onDelete={async (tag) => {
+              await deleteContactTag(tag.id)
+              setTags((current) => current.filter((item) => item.id !== tag.id))
+              setIncludeTagIds((current) => current.filter((id) => id !== tag.id))
+              setExcludeTagIds((current) => current.filter((id) => id !== tag.id))
+            }}
+          />
           <div className="mt-3 flex flex-wrap gap-4 text-sm">
             <label className="flex cursor-pointer items-center gap-2">
               <input
