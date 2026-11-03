@@ -2,6 +2,7 @@ import { Send } from 'lucide-react'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
+import { TelegramContactsPanel } from '@/features/settings/components/TelegramContactsPanel'
 import { TelegramForm } from '@/features/settings/pages/IntegrationsPage'
 import { fetchIntegrationConnections } from '@/features/settings/api/integrations'
 import { useEffect, useState } from 'react'
@@ -62,8 +63,9 @@ export function TelegramPage() {
           Telegram
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Valdykite botą ir DI atsakymus, siųskite arba iš anksto suplanuokite
-          žinutes bei stebėkite siuntimų rezultatus.
+          Valdykite botą, kontaktų bazę ir DI atsakymus. Iš čia galima siųsti
+          pranešimus, blokuoti ar ištrinti kontaktą, importuoti ir eksportuoti
+          sąrašą.
         </p>
       </div>
       {error && (
@@ -76,6 +78,13 @@ export function TelegramPage() {
         disabled={!['owner', 'admin'].includes(accountState.membership.role)}
         accountId={accountState.account.id}
       />
+      {connection?.status === 'active' && (
+        <TelegramContactsPanel
+          accountId={accountState.account.id}
+          connectionId={connection.id}
+          disabled={!['owner', 'admin'].includes(accountState.membership.role)}
+        />
+      )}
     </div>
   )
 }

@@ -159,6 +159,25 @@ serve(async (req) => {
   if (!chatId || chat.type !== 'private' || !messageText)
     return json({ received: true, ignored: true })
 
+  const { data: contactStatus, error: contactError } = await db.rpc(
+    'touch_telegram_bot_contact',
+    {
+      p_connection_id: connectionId,
+      p_chat_id: chatId,
+      p_telegram_user_id: stringValue(from.id) || null,
+      p_username: stringValue(from.username) || null,
+      p_first_name: stringValue(from.first_name) || null,
+      p_last_name: stringValue(from.last_name) || null,
+      p_language_code: stringValue(from.language_code) || null,
+    },
+  )
+  if (contactError) {
+    console.error('Telegram contact update failed', contactError)
+    return json({ error: 'Unable to save contact' }, 500)
+  }
+  if (contactStatus === 'blocked')
+    return json({ received: true, status: 'blocked' })
+
   if (/^\/stop(?:@\w+)?$/i.test(messageText)) {
     const { data: stopped, error: stopError } = await db.rpc(
       'unsubscribe_telegram_contact',

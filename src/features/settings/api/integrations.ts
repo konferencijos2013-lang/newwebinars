@@ -291,6 +291,73 @@ export async function fetchTelegramBroadcasts(
   return (data ?? []) as TelegramBroadcast[]
 }
 
+export async function setTelegramContactStatus(
+  contactId: string,
+  status: 'active' | 'blocked',
+) {
+  const { error } = await supabase.rpc('set_telegram_contact_status', {
+    p_contact_id: contactId,
+    p_status: status,
+  })
+  if (error) throw error
+}
+
+export async function deleteTelegramContact(contactId: string) {
+  const { error } = await supabase.rpc('delete_telegram_contact', {
+    p_contact_id: contactId,
+  })
+  if (error) throw error
+}
+
+export async function importTelegramContacts(
+  connectionId: string,
+  rows: Array<{
+    chat_id: string
+    telegram_user_id?: string
+    username?: string
+    first_name?: string
+    last_name?: string
+  }>,
+) {
+  const { data, error } = await supabase.rpc('import_telegram_contacts', {
+    p_connection_id: connectionId,
+    p_rows: rows,
+  })
+  if (error) throw error
+  const result = (Array.isArray(data) ? data[0] : data) as
+    | {
+        inserted_count: number
+        updated_count: number
+        skipped_count: number
+      }
+    | undefined
+  return {
+    inserted: result?.inserted_count ?? 0,
+    updated: result?.updated_count ?? 0,
+    skipped: result?.skipped_count ?? 0,
+  }
+}
+
+export async function fetchAllTelegramContacts(
+  accountId: string,
+  connectionId: string,
+) {
+  const pageSize = 100
+  const contacts: TelegramContact[] = []
+  for (let page = 0; page < 50; page += 1) {
+    const result = await fetchTelegramContacts({
+      accountId,
+      connectionId,
+      page,
+      pageSize,
+    })
+    contacts.push(...result.contacts)
+    if (contacts.length >= result.total || result.contacts.length < pageSize)
+      break
+  }
+  return contacts
+}
+
 export async function cancelScheduledTelegramBroadcast(broadcastId: string) {
   const { data, error } = await supabase.rpc(
     'cancel_scheduled_telegram_broadcast',
