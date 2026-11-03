@@ -13,6 +13,7 @@ import {
   setWebinarPassword,
 } from '@/features/webinars/api/webinars'
 import { slugify } from '@/shared/utils/slug'
+import { isReservedLocaleSlug } from '@/i18n/localePath'
 
 function toIsoDateTime(value: string): string | null {
   if (!value) return null
@@ -79,6 +80,11 @@ export function WebinarCreatePage() {
 
     try {
       const generatedSlug = slugify(slug || title)
+      if (isReservedLocaleSlug(generatedSlug)) {
+        setError('Adresas „lt“ ir „ru“ rezervuotas kalbai. Pasirinkite kitą.')
+        setIsSaving(false)
+        return
+      }
 
       const created = await createWebinar({
         account_id: account.account.id,

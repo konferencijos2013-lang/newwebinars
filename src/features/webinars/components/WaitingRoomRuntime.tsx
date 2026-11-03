@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
+import { localizedPath } from '@/i18n/localePath'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { trackAnalyticsEvent } from '@/features/analytics/dataLayer'
@@ -189,7 +190,7 @@ function WaitingRoomRuntimeContent({
         ? roomDestination(context)
         : roomDestination
     if (onNavigate) onNavigate(destination)
-    else window.location.assign(destination)
+    else window.location.assign(localizedPath(destination))
   }
 
   return (

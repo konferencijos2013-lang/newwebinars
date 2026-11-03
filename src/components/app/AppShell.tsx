@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router'
+import { localizedPath } from '@/i18n/localePath'
 import { Eye, X } from 'lucide-react'
 import { supportPath, useSupportView } from '@/features/support/useSupportView'
 import { useTranslation } from 'react-i18next'
@@ -191,7 +192,7 @@ export function AppShell() {
                   value={accountState.account.id}
                   onChange={(event) => {
                     localStorage.setItem('newwebinars-account', event.target.value)
-                    window.location.assign('/dashboard')
+                    window.location.assign(localizedPath('/dashboard'))
                   }}
                 >
                   {accountState.memberships.map((membership) => (

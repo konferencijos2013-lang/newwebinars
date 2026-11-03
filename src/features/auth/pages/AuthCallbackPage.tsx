@@ -8,6 +8,7 @@ import {
   hasMarketingConsent,
   PARTNER_VISITOR_TOKEN_KEY,
 } from '@/features/consent/consent'
+import { localizedPath, type Locale } from '@/i18n/localePath'
 
 function safeReturnTo(value: string | null) {
   if (!value) return '/dashboard'
@@ -40,6 +41,10 @@ export function AuthCallbackPage() {
     let isActive = true
     let authListener: { subscription: { unsubscribe: () => void } } | null =
       null
+    const queryParams = new URLSearchParams(window.location.search)
+    const requestedLang = queryParams.get('lang')
+    const locale: Locale =
+      requestedLang === 'lt' || requestedLang === 'ru' ? requestedLang : 'en'
 
     const finish = async (target: string) => {
       if (resolvedRef.current) return
@@ -69,7 +74,7 @@ export function AuthCallbackPage() {
           )
         }
       }
-      if (isActive) navigate(target, { replace: true })
+      if (isActive) window.location.replace(localizedPath(target, locale))
     }
 
     const fail = (reason: string, details?: unknown) => {
@@ -84,7 +89,6 @@ export function AuthCallbackPage() {
       }
     }
 
-    const queryParams = new URLSearchParams(window.location.search)
     const hashParamsForError = new URLSearchParams(
       window.location.hash.slice(1),
     )

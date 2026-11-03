@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { CardTitle, CardDescription } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
+import { currentLocale } from '@/i18n/localePath'
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
@@ -36,6 +37,7 @@ function safeReturnTo(value: string | null) {
 function getRedirectTo(returnTo: string) {
   const url = new URL('/auth/callback', window.location.origin)
   url.searchParams.set('returnTo', returnTo)
+  url.searchParams.set('lang', currentLocale())
   return url.toString()
 }
 

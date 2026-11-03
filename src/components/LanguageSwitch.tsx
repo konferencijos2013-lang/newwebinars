@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Languages } from 'lucide-react'
+import { localeFromPath, localizedPath, type Locale } from '@/i18n/localePath'
 
 const languages = [
   { code: 'en', label: 'EN' },
@@ -15,7 +16,15 @@ export function LanguageSwitch() {
       <select
         aria-label="Language"
         value={i18n.language.split('-')[0]}
-        onChange={(event) => i18n.changeLanguage(event.target.value)}
+        onChange={(event) => {
+          const next = event.target.value as Locale
+          const { pathname } = localeFromPath(window.location.pathname)
+          const target = localizedPath(
+            `${pathname}${window.location.search}${window.location.hash}`,
+            next,
+          )
+          window.location.assign(target)
+        }}
         className="text-foreground bg-transparent text-xs font-semibold outline-none"
       >
         {languages.map((language) => (

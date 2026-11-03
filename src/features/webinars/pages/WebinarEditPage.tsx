@@ -17,6 +17,7 @@ import { ReminderRulesCard } from '@/features/webinars/components/ReminderRulesC
 import { WebinarInvitesCard } from '@/features/webinars/components/WebinarInvitesCard'
 import type { Webinar } from '@/shared/database.types'
 import { slugify } from '@/shared/utils/slug'
+import { isReservedLocaleSlug } from '@/i18n/localePath'
 
 function toIsoDateTime(value: string): string | null {
   if (!value) return null
@@ -114,9 +115,15 @@ export function WebinarEditPage() {
     }
 
     try {
+      const nextSlug = slugify(slug)
+      if (isReservedLocaleSlug(nextSlug)) {
+        setError('Adresas „lt“ ir „ru“ rezervuotas kalbai. Pasirinkite kitą.')
+        setIsSaving(false)
+        return
+      }
       await updateWebinar(webinar.id, {
         title: title.trim(),
-        slug: slugify(slug),
+        slug: nextSlug,
         description: description.trim() || null,
         scheduled_at: toIsoDateTime(scheduledAt),
         duration_minutes: durationMinutes ? Number(durationMinutes) : null,

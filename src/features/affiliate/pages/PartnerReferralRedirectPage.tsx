@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router'
 import { supabase } from '@/lib/supabase'
+import { localizedPath } from '@/i18n/localePath'
 import {
   hasMarketingConsent,
   PARTNER_VISITOR_TOKEN_KEY,
@@ -43,7 +44,7 @@ export function PartnerReferralRedirectPage() {
           p_utm_campaign: params.get('utm_campaign'),
         })
       }
-      window.location.replace(destination)
+      window.location.replace(localizedPath(destination))
     }
     void recordClick()
   }, [code])

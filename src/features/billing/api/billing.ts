@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { localizedHref } from '@/i18n/localePath'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import type {
   CreditPlan,
@@ -108,8 +109,8 @@ function createCheckoutAttemptId(): string {
 }
 
 export async function createCheckoutSession(accountId: string, planId: string) {
-  const successUrl = `${window.location.origin}/billing?success=1`
-  const cancelUrl = `${window.location.origin}/billing?canceled=1`
+  const successUrl = localizedHref('/billing?success=1')
+  const cancelUrl = localizedHref('/billing?canceled=1')
   const { data, error } = await supabase.functions.invoke(
     'create-checkout-session',
     {
@@ -133,7 +134,7 @@ export async function createCustomerPortalSession(accountId: string) {
     {
       body: {
         account_id: accountId,
-        return_url: `${window.location.origin}/billing`,
+        return_url: localizedHref('/billing'),
       },
     },
   )

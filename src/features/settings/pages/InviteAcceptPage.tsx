@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 import { supabase } from '@/lib/supabase'
+import { localizedPath } from '@/i18n/localePath'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 
@@ -31,7 +32,7 @@ export function InviteAcceptPage() {
           return
         }
         localStorage.setItem('newwebinars-account', String(data))
-        window.location.assign('/dashboard')
+        window.location.assign(localizedPath('/dashboard'))
       })
     return () => {
       active = false

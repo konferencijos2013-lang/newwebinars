@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { supabase } from '@/lib/supabase'
+import { localizedHref } from '@/i18n/localePath'
 import { useHlsVideo } from '@/features/webinars/hooks/useHlsVideo'
 import {
   ArrowLeft,
@@ -339,7 +340,7 @@ export function WebinarHostPage() {
   // access token, then use the waiting room / live room. The old link
   // pointed directly at /room?preview=1, which is only meant for the
   // logged-in host's own preview and fails for everyone else.
-  const viewerUrl = `${window.location.origin}/w/${webinar.slug}`
+  const viewerUrl = localizedHref(`/w/${webinar.slug}`, webinar.language ?? 'en')
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

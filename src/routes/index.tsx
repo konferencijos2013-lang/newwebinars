@@ -52,10 +52,17 @@ import { AdminPartnerDetailPage } from '@/features/admin/pages/AdminPartnerDetai
 import { PartnerReferralRedirectPage } from '@/features/affiliate/pages/PartnerReferralRedirectPage'
 import { CookieConsent } from '@/features/consent/CookieConsent'
 import { SpaPageViewTracker } from '@/features/analytics/SpaPageViewTracker'
+import { localeFromPath } from '@/i18n/localePath'
 
 export function AppRoutes() {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      basename={
+        localeFromPath(window.location.pathname).basename === '/'
+          ? undefined
+          : localeFromPath(window.location.pathname).basename
+      }
+    >
       <SpaPageViewTracker />
       <CookieConsent />
       <Routes>

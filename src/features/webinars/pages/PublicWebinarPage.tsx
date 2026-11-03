@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/Label'
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { supabase } from '@/lib/supabase'
+import { localizedPath } from '@/i18n/localePath'
 import {
   fetchWebinarByHostname,
   fetchWebinarBySlug,
@@ -197,7 +198,9 @@ export function PublicWebinarPage() {
           <Button
             className="mt-6"
             onClick={() =>
-              (window.location.href = `/${webinar.slug}/waiting-room?token=${registrationToken}`)
+              (window.location.href = localizedPath(
+                `/${webinar.slug}/waiting-room?token=${registrationToken}`,
+              ))
             }
           >
             {t('enterWaitingRoom')}
@@ -250,7 +253,9 @@ export function PublicWebinarPage() {
           <Button
             className="mt-6"
             onClick={() =>
-              (window.location.href = `/${webinar.slug}/room?preview=1`)
+              (window.location.href = localizedPath(
+                `/${webinar.slug}/room?preview=1`,
+              ))
             }
           >
             {t('openRoomPreview')}

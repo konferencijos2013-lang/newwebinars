@@ -11,6 +11,7 @@ import {
   User,
 } from 'lucide-react'
 import type { FunnelBlock } from '@/shared/database.types'
+import { localizedPath } from '@/i18n/localePath'
 import { backgroundStyle } from '@/features/funnels/pageTheme'
 import {
   getTelegramRegistrationIntentStatus,
@@ -269,7 +270,7 @@ function RegistrationForm({
   useEffect(() => {
     if (!waitingRoom || isPreview || hasRedirected.current) return
     hasRedirected.current = true
-    window.location.assign(waitingRoom)
+    window.location.assign(localizedPath(waitingRoom))
   }, [isPreview, waitingRoom])
 
   if (token) {

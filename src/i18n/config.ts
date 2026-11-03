@@ -1,13 +1,13 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import LanguageDetector from 'i18next-browser-languagedetector'
 import Backend from 'i18next-http-backend'
+import { currentLocale } from '@/i18n/localePath'
 
 void i18n
   .use(Backend)
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
+    lng: currentLocale(),
     fallbackLng: 'en',
     supportedLngs: ['en', 'lt', 'ru'],
     defaultNS: 'common',
@@ -26,13 +26,12 @@ void i18n
     interpolation: {
       escapeValue: false,
     },
-    detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage'],
-    },
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json',
     },
+  })
+  .then(() => {
+    document.documentElement.lang = i18n.resolvedLanguage ?? i18n.language
   })
   .catch(() => {})
 

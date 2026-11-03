@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
+import { localizedHref } from '@/i18n/localePath'
 import {
   ArrowLeft,
   Calendar,
@@ -72,7 +73,10 @@ export function WebinarDetailPage() {
     }
   }
 
-  const viewerUrl = `${window.location.origin}/w/${webinar?.slug ?? ''}`
+  const viewerUrl = localizedHref(
+    `/w/${webinar?.slug ?? ''}`,
+    webinar?.language ?? 'en',
+  )
 
   function copyViewerLink() {
     void navigator.clipboard.writeText(viewerUrl).then(() => {

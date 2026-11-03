@@ -1,9 +1,13 @@
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
+import { currentLocale } from '@/i18n/localePath'
 
 function getRedirectTo() {
-  return `${window.location.origin}/auth/callback`
+  const url = new URL('/auth/callback', window.location.origin)
+  url.searchParams.set('returnTo', '/dashboard')
+  url.searchParams.set('lang', currentLocale())
+  return url.toString()
 }
 
 export function SignInButton() {
