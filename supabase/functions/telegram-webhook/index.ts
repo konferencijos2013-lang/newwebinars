@@ -216,7 +216,7 @@ serve(async (req) => {
         await telegramReply(
           botToken,
           chatId,
-          `${completion.result_status === 'registered' ? 'Registracija sėkminga.' : 'Jūs jau užsiregistravote.'} Priminimus apie webinarą gausite čia.\n\nAsmeninė webinaro nuoroda: ${personalUrl}`,
+          `${completion.result_status === 'registered' ? 'Registracija sėkminga.' : 'Jūs jau užsiregistravote į šį vebinarą.'} Priminimus apie webinarą gausite čia.\n\nAsmeninė webinaro nuoroda: ${personalUrl}`,
         )
         return json({ received: true, status: completion.result_status })
       }

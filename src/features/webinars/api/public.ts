@@ -108,7 +108,7 @@ export function registrationFailureMessage(error: unknown): string {
     return 'Mokama prieiga dar nesukonfigūruota.'
   }
   if (message.includes('already registered')) {
-    return 'Jūs jau užsiregistravote į šį webinarą.'
+    return 'Jūs jau užsiregistravote į šį vebinarą.'
   }
   if (message.includes('participant limit')) {
     return 'Registracija uždaryta arba vietų nebėra.'

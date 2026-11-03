@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ChevronDown } from 'lucide-react'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAccount } from '@/features/auth/hooks/useAccount'
@@ -35,6 +36,7 @@ export function AnalyticsPage() {
   const [rows, setRows] = useState<AttendanceRow[]>([])
   const [titles, setTitles] = useState<Record<string, string>>({})
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
+  const [openWebinarId, setOpenWebinarId] = useState<string | null>(null)
 
   useEffect(() => {
     if (account.status !== 'ready') return
@@ -97,6 +99,33 @@ export function AnalyticsPage() {
     }
   }, [rows])
 
+  const webinarRows = useMemo(() => {
+    const ids = Object.keys(titles)
+    return ids
+      .map((id) => {
+        const people = rows.filter((row) => row.webinar_id === id)
+        const watched = people.reduce(
+          (sum, row) => sum + (row.watch_time_seconds || 0),
+          0,
+        )
+        return {
+          id,
+          title: titles[id],
+          people,
+          registrations: people.length,
+          joined: people.filter((row) => row.joined_webinar_at).length,
+          clicked: people.filter((row) => row.offer_clicked_at).length,
+          paid: people.filter((row) => row.offer_paid_at || row.paid_at).length,
+          averageWatch:
+            people.length === 0 ? 0 : Math.round(watched / people.length),
+        }
+      })
+      .sort(
+        (a, b) =>
+          b.registrations - a.registrations || a.title.localeCompare(b.title),
+      )
+  }, [rows, titles])
+
   if (account.status === 'loading' || status === 'loading') {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -151,57 +180,111 @@ export function AnalyticsPage() {
           </div>
 
           <Card className="mt-6 overflow-x-auto">
-            {rows.length === 0 ? (
+            {webinarRows.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                Registracijų dar nėra. Jos atsiras, kai dalyvis užsiregistruos.
+                Webinarų dar nėra.
               </p>
             ) : (
-              <table className="w-full min-w-[860px] text-left text-sm">
+              <table className="w-full min-w-[760px] text-left text-sm">
                 <thead className="text-muted-foreground">
                   <tr>
-                    <th className="p-2 font-medium">Dalyvis</th>
                     <th className="p-2 font-medium">Webinaras</th>
-                    <th className="p-2 font-medium">Registracija</th>
-                    <th className="p-2 font-medium">Laukiamasis</th>
-                    <th className="p-2 font-medium">Kambarys</th>
-                    <th className="p-2 font-medium">Žiūrėjo</th>
+                    <th className="p-2 font-medium">Registracijos</th>
+                    <th className="p-2 font-medium">Įėjo į kambarį</th>
+                    <th className="p-2 font-medium">Vid. žiūrėjimas</th>
                     <th className="p-2 font-medium">Pasiūlymas</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.id} className="border-t">
-                      <td className="p-2">
-                        <p className="font-medium">
-                          {row.full_name || 'Be vardo'}
-                        </p>
-                        <p className="text-muted-foreground">
-                          {row.email || 'Telegram'}
-                        </p>
-                      </td>
-                      <td className="p-2">{titles[row.webinar_id] ?? '—'}</td>
-                      <td className="p-2">
-                        {new Date(row.registered_at).toLocaleString()}
-                      </td>
-                      <td className="p-2">
-                        {row.entered_waiting_room_at ? 'Taip' : 'Ne'}
-                      </td>
-                      <td className="p-2">
-                        {row.joined_webinar_at ? 'Taip' : 'Ne'}
-                      </td>
-                      <td className="p-2">
-                        {formatWatch(row.watch_time_seconds || 0)}
-                      </td>
-                      <td className="p-2">
-                        {row.offer_paid_at
-                          ? 'Apmokėjo'
-                          : row.offer_clicked_at
-                            ? 'Paspaudė'
-                            : '—'}
-                        {row.paid_at ? ' · apmokėta' : ''}
-                      </td>
-                    </tr>
-                  ))}
+                  {webinarRows.map((webinar) => {
+                    const open = openWebinarId === webinar.id
+                    return (
+                      <Fragment key={webinar.id}>
+                        <tr className="border-t">
+                          <td className="p-2">
+                            <button
+                              type="button"
+                              className="flex items-center gap-2 font-medium"
+                              onClick={() =>
+                                setOpenWebinarId(open ? null : webinar.id)
+                              }
+                            >
+                              <ChevronDown
+                                className={`h-4 w-4 transition ${open ? 'rotate-180' : ''}`}
+                              />
+                              {webinar.title}
+                            </button>
+                          </td>
+                          <td className="p-2">{webinar.registrations}</td>
+                          <td className="p-2">{webinar.joined}</td>
+                          <td className="p-2">
+                            {formatWatch(webinar.averageWatch)}
+                          </td>
+                          <td className="p-2">
+                            {webinar.clicked} paspaudė
+                            {webinar.paid > 0 ? ` · ${webinar.paid} apmokėjo` : ''}
+                          </td>
+                        </tr>
+                        {open ? (
+                          <tr className="border-t bg-black/[0.02]">
+                            <td className="p-2" colSpan={5}>
+                              {webinar.people.length === 0 ? (
+                                <p className="text-muted-foreground px-6 py-2">
+                                  Registracijų dar nėra.
+                                </p>
+                              ) : (
+                                <table className="w-full text-left">
+                                  <thead className="text-muted-foreground">
+                                    <tr>
+                                      <th className="p-2 font-medium">Dalyvis</th>
+                                      <th className="p-2 font-medium">Registracija</th>
+                                      <th className="p-2 font-medium">Laukiamasis</th>
+                                      <th className="p-2 font-medium">Kambarys</th>
+                                      <th className="p-2 font-medium">Žiūrėjo</th>
+                                      <th className="p-2 font-medium">Pasiūlymas</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {webinar.people.map((row) => (
+                                      <tr key={row.id} className="border-t">
+                                        <td className="p-2">
+                                          <p className="font-medium">
+                                            {row.full_name || 'Be vardo'}
+                                          </p>
+                                          <p className="text-muted-foreground">
+                                            {row.email || 'Telegram'}
+                                          </p>
+                                        </td>
+                                        <td className="p-2">
+                                          {new Date(row.registered_at).toLocaleString()}
+                                        </td>
+                                        <td className="p-2">
+                                          {row.entered_waiting_room_at ? 'Taip' : 'Ne'}
+                                        </td>
+                                        <td className="p-2">
+                                          {row.joined_webinar_at ? 'Taip' : 'Ne'}
+                                        </td>
+                                        <td className="p-2">
+                                          {formatWatch(row.watch_time_seconds || 0)}
+                                        </td>
+                                        <td className="p-2">
+                                          {row.offer_paid_at || row.paid_at
+                                            ? 'Apmokėjo'
+                                            : row.offer_clicked_at
+                                              ? 'Paspaudė'
+                                              : '—'}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </td>
+                          </tr>
+                        ) : null}
+                      </Fragment>
+                    )
+                  })}
                 </tbody>
               </table>
             )}
