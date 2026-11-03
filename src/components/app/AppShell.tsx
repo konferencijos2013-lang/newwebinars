@@ -148,12 +148,12 @@ export function AppShell() {
               <SidebarNavLink
                 to="/admin"
                 icon={ShieldCheck}
-                label="Administravimas"
+                label={t('navigation.admin')}
               />
               <SidebarNavLink
                 to="/admin/partners"
                 icon={Users}
-                label="Partneriai"
+                label={t('navigation.partners')}
               />
             </>
           ) : null}
@@ -175,7 +175,7 @@ export function AppShell() {
             <SidebarNavLink
               to={path('/integrations')}
               icon={Link2}
-              label="Integracijos"
+              label={t('navigation.integrations')}
             />
           ) : null}
           {!supportView ? (

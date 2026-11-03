@@ -33,7 +33,10 @@
     "ai": "AI",
     "user": "Пользователь",
     "telegram": "Telegram",
-    "mail": "Почта"
+    "mail": "Почта",
+    "integrations": "Интеграции",
+    "admin": "Администрирование",
+    "partners": "Партнёры"
   },
   "dashboard": {
     "title": "Кабинет",

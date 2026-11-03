@@ -33,7 +33,10 @@
     "ai": "DI",
     "user": "Vartotojas",
     "telegram": "Telegram",
-    "mail": "El. paštas"
+    "mail": "El. paštas",
+    "integrations": "Integracijos",
+    "admin": "Administravimas",
+    "partners": "Partneriai"
   },
   "dashboard": {
     "title": "Kabinetas",

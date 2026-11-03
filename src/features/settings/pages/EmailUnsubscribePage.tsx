@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { unsubscribeEmailContact } from '@/features/settings/api/emailContacts'
 
 export function EmailUnsubscribePage() {
+  const { t } = useTranslation('mail')
   const [params] = useSearchParams()
   const token = params.get('token') ?? ''
   const [state, setState] = useState<'loading' | 'done' | 'invalid'>('loading')
@@ -34,17 +36,16 @@ export function EmailUnsubscribePage() {
           <Spinner className="mx-auto h-6 w-6" />
         ) : state === 'done' ? (
           <>
-            <CardTitle>Laiškų atsisakyta</CardTitle>
+            <CardTitle>{t('unsubscribedTitle')}</CardTitle>
             <CardDescription className="mt-2">
-              Daugiau bendrų laiškų šiuo adresu nesiųsime. Vebinaro priminimas,
-              jei esate užsiregistravę į konkretų vebinarą, lieka atskiras.
+              {t('unsubscribedDescription')}
             </CardDescription>
           </>
         ) : (
           <>
-            <CardTitle>Nuoroda negalioja</CardTitle>
+            <CardTitle>{t('invalidTitle')}</CardTitle>
             <CardDescription className="mt-2">
-              Šia nuoroda atsisakyti laiškų nepavyko.
+              {t('invalidDescription')}
             </CardDescription>
           </>
         )}

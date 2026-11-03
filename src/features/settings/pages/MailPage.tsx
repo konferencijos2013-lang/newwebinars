@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { Mail } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -37,13 +38,8 @@ function providerLabel(provider: string) {
   return 'SMTP'
 }
 
-function statusLabel(status: EmailContact['status']) {
-  if (status === 'blocked') return 'Užblokuotas'
-  if (status === 'unsubscribed') return 'Atsisakė'
-  return 'Aktyvus'
-}
-
 export function MailPage() {
+  const { t } = useTranslation('mail')
   const accountState = useAccount()
   const [connections, setConnections] = useState<IntegrationConnection[]>([])
   const [connectionId, setConnectionId] = useState('')
@@ -149,8 +145,10 @@ export function MailPage() {
   async function send() {
     if (!connectionId) return
     const target =
-      audience === 'all' ? `${activeTotal} aktyviems` : `${selectedIds.length} pasirinktiems`
-    if (!window.confirm(`Išsiųsti šį laišką ${target}?`)) return
+      audience === 'all'
+        ? t('targetActive', { count: activeTotal })
+        : t('targetSelected', { count: selectedIds.length })
+    if (!window.confirm(t('confirmSend', { target }))) return
     setSending(true)
     setError(null)
     setNotice(null)
@@ -188,7 +186,7 @@ export function MailPage() {
   }
 
   async function remove(contact: EmailContact) {
-    if (!window.confirm(`Ištrinti ${contact.email}?`)) return
+    if (!window.confirm(t('confirmDelete', { email: contact.email }))) return
     setBusyId(contact.id)
     setError(null)
     try {
@@ -217,7 +215,7 @@ export function MailPage() {
       link.download = 'el-pasto-kontaktai.csv'
       link.click()
       URL.revokeObjectURL(url)
-      setNotice(`Eksportuota adresų: ${rows.length}.`)
+      setNotice(t('exported', { count: rows.length }))
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason))
     } finally {
@@ -235,7 +233,7 @@ export function MailPage() {
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email),
       )
       if (rows.length === 0) {
-        setError('CSV faile nėra el. pašto adresų.')
+        setError(t('csvEmpty'))
         return
       }
       let inserted = 0
@@ -250,9 +248,7 @@ export function MailPage() {
         updated += result.updated
         skipped += result.skipped
       }
-      setNotice(
-        `Importuota naujų: ${inserted}. Atnaujinta: ${updated}. Praleista: ${skipped}.`,
-      )
+      setNotice(t('imported', { inserted, updated, skipped }))
       setPage(0)
       await loadContacts()
     } catch (reason) {
@@ -272,7 +268,7 @@ export function MailPage() {
   if (!accountId) {
     return (
       <Card className="mx-auto max-w-3xl text-center">
-        <CardTitle>El. paštas nepasiekiamas</CardTitle>
+        <CardTitle>{t('unavailable')}</CardTitle>
       </Card>
     )
   }
@@ -293,34 +289,29 @@ export function MailPage() {
       <div>
         <h1 className="text-foreground flex items-center gap-2 text-2xl font-bold tracking-tight">
           <Mail className="h-6 w-6" />
-          El. paštas
+          {t('title')}
         </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Viena eilutė vienam adresui. Čia patenka vebinarų registracijos ir
-          importuota sena bazė. Laiškas išeina per prijungtą Brevo, Resend arba
-          SMTP, o gale pridedama atsisakymo nuoroda. Vebinaro priminimai lieka
-          atskiri.
-        </p>
+        <p className="text-muted-foreground mt-1 text-sm">{t('description')}</p>
       </div>
 
       {connections.length === 0 ? (
         <Card>
-          <CardTitle>Pašto tiekėjas neprijungtas</CardTitle>
+          <CardTitle>{t('noProviderTitle')}</CardTitle>
           <CardDescription className="mt-2">
-            Pirmiausia prijunkite Brevo, Resend arba SMTP.
+            {t('noProviderDescription')}
           </CardDescription>
           <Link
             className="bg-primary text-primary-foreground mt-4 inline-flex h-9 items-center rounded-md px-4 text-sm font-medium"
             to="/integrations"
           >
-            Atidaryti integracijas
+            {t('openIntegrations')}
           </Link>
         </Card>
       ) : (
         <Card>
-          <CardTitle>Siųsti laišką</CardTitle>
+          <CardTitle>{t('sendTitle')}</CardTitle>
           <label className="mt-4 block text-sm font-medium" htmlFor="mail-provider">
-            Tiekėjas
+            {t('provider')}
           </label>
           <select
             id="mail-provider"
@@ -340,7 +331,7 @@ export function MailPage() {
             ))}
           </select>
           <label className="mt-3 block text-sm font-medium" htmlFor="mail-subject">
-            Tema
+            {t('subject')}
           </label>
           <Input
             id="mail-subject"
@@ -354,7 +345,7 @@ export function MailPage() {
             }}
           />
           <label className="mt-3 block text-sm font-medium" htmlFor="mail-body">
-            Laiškas
+            {t('body')}
           </label>
           <Textarea
             id="mail-body"
@@ -375,7 +366,7 @@ export function MailPage() {
                 disabled={disabled || running}
                 onChange={() => setAudience('all')}
               />
-              Visiems aktyviems ({activeTotal})
+              {t('audienceAll', { count: activeTotal })}
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -384,7 +375,7 @@ export function MailPage() {
                 disabled={disabled || running}
                 onChange={() => setAudience('selected')}
               />
-              Pasirinktiems ({selectedIds.length})
+              {t('audienceSelected', { count: selectedIds.length })}
             </label>
           </div>
           <Button
@@ -400,23 +391,24 @@ export function MailPage() {
             isLoading={sending}
             onClick={() => void send()}
           >
-            Siųsti
+            {t('send')}
           </Button>
           {broadcast && (
             <div className="bg-muted/40 mt-4 rounded-lg p-3 text-sm">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-medium">
-                  {broadcast.status === 'completed'
-                    ? 'Siuntimas baigtas'
-                    : 'Vyksta siuntimas'}
+                  {broadcast.status === 'completed' ? t('finished') : t('running')}
                   : {broadcast.subject}
                 </span>
                 <span>{progress}%</span>
               </div>
               <p className="text-muted-foreground mt-2 text-xs">
-                Išsiųsta {broadcast.sent_count} iš {broadcast.recipient_count} ·
-                Nepavyko: {broadcast.failed_count} · Praleista:{' '}
-                {broadcast.blocked_count}
+                {t('stats', {
+                  sent: broadcast.sent_count,
+                  total: broadcast.recipient_count,
+                  failed: broadcast.failed_count,
+                  skipped: broadcast.blocked_count,
+                })}
               </p>
             </div>
           )}
@@ -424,9 +416,9 @@ export function MailPage() {
       )}
 
       <Card>
-        <CardTitle>Adresų bazė</CardTitle>
+        <CardTitle>{t('listTitle')}</CardTitle>
         <CardDescription className="mt-1">
-          Užblokuotas arba atsisakęs adresas bendro laiško nebegaus.
+          {t('listDescription')}
         </CardDescription>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <form
@@ -440,10 +432,10 @@ export function MailPage() {
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Ieškoti pagal el. paštą ar vardą"
+              placeholder={t('searchPlaceholder')}
             />
             <Button type="submit" variant="outline">
-              Ieškoti
+              {t('search')}
             </Button>
           </form>
           <Button
@@ -453,7 +445,7 @@ export function MailPage() {
             isLoading={exporting}
             onClick={() => void exportContacts()}
           >
-            Eksportuoti
+            {t('export')}
           </Button>
           <label>
             <input
@@ -474,30 +466,28 @@ export function MailPage() {
                   : 'hover:bg-muted cursor-pointer'
               }`}
             >
-              {importing ? 'Importuojama…' : 'Importuoti CSV'}
+              {importing ? t('importing') : t('import')}
             </span>
           </label>
         </div>
         <p className="text-muted-foreground mt-2 text-xs">
-          CSV stulpeliai: email, full_name. Užtenka ir vieno adreso eilutėje.
-          Iš viso: {total}.
+          {t('csvHint', { count: total })}
         </p>
         {notice && <p className="mt-3 text-sm text-green-700">{notice}</p>}
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         <div className="border-border mt-3 overflow-x-auto rounded-md border">
           {contacts.length === 0 ? (
             <p className="text-muted-foreground p-4 text-center text-sm">
-              Adresų dar nėra. Jie atsiras užsiregistravus į vebinarą arba
-              importavus CSV.
+              {t('empty')}
             </p>
           ) : (
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="text-muted-foreground">
                 <tr>
                   {audience === 'selected' && <th className="p-2" />}
-                  <th className="p-2 font-medium">Adresas</th>
-                  <th className="p-2 font-medium">Būsena</th>
-                  <th className="p-2 font-medium">Šaltinis</th>
+                  <th className="p-2 font-medium">{t('address')}</th>
+                  <th className="p-2 font-medium">{t('status')}</th>
+                  <th className="p-2 font-medium">{t('source')}</th>
                   <th className="p-2" />
                 </tr>
               </thead>
@@ -526,9 +516,11 @@ export function MailPage() {
                         <p className="text-muted-foreground">{contact.full_name}</p>
                       )}
                     </td>
-                    <td className="p-2">{statusLabel(contact.status)}</td>
+                    <td className="p-2">{t(contact.status)}</td>
                     <td className="p-2">
-                      {contact.source === 'import' ? 'Importas' : 'Registracija'}
+                      {contact.source === 'import'
+                        ? t('sourceImport')
+                        : t('sourceRegistration')}
                     </td>
                     <td className="p-2">
                       <div className="flex justify-end gap-2">
@@ -539,7 +531,7 @@ export function MailPage() {
                             disabled={disabled || busyId === contact.id}
                             onClick={() => void changeStatus(contact, 'blocked')}
                           >
-                            Užblokuoti
+                            {t('block')}
                           </Button>
                         ) : (
                           <Button
@@ -548,7 +540,7 @@ export function MailPage() {
                             disabled={disabled || busyId === contact.id}
                             onClick={() => void changeStatus(contact, 'active')}
                           >
-                            Leisti siųsti
+                            {t('allow')}
                           </Button>
                         )}
                         <Button
@@ -557,7 +549,7 @@ export function MailPage() {
                           disabled={disabled || busyId === contact.id}
                           onClick={() => void remove(contact)}
                         >
-                          Ištrinti
+                          {t('delete')}
                         </Button>
                       </div>
                     </td>
@@ -574,7 +566,7 @@ export function MailPage() {
             disabled={page === 0}
             onClick={() => setPage((current) => current - 1)}
           >
-            Ankstesnis
+            {t('previous')}
           </Button>
           <span className="text-muted-foreground text-xs">
             {page + 1} / {pageCount}
@@ -585,7 +577,7 @@ export function MailPage() {
             disabled={page + 1 >= pageCount}
             onClick={() => setPage((current) => current + 1)}
           >
-            Kitas
+            {t('next')}
           </Button>
         </div>
       </Card>

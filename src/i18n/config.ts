@@ -22,6 +22,7 @@ void i18n
       'recordings',
       'billing',
       'ai',
+      'mail',
     ],
     interpolation: {
       escapeValue: false,

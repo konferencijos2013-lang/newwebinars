@@ -33,7 +33,10 @@
     "ai": "AI",
     "user": "User",
     "telegram": "Telegram",
-    "mail": "Email"
+    "mail": "Email",
+    "integrations": "Integrations",
+    "admin": "Administration",
+    "partners": "Partners"
   },
   "dashboard": {
     "title": "Dashboard",
