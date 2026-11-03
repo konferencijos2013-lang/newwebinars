@@ -15,6 +15,7 @@ import {
   Bot,
   ShieldCheck,
   Link2,
+  Mail,
   Send,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -157,11 +158,18 @@ export function AppShell() {
             </>
           ) : null}
           {!supportView ? (
-            <SidebarNavLink
-              to={path('/telegram')}
-              icon={Send}
-              label={t('navigation.telegram')}
-            />
+            <>
+              <SidebarNavLink
+                to={path('/telegram')}
+                icon={Send}
+                label={t('navigation.telegram')}
+              />
+              <SidebarNavLink
+                to={path('/mail')}
+                icon={Mail}
+                label={t('navigation.mail')}
+              />
+            </>
           ) : null}
           {!supportView ? (
             <SidebarNavLink

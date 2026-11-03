@@ -32,7 +32,8 @@
     "settings": "Nustatymai",
     "ai": "DI",
     "user": "Vartotojas",
-    "telegram": "Telegram"
+    "telegram": "Telegram",
+    "mail": "El. paštas"
   },
   "dashboard": {
     "title": "Kabinetas",

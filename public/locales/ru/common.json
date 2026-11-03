@@ -32,7 +32,8 @@
     "settings": "Настройки",
     "ai": "AI",
     "user": "Пользователь",
-    "telegram": "Telegram"
+    "telegram": "Telegram",
+    "mail": "Почта"
   },
   "dashboard": {
     "title": "Кабинет",

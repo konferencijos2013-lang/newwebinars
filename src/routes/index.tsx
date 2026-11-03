@@ -33,6 +33,8 @@ import { BillingPage } from '@/features/billing/pages/BillingPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
 import { InviteAcceptPage } from '@/features/settings/pages/InviteAcceptPage'
 import { IntegrationsPage } from '@/features/settings/pages/IntegrationsPage'
+import { EmailUnsubscribePage } from '@/features/settings/pages/EmailUnsubscribePage'
+import { MailPage } from '@/features/settings/pages/MailPage'
 import { TelegramPage } from '@/features/settings/pages/TelegramPage'
 import { AffiliatePage } from '@/features/affiliate/pages/AffiliatePage'
 import { AnalyticsPage } from '@/features/analytics/pages/AnalyticsPage'
@@ -71,6 +73,7 @@ export function AppRoutes() {
         {/* Public webinar funnel pages (no marketing wrapper) */}
         <Route path="f/:slug/:path" element={<PublicFunnelPage />} />
         <Route path="pay/offer" element={<OfferPaymentReturnPage />} />
+        <Route path="email/unsubscribe" element={<EmailUnsubscribePage />} />
         <Route path="w/:slug" element={<PublicWebinarPage />} />
         <Route path="w/:slug/waiting-room" element={<WaitingRoomPage />} />
         <Route path="w/:slug/room" element={<WebinarRoomPage />} />
@@ -248,6 +251,7 @@ export function AppRoutes() {
           <Route path="invite/:token" element={<InviteAcceptPage />} />
           <Route path="integrations" element={<IntegrationsPage />} />
           <Route path="telegram" element={<TelegramPage />} />
+          <Route path="mail" element={<MailPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

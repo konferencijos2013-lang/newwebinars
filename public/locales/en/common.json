@@ -32,7 +32,8 @@
     "settings": "Settings",
     "ai": "AI",
     "user": "User",
-    "telegram": "Telegram"
+    "telegram": "Telegram",
+    "mail": "Email"
   },
   "dashboard": {
     "title": "Dashboard",
