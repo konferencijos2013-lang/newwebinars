@@ -14,10 +14,16 @@ import {
   createReminderRule,
   deleteReminderRule,
   fetchReminderRules,
-  STANDARD_REMINDERS,
   updateReminderRule,
   type ReminderRule,
 } from '@/features/webinars/api/reminders'
+import { updateWebinar } from '@/features/webinars/api/webinars'
+import {
+  normalizeMessageLanguage,
+  standardReminders,
+  translatedStandardReminder,
+  type MessageLanguage,
+} from '@/features/webinars/reminderTemplates'
 
 const DEFAULT_SUBJECT = 'Primename: {{webinar_title}} prasidės netrukus'
 const DEFAULT_BODY =
@@ -59,12 +65,14 @@ export function ReminderRulesCard({
   scheduledAt,
   durationMinutes,
   followBroadcast = false,
+  messageLanguage = 'lt',
 }: {
   webinarId: string
   accountId: string
   scheduledAt: string | null
   durationMinutes?: string | null
   followBroadcast?: boolean
+  messageLanguage?: MessageLanguage
 }) {
   const [rules, setRules] = useState<ReminderRule[]>([])
   const [connections, setConnections] = useState<IntegrationConnection[]>([])
@@ -73,6 +81,9 @@ export function ReminderRulesCard({
   const [adding, setAdding] = useState(false)
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [messageLanguageValue, setMessageLanguageValue] =
+    useState<MessageLanguage>(normalizeMessageLanguage(messageLanguage))
+  const [savingLanguage, setSavingLanguage] = useState(false)
   const [connectionId, setConnectionId] = useState('')
   const [channel, setChannel] = useState<'email' | 'manychat' | 'telegram'>(
     'email',
@@ -172,6 +183,44 @@ export function ReminderRulesCard({
     }
   }
 
+  async function changeMessageLanguage(next: MessageLanguage) {
+    if (next === messageLanguageValue) return
+    setSavingLanguage(true)
+    setError(null)
+    try {
+      await updateWebinar(webinarId, { language: next })
+      const changed: ReminderRule[] = []
+      for (const rule of rules) {
+        const translation = translatedStandardReminder(next, rule)
+        if (
+          !translation ||
+          (translation.subject === (rule.subject ?? '') &&
+            translation.body === (rule.body ?? ''))
+        ) {
+          continue
+        }
+        changed.push(
+          await updateReminderRule(rule.id, {
+            subject: translation.subject,
+            body: translation.body,
+          }),
+        )
+      }
+      if (changed.length > 0) {
+        setRules((current) =>
+          current.map(
+            (rule) => changed.find((item) => item.id === rule.id) ?? rule,
+          ),
+        )
+      }
+      setMessageLanguageValue(next)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason))
+    } finally {
+      setSavingLanguage(false)
+    }
+  }
+
   async function generateStandard() {
     const targets = [
       emailConnections[0]
@@ -195,7 +244,7 @@ export function ReminderRulesCard({
     try {
       const created: ReminderRule[] = []
       for (const target of targets) {
-        for (const reminder of STANDARD_REMINDERS) {
+        for (const reminder of standardReminders(messageLanguageValue)) {
           const exists = rules.some(
             (rule) =>
               rule.channel === target.channel &&
@@ -304,13 +353,33 @@ export function ReminderRulesCard({
               {followBroadcast
                 ? 'Laiškas po pradžios išsiunčiamas, kai paleidžiama vaizdo transliacija. Laiškai po vebinaro išsiunčiami, kai transliacija sustabdoma.'
                 : 'Laiškai po pradžios ir po pabaigos naudoja trukmę. Jei trukmės nėra, laiškas po pabaigos skaičiuojamas nuo pradžios.'}{' '}
+              Pranešimų kalba yra auditorijos kalba. Ekrano kalba jos nekeičia.
+              Ranka pataisyti tekstai lieka, o standartiniai perrašomi.{' '}
               Galite naudoti {'{{name}}'}, {'{{email}}'}, {'{{webinar_title}}'},{' '}
               {'{{webinar_link}}'}, {'{{public_webinar_link}}'}, {'{{offer_link}}'}{' '}
               ir {'{{next_session}}'}.
             </CardDescription>
           </div>
         </div>
-        {!adding && (
+        <div className="flex flex-col gap-3">
+          <div className="min-w-40 space-y-2">
+            <Label htmlFor="reminder-language">Pranešimų kalba</Label>
+            <Select
+              id="reminder-language"
+              value={messageLanguageValue}
+              disabled={savingLanguage}
+              onChange={(event) =>
+                void changeMessageLanguage(
+                  normalizeMessageLanguage(event.target.value),
+                )
+              }
+            >
+              <option value="lt">Lietuvių</option>
+              <option value="en">English</option>
+              <option value="ru">Русский</option>
+            </Select>
+          </div>
+          {!adding && (
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
@@ -325,7 +394,8 @@ export function ReminderRulesCard({
               Pridėti priminimą
             </Button>
           </div>
-        )}
+          )}
+        </div>
       </div>
 
       {!scheduledAt && (

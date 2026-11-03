@@ -11,6 +11,7 @@ export type CreateWebinarInput = {
   title: string
   slug: string
   type: 'live' | 'automated'
+  language?: 'lt' | 'en' | 'ru'
   description?: string | null
   scheduled_at?: string | null
   duration_minutes?: number | null

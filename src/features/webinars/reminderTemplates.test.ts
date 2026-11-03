@@ -1,0 +1,32 @@
+import { describe, expect, it } from 'vitest'
+import { translatedStandardReminder } from './reminderTemplates'
+
+describe('translatedStandardReminder', () => {
+  it('rewrites an untouched Lithuanian reminder into Russian', () => {
+    expect(
+      translatedStandardReminder('ru', {
+        timing: 'before_start',
+        minutes_before: 60,
+        audience: 'all',
+        channel: 'email',
+        subject: 'Po valandos: {{webinar_title}}',
+        body: 'Sveiki, {{name}},\n\n„{{webinar_title}}“ prasidės po valandos.\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
+      }),
+    ).toMatchObject({
+      subject: 'Через час: {{webinar_title}}',
+    })
+  })
+
+  it('leaves a hand-edited reminder unchanged', () => {
+    expect(
+      translatedStandardReminder('en', {
+        timing: 'before_start',
+        minutes_before: 60,
+        audience: 'all',
+        channel: 'email',
+        subject: 'Mano tema',
+        body: 'Mano tekstas',
+      }),
+    ).toBeNull()
+  })
+})

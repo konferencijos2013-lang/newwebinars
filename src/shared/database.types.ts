@@ -125,6 +125,7 @@ export interface Webinar {
   title: string
   description: string | null
   type: WebinarType
+  language: 'lt' | 'en' | 'ru'
   status: WebinarStatus
   scheduled_at: string | null
   duration_minutes: number | null

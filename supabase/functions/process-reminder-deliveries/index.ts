@@ -210,6 +210,7 @@ serve(async (req) => {
         timezone?: string | null
         session_starts_at?: string | null
         next_fixed_start?: string | null
+        language?: 'lt' | 'en' | 'ru' | null
       }
       const audience = ruleRow?.audience ?? 'all'
       const attended = context.attended === true
@@ -249,6 +250,7 @@ serve(async (req) => {
           timezone: context.timezone,
           sessionStartsAt: context.session_starts_at,
           nextFixedStart: context.next_fixed_start,
+          language: context.language,
         }) ?? ''
       if (audience === 'missed' && !nextSession) {
         await db.rpc('complete_reminder_delivery', {

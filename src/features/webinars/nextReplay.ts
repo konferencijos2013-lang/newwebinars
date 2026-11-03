@@ -1,12 +1,40 @@
-const WEEKDAYS = [
-  'pirmadienį',
-  'antradienį',
-  'trečiadienį',
-  'ketvirtadienį',
-  'penktadienį',
-  'šeštadienį',
-  'sekmadienį',
-]
+const WEEKDAYS = {
+  lt: [
+    'pirmadienį',
+    'antradienį',
+    'trečiadienį',
+    'ketvirtadienį',
+    'penktadienį',
+    'šeštadienį',
+    'sekmadienį',
+  ],
+  en: [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ],
+  ru: [
+    'в понедельник',
+    'во вторник',
+    'в среду',
+    'в четверг',
+    'в пятницу',
+    'в субботу',
+    'в воскресенье',
+  ],
+} as const
+
+const TOMORROW = {
+  lt: 'rytoj',
+  en: 'tomorrow',
+  ru: 'завтра',
+} as const
+
+export type ReplayLanguage = keyof typeof TOMORROW
 
 const WEEKDAY_INDEX: Record<string, number> = {
   Mon: 1,
@@ -26,6 +54,7 @@ export type NextReplayInput = {
   timezone?: string | null
   sessionStartsAt?: string | null
   nextFixedStart?: string | null
+  language?: ReplayLanguage | null
 }
 
 function zonedParts(date: Date, timeZone: string) {
@@ -56,7 +85,12 @@ function clockOf(date: Date, timeZone: string) {
   return `${parts.hour}:${parts.minute}`
 }
 
-function formatFixed(value: string, sessionStartsAt: string | null | undefined, timeZone: string) {
+function formatFixed(
+  value: string,
+  sessionStartsAt: string | null | undefined,
+  timeZone: string,
+  language: ReplayLanguage,
+) {
   const when = new Date(value)
   if (Number.isNaN(when.getTime())) return null
   const parts = zonedParts(when, timeZone)
@@ -67,15 +101,16 @@ function formatFixed(value: string, sessionStartsAt: string | null | undefined, 
       new Date(Date.UTC(session.year, session.month - 1, session.day + 1, 12)),
       timeZone,
     )
-    if (parts.key === tomorrow.key) return `rytoj ${clock}`
+    if (parts.key === tomorrow.key) return `${TOMORROW[language]} ${clock}`
   }
   return `${parts.key} ${clock}`
 }
 
 export function formatNextReplay(input: NextReplayInput) {
   const timeZone = input.timezone || 'Europe/Vilnius'
+  const language = input.language === 'en' || input.language === 'ru' ? input.language : 'lt'
   if (input.nextFixedStart) {
-    return formatFixed(input.nextFixedStart, input.sessionStartsAt, timeZone)
+    return formatFixed(input.nextFixedStart, input.sessionStartsAt, timeZone, language)
   }
   if (input.webinarType !== 'automated' || !input.sessionStartsAt) return null
 
@@ -94,8 +129,8 @@ export function formatNextReplay(input: NextReplayInput) {
       timeZone,
     )
     if (!days.includes(probe.dow)) continue
-    if (offset === 1) return `rytoj ${clock}`
-    return `${WEEKDAYS[probe.dow - 1]} ${clock}`
+    if (offset === 1) return `${TOMORROW[language]} ${clock}`
+    return `${WEEKDAYS[language][probe.dow - 1]} ${clock}`
   }
   return null
 }

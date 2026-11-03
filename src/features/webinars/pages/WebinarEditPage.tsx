@@ -374,6 +374,7 @@ export function WebinarEditPage() {
         followBroadcast={
           webinar.type === 'live' && webinar.stream_provider !== 'youtube'
         }
+        messageLanguage={webinar.language ?? 'lt'}
       />
     </div>
   )

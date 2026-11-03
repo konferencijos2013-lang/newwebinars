@@ -28,6 +28,29 @@ describe('formatNextReplay', () => {
     ).toBe('rytoj 20:30')
   })
 
+  it('names the next time in the webinar language', () => {
+    expect(
+      formatNextReplay({
+        webinarType: 'automated',
+        scheduleType: 'recurring',
+        daysOfWeek: [3],
+        time: '20:30',
+        sessionStartsAt: session,
+        timezone: 'Europe/Vilnius',
+        language: 'en',
+      }),
+    ).toBe('Wednesday 20:30')
+    expect(
+      formatNextReplay({
+        webinarType: 'automated',
+        scheduleType: 'just_in_time',
+        sessionStartsAt: session,
+        timezone: 'Europe/Vilnius',
+        language: 'ru',
+      }),
+    ).toBe('завтра 20:30')
+  })
+
   it('uses the next scheduled weekday when the webinar does not run every day', () => {
     expect(
       formatNextReplay({
