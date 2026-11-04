@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Link2,
   Mail,
@@ -34,7 +35,10 @@ import {
   createContactTag,
   deleteContactTag,
   fetchContactTags,
+  listTelegramBroadcastContactIds,
   type ContactTag,
+  type TagCondition,
+  type TagMatch,
 } from '@/features/settings/api/contactTags'
 import { ContactTagFilters } from '@/features/settings/components/ContactTagControls'
 import { PaymentProviderCard } from '@/features/settings/components/PaymentProviderCard'
@@ -525,6 +529,7 @@ export function TelegramForm({
   disabled: boolean
   accountId: string
 }) {
+  const { t } = useTranslation('common')
   const initialConfig = connection?.config ?? {}
   const [credential, setCredential] = useState('')
   const [configuring, setConfiguring] = useState(false)
@@ -565,9 +570,10 @@ export function TelegramForm({
   const uploadedImagePathRef = useRef<string | null>(null)
   const [audience, setAudience] = useState<'selected' | 'all'>('selected')
   const [tags, setTags] = useState<ContactTag[]>([])
-  const [includeTagIds, setIncludeTagIds] = useState<string[]>([])
-  const [excludeTagIds, setExcludeTagIds] = useState<string[]>([])
+  const [tagConditions, setTagConditions] = useState<TagCondition[]>([])
+  const [tagMatch, setTagMatch] = useState<TagMatch>('all')
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([])
+  const [selectingContacts, setSelectingContacts] = useState(false)
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const [broadcast, setBroadcast] = useState<TelegramBroadcast | null>(null)
@@ -604,12 +610,12 @@ export function TelegramForm({
           pageSize,
           search: contactSearch,
           eligibleOnly: true,
-          includeTagIds,
-          excludeTagIds,
+          tagConditions,
+          tagMatch,
         }),
         fetchTelegramContactCount(accountId, connection.id, {
-          includeTagIds,
-          excludeTagIds,
+          tagConditions,
+          tagMatch,
         }),
       ])
       setContacts(result.contacts)
@@ -620,7 +626,7 @@ export function TelegramForm({
     } finally {
       setLoadingContacts(false)
     }
-  }, [accountId, connection, contactPage, contactSearch, includeTagIds, excludeTagIds])
+  }, [accountId, connection, contactPage, contactSearch, tagConditions, tagMatch])
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadContacts(), 0)
@@ -690,6 +696,37 @@ export function TelegramForm({
     setSendError(null)
   }
 
+  async function selectAllMatching() {
+    if (!connection) return
+    setSelectingContacts(true)
+    setSendError(null)
+    try {
+      const ids = await listTelegramBroadcastContactIds({
+        accountId,
+        connectionId: connection.id,
+        search: contactSearch,
+        tagConditions,
+        tagMatch,
+      })
+      if (ids.length === 0) {
+        setSendError(t('tags.selectNone'))
+        return
+      }
+      sendRequestKeyRef.current = null
+      setSelectedContactIds(ids)
+      setAudience('selected')
+    } catch (reason) {
+      setSendError(reason instanceof Error ? reason.message : String(reason))
+    } finally {
+      setSelectingContacts(false)
+    }
+  }
+
+  function clearSelection() {
+    sendRequestKeyRef.current = null
+    setSelectedContactIds([])
+  }
+
   function toggleContact(contactId: string) {
     sendRequestKeyRef.current = null
     setSelectedContactIds((current) =>
@@ -743,8 +780,8 @@ export function TelegramForm({
         imagePath,
         scheduledFor,
         contactIds: audience === 'selected' ? selectedContactIds : undefined,
-        includeTagIds,
-        excludeTagIds,
+        tagConditions,
+        tagMatch,
       })
       setBroadcast(created)
       setBroadcasts((current) => [created, ...current].slice(0, 20))
@@ -1023,14 +1060,14 @@ export function TelegramForm({
           </div>
           <ContactTagFilters
             tags={tags}
-            includeIds={includeTagIds}
-            excludeIds={excludeTagIds}
+            conditions={tagConditions}
+            match={tagMatch}
             disabled={disabled || broadcastActive}
-            onChange={(includeIds, excludeIds) => {
+            onChange={(conditions, match) => {
               sendRequestKeyRef.current = null
               setContactPage(0)
-              setIncludeTagIds(includeIds)
-              setExcludeTagIds(excludeIds)
+              setTagConditions(conditions)
+              setTagMatch(match)
             }}
             onCreate={async (name) => {
               const created = await createContactTag(accountId, name)
@@ -1041,10 +1078,54 @@ export function TelegramForm({
             onDelete={async (tag) => {
               await deleteContactTag(tag.id)
               setTags((current) => current.filter((item) => item.id !== tag.id))
-              setIncludeTagIds((current) => current.filter((id) => id !== tag.id))
-              setExcludeTagIds((current) => current.filter((id) => id !== tag.id))
+              setTagConditions((current) =>
+                current.filter((item) => item.tagId !== tag.id),
+              )
             }}
           />
+          <form
+            className="mt-3 flex gap-2"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setContactPage(0)
+              setContactSearch(searchInput)
+            }}
+          >
+            <Input
+              value={searchInput}
+              disabled={disabled || broadcastActive}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder="Ieškoti pagal vardą, @username ar Telegram ID"
+            />
+            <Button type="submit" variant="outline">
+              Ieškoti
+            </Button>
+          </form>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={
+                disabled ||
+                broadcastActive ||
+                selectingContacts ||
+                !connection ||
+                contactTotal === 0
+              }
+              isLoading={selectingContacts}
+              onClick={() => void selectAllMatching()}
+            >
+              {t('tags.selectAll')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={disabled || broadcastActive || selectedContactIds.length === 0}
+              onClick={clearSelection}
+            >
+              {t('tags.clearSelection')}
+            </Button>
+          </div>
           <div className="mt-3 flex flex-wrap gap-4 text-sm">
             <label className="flex cursor-pointer items-center gap-2">
               <input
@@ -1073,24 +1154,6 @@ export function TelegramForm({
           </div>
           {audience === 'selected' && (
             <>
-              <form
-                className="mt-3 flex gap-2"
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  setContactPage(0)
-                  setContactSearch(searchInput)
-                }}
-              >
-                <Input
-                  value={searchInput}
-                  disabled={disabled || broadcastActive}
-                  onChange={(event) => setSearchInput(event.target.value)}
-                  placeholder="Ieškoti pagal vardą, @username ar Telegram ID"
-                />
-                <Button type="submit" variant="outline">
-                  Ieškoti
-                </Button>
-              </form>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-medium">
                   Pasirinkta: {selectedContactIds.length} · Rasta:{' '}
@@ -1181,7 +1244,7 @@ export function TelegramForm({
               sending ||
               broadcastActive ||
               !message.trim() ||
-              eligibleContactTotal === 0 ||
+              (audience === 'all' && eligibleContactTotal === 0) ||
               (audience === 'selected' && selectedContactIds.length === 0)
             }
             isLoading={sending}

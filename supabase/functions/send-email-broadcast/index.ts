@@ -143,16 +143,26 @@ async function sendSmtp(
   })
 }
 
-function uuidList(value: unknown) {
-  if (value == null) return null
-  if (!Array.isArray(value)) return 'invalid' as const
-  if (value.length === 0) return null
-  if (
-    value.length > 20 ||
-    value.some((id) => typeof id !== 'string' || !UUID_PATTERN.test(id))
-  )
-    return 'invalid' as const
-  return [...new Set(value)]
+function tagQuery(payload: Record<string, unknown>) {
+  const raw = payload.tag_conditions
+  if (raw == null || (Array.isArray(raw) && raw.length === 0)) return null
+  const match = payload.tag_match
+  if (!Array.isArray(raw) || raw.length > 20) return 'invalid' as const
+  if (match !== 'all' && match !== 'any') return 'invalid' as const
+  const seen = new Set<string>()
+  const conditions: Array<{ tag_id: string; present: boolean }> = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') return 'invalid' as const
+    const tagId = (item as { tag_id?: unknown }).tag_id
+    const present = (item as { present?: unknown }).present
+    if (typeof tagId !== 'string' || !UUID_PATTERN.test(tagId))
+      return 'invalid' as const
+    if (typeof present !== 'boolean') return 'invalid' as const
+    if (seen.has(tagId)) return 'invalid' as const
+    seen.add(tagId)
+    conditions.push({ tag_id: tagId, present })
+  }
+  return { conditions, match }
 }
 
 const BROADCAST_COLUMNS =
@@ -197,10 +207,8 @@ serve(async (req) => {
     const audience = payload.audience
     const requestKey = payload.request_key
     const contactIds = payload.contact_ids
-    const includeTagIds = uuidList(payload.include_tag_ids)
-    const excludeTagIds = uuidList(payload.exclude_tag_ids)
-    if (includeTagIds === 'invalid' || excludeTagIds === 'invalid')
-      return json({ error: 'Invalid tags' }, 400)
+    const tags = tagQuery(payload)
+    if (tags === 'invalid') return json({ error: 'Invalid tags' }, 400)
     if (typeof connectionId !== 'string' || !UUID_PATTERN.test(connectionId))
       return json({ error: 'Invalid email connection' }, 400)
     if (typeof requestKey !== 'string' || !UUID_PATTERN.test(requestKey))
@@ -250,8 +258,8 @@ serve(async (req) => {
         p_request_key: requestKey,
         p_contact_ids:
           audience === 'selected' ? [...new Set(contactIds as string[])] : null,
-        p_include_tag_ids: audience === 'all' ? includeTagIds : null,
-        p_exclude_tag_ids: audience === 'all' ? excludeTagIds : null,
+        p_tag_conditions: audience === 'all' ? tags?.conditions ?? null : null,
+        p_tag_match: audience === 'all' ? tags?.match ?? 'all' : 'all',
       },
     )
     if (enqueueError || !broadcastId)

@@ -21,6 +21,8 @@ import {
   fetchContactTags,
   setContactTag,
   type ContactTag,
+  type TagCondition,
+  type TagMatch,
 } from '@/features/settings/api/contactTags'
 import {
   ContactTagFilters,
@@ -60,8 +62,8 @@ export function TelegramContactsPanel({
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [tags, setTags] = useState<ContactTag[]>([])
-  const [includeTagIds, setIncludeTagIds] = useState<string[]>([])
-  const [excludeTagIds, setExcludeTagIds] = useState<string[]>([])
+  const [tagConditions, setTagConditions] = useState<TagCondition[]>([])
+  const [tagMatch, setTagMatch] = useState<TagMatch>('all')
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
@@ -79,8 +81,8 @@ export function TelegramContactsPanel({
         page,
         pageSize: PAGE_SIZE,
         search,
-        includeTagIds,
-        excludeTagIds,
+        tagConditions,
+        tagMatch,
       })
       setContacts(result.contacts)
       setTotal(result.total)
@@ -89,7 +91,7 @@ export function TelegramContactsPanel({
     } finally {
       setLoading(false)
     }
-  }, [accountId, connectionId, page, search, includeTagIds, excludeTagIds])
+  }, [accountId, connectionId, page, search, tagConditions, tagMatch])
 
   useEffect(() => {
     void load()
@@ -212,13 +214,13 @@ export function TelegramContactsPanel({
         </CardDescription>
         <ContactTagFilters
           tags={tags}
-          includeIds={includeTagIds}
-          excludeIds={excludeTagIds}
+          conditions={tagConditions}
+          match={tagMatch}
           disabled={disabled}
-          onChange={(includeIds, excludeIds) => {
+          onChange={(conditions, match) => {
             setPage(0)
-            setIncludeTagIds(includeIds)
-            setExcludeTagIds(excludeIds)
+            setTagConditions(conditions)
+            setTagMatch(match)
           }}
           onCreate={async (name) => {
             const created = await createContactTag(accountId, name)
@@ -229,8 +231,9 @@ export function TelegramContactsPanel({
           onDelete={async (tag) => {
             await deleteContactTag(tag.id)
             setTags((current) => current.filter((item) => item.id !== tag.id))
-            setIncludeTagIds((current) => current.filter((id) => id !== tag.id))
-            setExcludeTagIds((current) => current.filter((id) => id !== tag.id))
+            setTagConditions((current) =>
+              current.filter((item) => item.tagId !== tag.id),
+            )
             setContacts((current) =>
               current.map((contact) => ({
                 ...contact,

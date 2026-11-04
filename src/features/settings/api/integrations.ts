@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase'
-import { searchTelegramContacts } from '@/features/settings/api/contactTags'
+import {
+  searchTelegramContacts,
+  tagConditionsPayload,
+  type TagCondition,
+  type TagMatch,
+} from '@/features/settings/api/contactTags'
 
 export type IntegrationProvider =
   | 'brevo'
@@ -136,8 +141,8 @@ export async function fetchTelegramContacts(input: {
   pageSize?: number
   search?: string
   eligibleOnly?: boolean
-  includeTagIds?: string[]
-  excludeTagIds?: string[]
+  tagConditions?: TagCondition[]
+  tagMatch?: TagMatch
 }): Promise<TelegramContactPage & { eligible: number }> {
   const page = Math.max(0, input.page ?? 0)
   const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
@@ -154,13 +159,13 @@ export async function fetchTelegramContacts(input: {
 export async function fetchTelegramContactCount(
   accountId: string,
   connectionId: string,
-  tags?: { includeTagIds?: string[]; excludeTagIds?: string[] },
+  tags?: { tagConditions?: TagCondition[]; tagMatch?: TagMatch },
 ) {
   const result = await searchTelegramContacts({
     accountId,
     connectionId,
-    includeTagIds: tags?.includeTagIds,
-    excludeTagIds: tags?.excludeTagIds,
+    tagConditions: tags?.tagConditions,
+    tagMatch: tags?.tagMatch,
     pageSize: 1,
   })
   return result.eligible
@@ -222,8 +227,8 @@ export async function createTelegramBroadcast(input: {
   message: string
   audience: 'all' | 'selected'
   contactIds?: string[]
-  includeTagIds?: string[]
-  excludeTagIds?: string[]
+  tagConditions?: TagCondition[]
+  tagMatch?: TagMatch
   requestKey: string
   imagePath?: string | null
   scheduledFor?: string | null
@@ -237,8 +242,11 @@ export async function createTelegramBroadcast(input: {
     image_path: input.imagePath ?? null,
     scheduled_for: input.scheduledFor ?? null,
     contact_ids: input.audience === 'selected' ? input.contactIds : undefined,
-    include_tag_ids: input.audience === 'all' ? input.includeTagIds ?? [] : [],
-    exclude_tag_ids: input.audience === 'all' ? input.excludeTagIds ?? [] : [],
+    tag_conditions:
+      input.audience === 'all'
+        ? tagConditionsPayload(input.tagConditions) ?? []
+        : [],
+    tag_match: input.audience === 'all' ? input.tagMatch ?? 'all' : 'all',
   })
   return result.broadcast
 }

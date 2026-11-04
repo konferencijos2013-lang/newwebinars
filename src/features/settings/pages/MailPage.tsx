@@ -23,8 +23,11 @@ import {
   createContactTag,
   deleteContactTag,
   fetchContactTags,
+  listEmailBroadcastContactIds,
   setContactTag,
   type ContactTag,
+  type TagCondition,
+  type TagMatch,
 } from '@/features/settings/api/contactTags'
 import {
   ContactTagFilters,
@@ -50,6 +53,7 @@ function providerLabel(provider: string) {
 
 export function MailPage() {
   const { t } = useTranslation('mail')
+  const { t: tCommon } = useTranslation('common')
   const accountState = useAccount()
   const [connections, setConnections] = useState<IntegrationConnection[]>([])
   const [connectionId, setConnectionId] = useState('')
@@ -60,9 +64,10 @@ export function MailPage() {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [tags, setTags] = useState<ContactTag[]>([])
-  const [includeTagIds, setIncludeTagIds] = useState<string[]>([])
-  const [excludeTagIds, setExcludeTagIds] = useState<string[]>([])
+  const [tagConditions, setTagConditions] = useState<TagCondition[]>([])
+  const [tagMatch, setTagMatch] = useState<TagMatch>('all')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [selecting, setSelecting] = useState(false)
   const [audience, setAudience] = useState<'all' | 'selected'>('all')
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
@@ -91,13 +96,13 @@ export function MailPage() {
       page,
       pageSize: PAGE_SIZE,
       search,
-      includeTagIds,
-      excludeTagIds,
+      tagConditions,
+      tagMatch,
     })
     setContacts(result.contacts)
     setTotal(result.total)
     setActiveTotal(result.active)
-  }, [accountId, page, search, includeTagIds, excludeTagIds])
+  }, [accountId, page, search, tagConditions, tagMatch])
 
   useEffect(() => {
     if (!accountId) return
@@ -174,8 +179,8 @@ export function MailPage() {
         message,
         audience,
         contactIds: audience === 'selected' ? selectedIds : undefined,
-        includeTagIds,
-        excludeTagIds,
+        tagConditions,
+        tagMatch,
         requestKey: requestKeyRef.current,
       })
       requestKeyRef.current = null
@@ -214,6 +219,36 @@ export function MailPage() {
     } finally {
       setBusyId(null)
     }
+  }
+
+  async function selectAllMatching() {
+    if (!accountId) return
+    setSelecting(true)
+    setError(null)
+    try {
+      const ids = await listEmailBroadcastContactIds({
+        accountId,
+        search,
+        tagConditions,
+        tagMatch,
+      })
+      if (ids.length === 0) {
+        setError(tCommon('tags.selectNone'))
+        return
+      }
+      requestKeyRef.current = null
+      setSelectedIds(ids)
+      setAudience('selected')
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason))
+    } finally {
+      setSelecting(false)
+    }
+  }
+
+  function clearSelection() {
+    requestKeyRef.current = null
+    setSelectedIds([])
   }
 
   async function exportContacts() {
@@ -376,14 +411,14 @@ export function MailPage() {
           />
           <ContactTagFilters
             tags={tags}
-            includeIds={includeTagIds}
-            excludeIds={excludeTagIds}
+            conditions={tagConditions}
+            match={tagMatch}
             disabled={disabled || running}
-            onChange={(includeIds, excludeIds) => {
+            onChange={(conditions, match) => {
               requestKeyRef.current = null
               setPage(0)
-              setIncludeTagIds(includeIds)
-              setExcludeTagIds(excludeIds)
+              setTagConditions(conditions)
+              setTagMatch(match)
             }}
             onCreate={async (name) => {
               const created = await createContactTag(accountId, name)
@@ -394,8 +429,9 @@ export function MailPage() {
             onDelete={async (tag) => {
               await deleteContactTag(tag.id)
               setTags((current) => current.filter((item) => item.id !== tag.id))
-              setIncludeTagIds((current) => current.filter((id) => id !== tag.id))
-              setExcludeTagIds((current) => current.filter((id) => id !== tag.id))
+              setTagConditions((current) =>
+                current.filter((item) => item.tagId !== tag.id),
+              )
               setContacts((current) =>
                 current.map((contact) => ({
                   ...contact,
@@ -484,6 +520,23 @@ export function MailPage() {
               {t('search')}
             </Button>
           </form>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={disabled || running || selecting || total === 0}
+            isLoading={selecting}
+            onClick={() => void selectAllMatching()}
+          >
+            {tCommon('tags.selectAll')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={disabled || running || selectedIds.length === 0}
+            onClick={clearSelection}
+          >
+            {tCommon('tags.clearSelection')}
+          </Button>
           <Button
             type="button"
             variant="outline"

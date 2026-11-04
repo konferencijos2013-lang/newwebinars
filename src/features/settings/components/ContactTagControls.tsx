@@ -1,31 +1,47 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import type { ContactTag } from '@/features/settings/api/contactTags'
+import type {
+  ContactTag,
+  TagCondition,
+  TagMatch,
+} from '@/features/settings/api/contactTags'
 
-function toggle(ids: string[], id: string) {
-  return ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id]
+function setCondition(
+  conditions: TagCondition[],
+  tagId: string,
+  present: boolean,
+) {
+  const current = conditions.find((item) => item.tagId === tagId)
+  if (current?.present === present) {
+    return conditions.filter((item) => item.tagId !== tagId)
+  }
+  return [
+    ...conditions.filter((item) => item.tagId !== tagId),
+    { tagId, present },
+  ]
 }
 
 export function ContactTagFilters({
   tags,
-  includeIds,
-  excludeIds,
+  conditions,
+  match,
   disabled,
   onChange,
   onCreate,
   onDelete,
 }: {
   tags: ContactTag[]
-  includeIds: string[]
-  excludeIds: string[]
+  conditions: TagCondition[]
+  match: TagMatch
   disabled: boolean
-  onChange: (includeIds: string[], excludeIds: string[]) => void
+  onChange: (conditions: TagCondition[], match: TagMatch) => void
   onCreate: (name: string) => Promise<void>
   onDelete: (tag: ContactTag) => Promise<void>
 }) {
   const { t } = useTranslation('common')
+  const matchName = useId()
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -43,6 +59,34 @@ export function ContactTagFilters({
 
   return (
     <div className="mt-3 space-y-3">
+      {tags.length > 0 && (
+        <div>
+          <p className="text-sm font-medium">{t('tags.match')}</p>
+          <div className="mt-1 flex flex-wrap gap-4 text-sm">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name={matchName}
+                checked={match === 'all'}
+                disabled={disabled}
+                onChange={() => onChange(conditions, 'all')}
+              />
+              {t('tags.matchAll')}
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name={matchName}
+                checked={match === 'any'}
+                disabled={disabled}
+                onChange={() => onChange(conditions, 'any')}
+              />
+              {t('tags.matchAny')}
+            </label>
+          </div>
+          <p className="text-muted-foreground mt-1 text-xs">{t('tags.matchHint')}</p>
+        </div>
+      )}
       <div>
         <p className="text-sm font-medium">{t('tags.has')}</p>
         <p className="text-muted-foreground text-xs">{t('tags.hasHint')}</p>
@@ -51,7 +95,9 @@ export function ContactTagFilters({
             <span className="text-muted-foreground text-xs">{t('tags.none')}</span>
           ) : (
             tags.map((tag) => {
-              const selected = includeIds.includes(tag.id)
+              const selected = conditions.some(
+                (item) => item.tagId === tag.id && item.present,
+              )
               return (
                 <button
                   key={tag.id}
@@ -63,10 +109,7 @@ export function ContactTagFilters({
                       : 'border-border'
                   }`}
                   onClick={() =>
-                    onChange(
-                      toggle(includeIds, tag.id),
-                      excludeIds.filter((id) => id !== tag.id),
-                    )
+                    onChange(setCondition(conditions, tag.id, true), match)
                   }
                 >
                   {tag.name}
@@ -81,7 +124,9 @@ export function ContactTagFilters({
         <p className="text-muted-foreground text-xs">{t('tags.lacksHint')}</p>
         <div className="mt-1 flex flex-wrap gap-1">
           {tags.map((tag) => {
-            const selected = excludeIds.includes(tag.id)
+            const selected = conditions.some(
+              (item) => item.tagId === tag.id && !item.present,
+            )
             return (
               <button
                 key={tag.id}
@@ -93,10 +138,7 @@ export function ContactTagFilters({
                     : 'border-border'
                 }`}
                 onClick={() =>
-                  onChange(
-                    includeIds.filter((id) => id !== tag.id),
-                    toggle(excludeIds, tag.id),
-                  )
+                  onChange(setCondition(conditions, tag.id, false), match)
                 }
               >
                 {tag.name}

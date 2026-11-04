@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase'
-import { searchEmailContacts } from '@/features/settings/api/contactTags'
+import {
+  searchEmailContacts,
+  tagConditionsPayload,
+  type TagCondition,
+  type TagMatch,
+} from '@/features/settings/api/contactTags'
 
 export interface EmailContact {
   id: string
@@ -28,8 +33,8 @@ export async function fetchEmailContacts(input: {
   page?: number
   pageSize?: number
   search?: string
-  includeTagIds?: string[]
-  excludeTagIds?: string[]
+  tagConditions?: TagCondition[]
+  tagMatch?: TagMatch
 }) {
   const page = Math.max(0, input.page ?? 0)
   const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
@@ -120,8 +125,8 @@ export async function createEmailBroadcast(input: {
   message: string
   audience: 'all' | 'selected'
   contactIds?: string[]
-  includeTagIds?: string[]
-  excludeTagIds?: string[]
+  tagConditions?: TagCondition[]
+  tagMatch?: TagMatch
   requestKey: string
 }) {
   const { data, error } = await supabase.functions.invoke('send-email-broadcast', {
@@ -133,10 +138,11 @@ export async function createEmailBroadcast(input: {
       audience: input.audience,
       request_key: input.requestKey,
       contact_ids: input.audience === 'selected' ? input.contactIds : undefined,
-      include_tag_ids:
-        input.audience === 'all' ? input.includeTagIds ?? [] : [],
-      exclude_tag_ids:
-        input.audience === 'all' ? input.excludeTagIds ?? [] : [],
+      tag_conditions:
+        input.audience === 'all'
+          ? tagConditionsPayload(input.tagConditions) ?? []
+          : [],
+      tag_match: input.audience === 'all' ? input.tagMatch ?? 'all' : 'all',
     },
   })
   if (error) {

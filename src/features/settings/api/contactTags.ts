@@ -46,6 +46,21 @@ export async function setContactTag(input: {
   if (error) throw error
 }
 
+export interface TagCondition {
+  tagId: string
+  present: boolean
+}
+
+export type TagMatch = 'all' | 'any'
+
+export function tagConditionsPayload(conditions: TagCondition[] | undefined) {
+  if (!conditions?.length) return null
+  return conditions.map((item) => ({
+    tag_id: item.tagId,
+    present: item.present,
+  }))
+}
+
 export interface TaggedContactPage<T> {
   contacts: T[]
   total: number
@@ -55,8 +70,8 @@ export interface TaggedContactPage<T> {
 export async function searchEmailContacts(input: {
   accountId: string
   search?: string
-  includeTagIds?: string[]
-  excludeTagIds?: string[]
+  tagConditions?: TagCondition[]
+  tagMatch?: TagMatch
   page?: number
   pageSize?: number
 }) {
@@ -65,8 +80,8 @@ export async function searchEmailContacts(input: {
   const { data, error } = await supabase.rpc('search_email_contacts', {
     p_account_id: input.accountId,
     p_search: input.search ?? '',
-    p_include_tag_ids: input.includeTagIds?.length ? input.includeTagIds : null,
-    p_exclude_tag_ids: input.excludeTagIds?.length ? input.excludeTagIds : null,
+    p_tag_conditions: tagConditionsPayload(input.tagConditions),
+    p_tag_match: input.tagMatch ?? 'all',
     p_limit: pageSize,
     p_offset: page * pageSize,
   })
@@ -90,8 +105,8 @@ export async function searchTelegramContacts(input: {
   accountId: string
   connectionId: string
   search?: string
-  includeTagIds?: string[]
-  excludeTagIds?: string[]
+  tagConditions?: TagCondition[]
+  tagMatch?: TagMatch
   eligibleOnly?: boolean
   page?: number
   pageSize?: number
@@ -102,8 +117,8 @@ export async function searchTelegramContacts(input: {
     p_account_id: input.accountId,
     p_connection_id: input.connectionId,
     p_search: input.search ?? '',
-    p_include_tag_ids: input.includeTagIds?.length ? input.includeTagIds : null,
-    p_exclude_tag_ids: input.excludeTagIds?.length ? input.excludeTagIds : null,
+    p_tag_conditions: tagConditionsPayload(input.tagConditions),
+    p_tag_match: input.tagMatch ?? 'all',
     p_eligible_only: input.eligibleOnly ?? false,
     p_limit: pageSize,
     p_offset: page * pageSize,
@@ -122,4 +137,41 @@ export async function searchTelegramContacts(input: {
     total: result.total ?? 0,
     eligible: result.eligible ?? 0,
   }
+}
+
+export async function listEmailBroadcastContactIds(input: {
+  accountId: string
+  search?: string
+  tagConditions?: TagCondition[]
+  tagMatch?: TagMatch
+}) {
+  const { data, error } = await supabase.rpc('list_email_broadcast_contact_ids', {
+    p_account_id: input.accountId,
+    p_search: input.search ?? '',
+    p_tag_conditions: tagConditionsPayload(input.tagConditions),
+    p_tag_match: input.tagMatch ?? 'all',
+  })
+  if (error) throw error
+  return (data ?? []) as string[]
+}
+
+export async function listTelegramBroadcastContactIds(input: {
+  accountId: string
+  connectionId: string
+  search?: string
+  tagConditions?: TagCondition[]
+  tagMatch?: TagMatch
+}) {
+  const { data, error } = await supabase.rpc(
+    'list_telegram_broadcast_contact_ids',
+    {
+      p_account_id: input.accountId,
+      p_connection_id: input.connectionId,
+      p_search: input.search ?? '',
+      p_tag_conditions: tagConditionsPayload(input.tagConditions),
+      p_tag_match: input.tagMatch ?? 'all',
+    },
+  )
+  if (error) throw error
+  return (data ?? []) as string[]
 }
