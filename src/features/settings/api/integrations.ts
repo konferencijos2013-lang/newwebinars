@@ -143,7 +143,7 @@ export async function fetchTelegramContacts(input: {
   const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
   const result = await searchTelegramContacts({ ...input, page, pageSize })
   return {
-    contacts: result.contacts as TelegramContact[],
+    contacts: result.contacts as unknown as TelegramContact[],
     total: result.total,
     eligible: result.eligible,
     page,

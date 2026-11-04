@@ -35,7 +35,7 @@ export async function fetchEmailContacts(input: {
   const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
   const result = await searchEmailContacts({ ...input, page, pageSize })
   return {
-    contacts: result.contacts as EmailContact[],
+    contacts: result.contacts as unknown as EmailContact[],
     total: result.total,
     active: result.active,
     page,
