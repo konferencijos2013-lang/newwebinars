@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 import { localizedPath } from '@/i18n/localePath'
 import { Eye, X } from 'lucide-react'
@@ -66,6 +67,17 @@ export function AppShell() {
   const supportAccountLabel = supportView
     ? (accountState.account?.name ?? 'Stebima paskyra')
     : null
+
+  useEffect(() => {
+    document.title = 'NewWebinars'
+    let robots = document.head.querySelector('meta[name="robots"]')
+    if (!(robots instanceof HTMLMetaElement)) {
+      robots = document.createElement('meta')
+      robots.setAttribute('name', 'robots')
+      document.head.appendChild(robots)
+    }
+    robots.setAttribute('content', 'noindex,nofollow')
+  }, [])
 
   async function handleSignOut() {
     // A local sign-out is deterministic even when the global Supabase request

@@ -1,2 +1,72 @@
 User-agent: *
-Disallow:
+Allow: /
+
+Disallow: /dashboard
+Disallow: /webinars
+Disallow: /funnels
+Disallow: /recordings
+Disallow: /analytics
+Disallow: /affiliate
+Disallow: /ai
+Disallow: /admin
+Disallow: /billing
+Disallow: /settings
+Disallow: /invite
+Disallow: /integrations
+Disallow: /telegram
+Disallow: /mail
+Disallow: /support
+Disallow: /auth
+Disallow: /lt/dashboard
+Disallow: /lt/webinars
+Disallow: /lt/funnels
+Disallow: /lt/recordings
+Disallow: /lt/analytics
+Disallow: /lt/affiliate
+Disallow: /lt/ai
+Disallow: /lt/admin
+Disallow: /lt/billing
+Disallow: /lt/settings
+Disallow: /lt/invite
+Disallow: /lt/integrations
+Disallow: /lt/telegram
+Disallow: /lt/mail
+Disallow: /lt/support
+Disallow: /lt/auth
+Disallow: /ru/dashboard
+Disallow: /ru/webinars
+Disallow: /ru/funnels
+Disallow: /ru/recordings
+Disallow: /ru/analytics
+Disallow: /ru/affiliate
+Disallow: /ru/ai
+Disallow: /ru/admin
+Disallow: /ru/billing
+Disallow: /ru/settings
+Disallow: /ru/invite
+Disallow: /ru/integrations
+Disallow: /ru/telegram
+Disallow: /ru/mail
+Disallow: /ru/support
+Disallow: /ru/auth
+
+# Public product pages may be read by search and AI crawlers.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://newwebinars.com/sitemap.xml
