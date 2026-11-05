@@ -10,7 +10,7 @@ describe('translatedStandardReminder', () => {
         audience: 'all',
         channel: 'email',
         subject: 'Po valandos: {{webinar_title}}',
-        body: 'Sveiki, {{name}},\n\n„{{webinar_title}}“ prasidės po valandos.\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
+        body: 'Sveiki, {{name}},\n\n„{{webinar_title}}“ prasidės po valandos.\n\nPradžia: {{starts_at}}\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
       }),
     ).toMatchObject({
       subject: 'Через час: {{webinar_title}}',

@@ -28,11 +28,11 @@ import {
 
 const DEFAULT_SUBJECT = 'Primename: {{webinar_title}} prasidės netrukus'
 const DEFAULT_BODY =
-  'Sveiki, {{name}},\n\nprimename, kad webinaras „{{webinar_title}}“ prasidės netrukus.\n\nPrisijungti prie webinaro:\n{{webinar_link}}\n\nIki pasimatymo!'
+  'Sveiki, {{name}},\n\nprimename, kad webinaras „{{webinar_title}}“ prasidės netrukus.\n\nPradžia: {{starts_at}}\n\nPrisijungti prie webinaro:\n{{webinar_link}}\n\nIki pasimatymo!'
 const DEFAULT_TELEGRAM_BODY =
-  'Sveiki, {{name}}! Webinaras „{{webinar_title}}“ prasidės netrukus. Prisijungti: {{webinar_link}}'
+  'Sveiki, {{name}}! Webinaras „{{webinar_title}}“ prasidės netrukus. Pradžia: {{starts_at}}. Prisijungti: {{webinar_link}}'
 const DEFAULT_MANYCHAT_BODY =
-  'Sveiki, {{name}}! Webinaras „{{webinar_title}}“ prasidės netrukus. Prisijungti: {{webinar_link}}'
+  'Sveiki, {{name}}! Webinaras „{{webinar_title}}“ prasidės netrukus. Pradžia: {{starts_at}}. Prisijungti: {{webinar_link}}'
 
 const DEFAULT_AFTER_SUBJECT = 'Ačiū, kad dalyvavote: {{webinar_title}}'
 const DEFAULT_AFTER_BODY =
@@ -370,7 +370,7 @@ export function ReminderRulesCard({
                 : t('reminders.clockDuration')}{' '}
               {t('reminders.languageNote')} {t('reminders.placeholders')}{' '}
               {'{{name}}'}, {'{{email}}'}, {'{{webinar_title}}'},{' '}
-              {'{{webinar_link}}'}, {'{{public_webinar_link}}'}, {'{{offer_link}}'}{' '}
+              {'{{webinar_link}}'}, {'{{public_webinar_link}}'}, {'{{offer_link}}'}, {'{{starts_at}}'}{' '}
               {t('reminders.and')} {'{{next_session}}'}.
             </CardDescription>
           </div>

@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import nodemailer from 'npm:nodemailer@6.9.16'
-import { formatNextReplay } from '../../../src/features/webinars/nextReplay.ts'
+import { formatNextReplay, formatSessionStart } from '../../../src/features/webinars/nextReplay.ts'
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -273,6 +273,11 @@ serve(async (req) => {
         public_webinar_link: publicWebinarLink,
         offer_link: context.offer_link || webinarLink,
         next_session: nextSession,
+        starts_at: formatSessionStart(
+          context.session_starts_at,
+          context.timezone,
+          context.language,
+        ),
       }
       const subject =
         render(job.subject, values) || `Reminder: ${values.webinar_title}`

@@ -1,9 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { formatNextReplay } from './nextReplay'
+import { formatNextReplay, formatSessionStart } from './nextReplay'
 
 const session = '2026-11-01T18:30:00.000Z'
 
 describe('formatNextReplay', () => {
+  it('writes the session start in the webinar timezone', () => {
+    const label = formatSessionStart(
+      '2026-11-01T18:30:00.000Z',
+      'Europe/Vilnius',
+      'lt',
+    )
+    expect(label).toContain('20:30')
+    expect(label).toContain('2026')
+  })
+
   it('offers tomorrow at the same time for a daily automated webinar', () => {
     expect(
       formatNextReplay({

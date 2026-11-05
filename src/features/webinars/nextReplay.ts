@@ -135,6 +135,26 @@ export function formatNextReplay(input: NextReplayInput) {
   return null
 }
 
+export function formatSessionStart(
+  value: string | null | undefined,
+  timezone?: string | null,
+  language?: ReplayLanguage | null,
+) {
+  if (!value) return ''
+  const when = new Date(value)
+  if (Number.isNaN(when.getTime())) return ''
+  const locale = language === 'en' ? 'en-GB' : language === 'ru' ? 'ru-RU' : 'lt-LT'
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: timezone || 'Europe/Vilnius',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(when)
+}
+
 export function clockLabel(value: string, timeZone = 'Europe/Vilnius') {
   return clockOf(new Date(value), timeZone)
 }

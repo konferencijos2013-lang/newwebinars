@@ -26,21 +26,21 @@ const SLOTS: Slot[] = [
     texts: {
       lt: {
         subject: 'Užsiregistravote: {{webinar_title}}',
-        body: 'Sveiki, {{name}},\n\njūs užsiregistravote į „{{webinar_title}}“.\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
+        body: 'Sveiki, {{name}},\n\njūs užsiregistravote į „{{webinar_title}}“.\n\nPradžia: {{starts_at}}\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
         shortBody:
-          'Sveiki, {{name}}! Jūs užsiregistravote į „{{webinar_title}}“. Prisijungti: {{webinar_link}}',
+          'Sveiki, {{name}}! Jūs užsiregistravote į „{{webinar_title}}“. Pradžia: {{starts_at}}. Prisijungti: {{webinar_link}}',
       },
       en: {
         subject: 'You are registered: {{webinar_title}}',
-        body: 'Hello {{name}},\n\nyou are registered for "{{webinar_title}}".\n\nYour join link:\n{{webinar_link}}',
+        body: 'Hello {{name}},\n\nyou are registered for "{{webinar_title}}".\n\nStarts: {{starts_at}}\n\nYour join link:\n{{webinar_link}}',
         shortBody:
-          'Hello {{name}}! You are registered for "{{webinar_title}}". Join: {{webinar_link}}',
+          'Hello {{name}}! You are registered for "{{webinar_title}}". Starts: {{starts_at}}. Join: {{webinar_link}}',
       },
       ru: {
         subject: 'Вы зарегистрированы: {{webinar_title}}',
-        body: 'Здравствуйте, {{name}}!\n\nВы зарегистрировались на «{{webinar_title}}».\n\nВаша ссылка для входа:\n{{webinar_link}}',
+        body: 'Здравствуйте, {{name}}!\n\nВы зарегистрировались на «{{webinar_title}}».\n\nНачало: {{starts_at}}\n\nВаша ссылка для входа:\n{{webinar_link}}',
         shortBody:
-          'Здравствуйте, {{name}}! Вы зарегистрировались на «{{webinar_title}}». Войти: {{webinar_link}}',
+          'Здравствуйте, {{name}}! Вы зарегистрировались на «{{webinar_title}}». Начало: {{starts_at}}. Войти: {{webinar_link}}',
       },
     },
   },
@@ -51,21 +51,21 @@ const SLOTS: Slot[] = [
     texts: {
       lt: {
         subject: 'Rytoj: {{webinar_title}}',
-        body: 'Sveiki, {{name}},\n\nrytoj vyks „{{webinar_title}}“.\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
+        body: 'Sveiki, {{name}},\n\nrytoj vyks „{{webinar_title}}“.\n\nPradžia: {{starts_at}}\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
         shortBody:
-          'Sveiki, {{name}}! Rytoj vyks „{{webinar_title}}“. Prisijungti: {{webinar_link}}',
+          'Sveiki, {{name}}! Rytoj vyks „{{webinar_title}}“. Pradžia: {{starts_at}}. Prisijungti: {{webinar_link}}',
       },
       en: {
         subject: 'Tomorrow: {{webinar_title}}',
-        body: 'Hello {{name}},\n\n"{{webinar_title}}" is tomorrow.\n\nYour join link:\n{{webinar_link}}',
+        body: 'Hello {{name}},\n\n"{{webinar_title}}" is tomorrow.\n\nStarts: {{starts_at}}\n\nYour join link:\n{{webinar_link}}',
         shortBody:
-          'Hello {{name}}! "{{webinar_title}}" is tomorrow. Join: {{webinar_link}}',
+          'Hello {{name}}! "{{webinar_title}}" is tomorrow. Starts: {{starts_at}}. Join: {{webinar_link}}',
       },
       ru: {
         subject: 'Завтра: {{webinar_title}}',
-        body: 'Здравствуйте, {{name}}!\n\nЗавтра пройдёт «{{webinar_title}}».\n\nВаша ссылка для входа:\n{{webinar_link}}',
+        body: 'Здравствуйте, {{name}}!\n\nЗавтра пройдёт «{{webinar_title}}».\n\nНачало: {{starts_at}}\n\nВаша ссылка для входа:\n{{webinar_link}}',
         shortBody:
-          'Здравствуйте, {{name}}! Завтра пройдёт «{{webinar_title}}». Войти: {{webinar_link}}',
+          'Здравствуйте, {{name}}! Завтра пройдёт «{{webinar_title}}». Начало: {{starts_at}}. Войти: {{webinar_link}}',
       },
     },
   },
@@ -76,21 +76,21 @@ const SLOTS: Slot[] = [
     texts: {
       lt: {
         subject: 'Po valandos: {{webinar_title}}',
-        body: 'Sveiki, {{name}},\n\n„{{webinar_title}}“ prasidės po valandos.\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
+        body: 'Sveiki, {{name}},\n\n„{{webinar_title}}“ prasidės po valandos.\n\nPradžia: {{starts_at}}\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
         shortBody:
-          'Sveiki, {{name}}! „{{webinar_title}}“ prasidės po valandos. Prisijungti: {{webinar_link}}',
+          'Sveiki, {{name}}! „{{webinar_title}}“ prasidės po valandos. Pradžia: {{starts_at}}. Prisijungti: {{webinar_link}}',
       },
       en: {
         subject: 'In one hour: {{webinar_title}}',
-        body: 'Hello {{name}},\n\n"{{webinar_title}}" starts in one hour.\n\nYour join link:\n{{webinar_link}}',
+        body: 'Hello {{name}},\n\n"{{webinar_title}}" starts in one hour.\n\nStarts: {{starts_at}}\n\nYour join link:\n{{webinar_link}}',
         shortBody:
-          'Hello {{name}}! "{{webinar_title}}" starts in one hour. Join: {{webinar_link}}',
+          'Hello {{name}}! "{{webinar_title}}" starts in one hour. Starts: {{starts_at}}. Join: {{webinar_link}}',
       },
       ru: {
         subject: 'Через час: {{webinar_title}}',
-        body: 'Здравствуйте, {{name}}!\n\n«{{webinar_title}}» начнётся через час.\n\nВаша ссылка для входа:\n{{webinar_link}}',
+        body: 'Здравствуйте, {{name}}!\n\n«{{webinar_title}}» начнётся через час.\n\nНачало: {{starts_at}}\n\nВаша ссылка для входа:\n{{webinar_link}}',
         shortBody:
-          'Здравствуйте, {{name}}! «{{webinar_title}}» начнётся через час. Войти: {{webinar_link}}',
+          'Здравствуйте, {{name}}! «{{webinar_title}}» начнётся через час. Начало: {{starts_at}}. Войти: {{webinar_link}}',
       },
     },
   },
@@ -101,21 +101,21 @@ const SLOTS: Slot[] = [
     texts: {
       lt: {
         subject: 'Po 15 minučių: {{webinar_title}}',
-        body: 'Sveiki, {{name}},\n\n„{{webinar_title}}“ prasidės po 15 minučių.\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
+        body: 'Sveiki, {{name}},\n\n„{{webinar_title}}“ prasidės po 15 minučių.\n\nPradžia: {{starts_at}}\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
         shortBody:
-          'Sveiki, {{name}}! „{{webinar_title}}“ prasidės po 15 minučių. Prisijungti: {{webinar_link}}',
+          'Sveiki, {{name}}! „{{webinar_title}}“ prasidės po 15 minučių. Pradžia: {{starts_at}}. Prisijungti: {{webinar_link}}',
       },
       en: {
         subject: 'In 15 minutes: {{webinar_title}}',
-        body: 'Hello {{name}},\n\n"{{webinar_title}}" starts in 15 minutes.\n\nYour join link:\n{{webinar_link}}',
+        body: 'Hello {{name}},\n\n"{{webinar_title}}" starts in 15 minutes.\n\nStarts: {{starts_at}}\n\nYour join link:\n{{webinar_link}}',
         shortBody:
-          'Hello {{name}}! "{{webinar_title}}" starts in 15 minutes. Join: {{webinar_link}}',
+          'Hello {{name}}! "{{webinar_title}}" starts in 15 minutes. Starts: {{starts_at}}. Join: {{webinar_link}}',
       },
       ru: {
         subject: 'Через 15 минут: {{webinar_title}}',
-        body: 'Здравствуйте, {{name}}!\n\n«{{webinar_title}}» начнётся через 15 минут.\n\nВаша ссылка для входа:\n{{webinar_link}}',
+        body: 'Здравствуйте, {{name}}!\n\n«{{webinar_title}}» начнётся через 15 минут.\n\nНачало: {{starts_at}}\n\nВаша ссылка для входа:\n{{webinar_link}}',
         shortBody:
-          'Здравствуйте, {{name}}! «{{webinar_title}}» начнётся через 15 минут. Войти: {{webinar_link}}',
+          'Здравствуйте, {{name}}! «{{webinar_title}}» начнётся через 15 минут. Начало: {{starts_at}}. Войти: {{webinar_link}}',
       },
     },
   },
@@ -126,21 +126,21 @@ const SLOTS: Slot[] = [
     texts: {
       lt: {
         subject: 'Jau prasidėjo: {{webinar_title}}',
-        body: 'Sveiki, {{name}},\n\n„{{webinar_title}}“ jau prasidėjo. Prisijunkite dabar:\n{{webinar_link}}',
+        body: 'Sveiki, {{name}},\n\n„{{webinar_title}}“ jau prasidėjo. Pradžia: {{starts_at}}\n\nPrisijunkite dabar:\n{{webinar_link}}',
         shortBody:
-          'Sveiki, {{name}}! „{{webinar_title}}“ jau prasidėjo. Prisijungti: {{webinar_link}}',
+          'Sveiki, {{name}}! „{{webinar_title}}“ jau prasidėjo. Pradžia: {{starts_at}}. Prisijungti: {{webinar_link}}',
       },
       en: {
         subject: 'Started: {{webinar_title}}',
-        body: 'Hello {{name}},\n\n"{{webinar_title}}" has started. Join now:\n{{webinar_link}}',
+        body: 'Hello {{name}},\n\n"{{webinar_title}}" has started. Starts: {{starts_at}}\n\nJoin now:\n{{webinar_link}}',
         shortBody:
-          'Hello {{name}}! "{{webinar_title}}" has started. Join: {{webinar_link}}',
+          'Hello {{name}}! "{{webinar_title}}" has started. Starts: {{starts_at}}. Join: {{webinar_link}}',
       },
       ru: {
         subject: 'Уже началось: {{webinar_title}}',
-        body: 'Здравствуйте, {{name}}!\n\n«{{webinar_title}}» уже начался. Подключайтесь сейчас:\n{{webinar_link}}',
+        body: 'Здравствуйте, {{name}}!\n\n«{{webinar_title}}» уже начался. Начало: {{starts_at}}\n\nПодключайтесь сейчас:\n{{webinar_link}}',
         shortBody:
-          'Здравствуйте, {{name}}! «{{webinar_title}}» уже начался. Войти: {{webinar_link}}',
+          'Здравствуйте, {{name}}! «{{webinar_title}}» уже начался. Начало: {{starts_at}}. Войти: {{webinar_link}}',
       },
     },
   },
