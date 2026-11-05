@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import nodemailer from 'npm:nodemailer@6.9.16'
 import { formatNextReplay, formatSessionStart } from '../../../src/features/webinars/nextReplay.ts'
+import { formatHighlights } from '../../../src/features/webinars/reminderHighlights.ts'
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -28,7 +29,7 @@ function render(template: string | null, values: Record<string, string>) {
   return (template ?? '').replace(
     /{{\s*(\w+)\s*}}/g,
     (_, key) => values[key] ?? '',
-  )
+  ).replace(/\n{3,}/g, '\n\n')
 }
 
 function html(textValue: string) {
@@ -211,6 +212,7 @@ serve(async (req) => {
         session_starts_at?: string | null
         next_fixed_start?: string | null
         language?: 'lt' | 'en' | 'ru' | null
+        description?: string | null
       }
       const audience = ruleRow?.audience ?? 'all'
       const attended = context.attended === true
@@ -278,6 +280,7 @@ serve(async (req) => {
           context.timezone,
           context.language,
         ),
+        highlights: formatHighlights(context.description, context.language),
       }
       const subject =
         render(job.subject, values) || `Reminder: ${values.webinar_title}`

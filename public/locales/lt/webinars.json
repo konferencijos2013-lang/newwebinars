@@ -125,6 +125,7 @@
     "clockDuration": "Laiškai po pradžios ir po pabaigos naudoja trukmę. Jei trukmės nėra, laiškas po pabaigos skaičiuojamas nuo pradžios.",
     "languageNote": "Pranešimų kalba yra laiškų tekstų kalba. Ekrano kalba jos nekeičia. Ranka pataisyti tekstai lieka, o standartiniai perrašomi.",
     "placeholders": "Galite naudoti",
+    "highlightsNote": "Punktai atsiranda tik tada, kai vebinaro aprašyme yra bent du aiškūs sakiniai.",
     "and": "ir",
     "languageLabel": "Pranešimų kalba",
     "createStandard": "Sukurti standartinius",

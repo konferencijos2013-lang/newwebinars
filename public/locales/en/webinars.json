@@ -125,6 +125,7 @@
     "clockDuration": "Messages after the start and after the end use the duration. If there is no duration, the message after the end is counted from the start.",
     "languageNote": "Message language is the language of the letters. The screen language does not change it. Hand-edited text stays, and standard text is rewritten.",
     "placeholders": "You can use",
+    "highlightsNote": "Bullet points appear only when the webinar description has at least two clear sentences.",
     "and": "and",
     "languageLabel": "Message language",
     "createStandard": "Create standard messages",
