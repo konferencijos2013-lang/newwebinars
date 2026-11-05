@@ -30,6 +30,37 @@ function formatWatch(seconds: number) {
   return `${rest} s`
 }
 
+function conversionPercent(count: number, total: number) {
+  if (total <= 0) return 0
+  return Math.round((count / total) * 100)
+}
+
+function CountRate({
+  count,
+  total,
+  large = false,
+}: {
+  count: number
+  total: number
+  large?: boolean
+}) {
+  return (
+    <span className="inline-flex items-baseline gap-1.5">
+      <span>{count}</span>
+      <span
+        className={
+          large
+            ? 'text-muted-foreground text-xs font-normal'
+            : 'text-muted-foreground text-[11px] font-normal'
+        }
+        title="Iš registracijų"
+      >
+        {conversionPercent(count, total)}%
+      </span>
+    </span>
+  )
+}
+
 export function AnalyticsPage() {
   const { t } = useTranslation('webinars')
   const account = useAccount()
@@ -162,7 +193,11 @@ export function AnalyticsPage() {
             <Card>
               <CardTitle>Įėjo į kambarį</CardTitle>
               <CardDescription className="mt-2 text-2xl font-semibold">
-                {summary.joined}
+                <CountRate
+                  count={summary.joined}
+                  total={summary.registrations}
+                  large
+                />
               </CardDescription>
             </Card>
             <Card>
@@ -174,7 +209,11 @@ export function AnalyticsPage() {
             <Card>
               <CardTitle>Pasiūlymo paspaudimai</CardTitle>
               <CardDescription className="mt-2 text-2xl font-semibold">
-                {summary.clicked}
+                <CountRate
+                  count={summary.clicked}
+                  total={summary.registrations}
+                  large
+                />
               </CardDescription>
             </Card>
           </div>
@@ -216,13 +255,27 @@ export function AnalyticsPage() {
                             </button>
                           </td>
                           <td className="p-2">{webinar.registrations}</td>
-                          <td className="p-2">{webinar.joined}</td>
+                          <td className="p-2">
+                            <CountRate
+                              count={webinar.joined}
+                              total={webinar.registrations}
+                            />
+                          </td>
                           <td className="p-2">
                             {formatWatch(webinar.averageWatch)}
                           </td>
                           <td className="p-2">
-                            {webinar.clicked} paspaudė
-                            {webinar.paid > 0 ? ` · ${webinar.paid} apmokėjo` : ''}
+                            <CountRate
+                              count={webinar.clicked}
+                              total={webinar.registrations}
+                            />{' '}
+                            paspaudė
+                            {' · '}
+                            <CountRate
+                              count={webinar.paid}
+                              total={webinar.registrations}
+                            />{' '}
+                            apmokėjo
                           </td>
                         </tr>
                         {open ? (
