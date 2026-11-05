@@ -5,7 +5,7 @@ export interface ReminderRule {
   webinar_id: string
   integration_connection_id: string | null
   channel: 'email' | 'telegram' | 'manychat'
-  timing: 'before_start' | 'after_start' | 'after_end'
+  timing: 'on_registration' | 'before_start' | 'after_start' | 'after_end'
   minutes_before: number
   audience: 'all' | 'attended' | 'missed'
   subject: string | null
@@ -31,7 +31,7 @@ export async function createReminderRule(input: {
   webinarId: string
   integrationConnectionId: string
   minutesBefore: number
-  timing?: 'before_start' | 'after_start' | 'after_end'
+  timing?: 'on_registration' | 'before_start' | 'after_start' | 'after_end'
   audience?: 'all' | 'attended' | 'missed'
   subject: string
   body: string

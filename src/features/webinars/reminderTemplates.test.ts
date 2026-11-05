@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { translatedStandardReminder } from './reminderTemplates'
+import { standardReminders, translatedStandardReminder } from './reminderTemplates'
 
 describe('translatedStandardReminder', () => {
   it('rewrites an untouched Lithuanian reminder into Russian', () => {
@@ -15,6 +15,12 @@ describe('translatedStandardReminder', () => {
     ).toMatchObject({
       subject: 'Через час: {{webinar_title}}',
     })
+  })
+
+  it('puts the registration confirmation first', () => {
+    const first = standardReminders('lt')[0]
+    expect(first.timing).toBe('on_registration')
+    expect(first.subject).toContain('Užsiregistravote')
   })
 
   it('leaves a hand-edited reminder unchanged', () => {

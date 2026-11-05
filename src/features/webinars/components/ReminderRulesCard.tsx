@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Bell, Mail, MessageCircle, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/Card'
@@ -37,26 +38,22 @@ const DEFAULT_AFTER_SUBJECT = 'Ačiū, kad dalyvavote: {{webinar_title}}'
 const DEFAULT_AFTER_BODY =
   'Sveiki, {{name}},\n\nwebinaras „{{webinar_title}}“ jau baigėsi. Jei nespėjote pasiūlymo, jį rasite čia:\n{{webinar_link}}'
 
-function formatOffset(
-  minutes: number,
-  timing: 'before_start' | 'after_start' | 'after_end' = 'before_start',
-) {
-  if (timing === 'after_start') {
-    return minutes === 0 ? 'Pradžios metu' : `${minutes} min. po pradžios`
-  }
-  const when = timing === 'after_end' ? 'po pabaigos' : 'prieš pradžią'
-  if (minutes === 0) {
-    return timing === 'after_end' ? 'Iš karto po pabaigos' : 'Webinaro pradžios metu'
-  }
-  if (minutes % 1440 === 0) return `${minutes / 1440} d. ${when}`
-  if (minutes % 60 === 0) return `${minutes / 60} val. ${when}`
-  return `${minutes} min. ${when}`
-}
-
-function audienceLabel(audience: ReminderRule['audience'] | undefined) {
-  if (audience === 'attended') return 'dalyvavusiems'
-  if (audience === 'missed') return 'nedalyvavusiems'
-  return 'visiems'
+function sortRules(rules: ReminderRule[]) {
+  const rank = (timing: ReminderRule['timing']) =>
+    timing === 'on_registration'
+      ? 0
+      : timing === 'before_start'
+        ? 1
+        : timing === 'after_start'
+          ? 2
+          : 3
+  return [...rules].sort((a, b) => {
+    const byTiming = rank(a.timing) - rank(b.timing)
+    if (byTiming !== 0) return byTiming
+    return a.timing === 'before_start'
+      ? b.minutes_before - a.minutes_before
+      : a.minutes_before - b.minutes_before
+  })
 }
 
 export function ReminderRulesCard({
@@ -89,15 +86,42 @@ export function ReminderRulesCard({
     'email',
   )
   const [minutesBefore, setMinutesBefore] = useState('60')
-  const [timing, setTiming] = useState<
-    'before_start' | 'after_start' | 'after_end'
-  >('before_start')
+  const [timing, setTiming] = useState<ReminderRule['timing']>('before_start')
   const [subject, setSubject] = useState(DEFAULT_SUBJECT)
   const [body, setBody] = useState(DEFAULT_BODY)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editSubject, setEditSubject] = useState('')
   const [editBody, setEditBody] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
+  const { t } = useTranslation('webinars')
+
+  function formatOffset(minutes: number, timing: ReminderRule['timing'] = 'before_start') {
+    if (timing === 'on_registration') return t('reminders.onRegistration')
+    if (timing === 'after_start') {
+      return minutes === 0
+        ? t('reminders.afterStartNow')
+        : t('reminders.afterStart', { count: minutes })
+    }
+    if (minutes === 0) {
+      return timing === 'after_end' ? t('reminders.afterEndNow') : t('reminders.atStart')
+    }
+    const count = minutes % 1440 === 0 ? minutes / 1440 : minutes % 60 === 0 ? minutes / 60 : minutes
+    const unit =
+      minutes % 1440 === 0
+        ? t('reminders.days')
+        : minutes % 60 === 0
+          ? t('reminders.hours')
+          : t('reminders.minutes')
+    return timing === 'after_end'
+      ? t('reminders.afterEnd', { count, unit })
+      : t('reminders.before', { count, unit })
+  }
+
+  function audienceLabel(audience: ReminderRule['audience'] | undefined) {
+    if (audience === 'attended') return t('reminders.audienceAttended')
+    if (audience === 'missed') return t('reminders.audienceMissed')
+    return t('reminders.audienceAll')
+  }
 
   const manyChatConnections = connections.filter(
     (connection) =>
@@ -155,9 +179,7 @@ export function ReminderRulesCard({
   async function addRule() {
     const offset = Number(minutesBefore)
     if (!connectionId || !Number.isInteger(offset) || offset < 0) {
-      setError(
-        'Pasirinkite siuntimo integraciją ir įveskite laiką minutėmis (0 ar daugiau).',
-      )
+      setError(t('reminders.errorOffset'))
       return
     }
     setSaving(true)
@@ -172,9 +194,7 @@ export function ReminderRulesCard({
         body,
         channel,
       })
-      setRules((current) =>
-        [...current, rule].sort((a, b) => b.minutes_before - a.minutes_before),
-      )
+      setRules((current) => sortRules([...current, rule]))
       setAdding(false)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason))
@@ -234,9 +254,7 @@ export function ReminderRulesCard({
         : null,
     ].filter((item) => item !== null)
     if (targets.length === 0) {
-      setError(
-        'Pirmiausia prijunkite el. pašto arba Telegram integraciją puslapyje „Integracijos“.',
-      )
+      setError(t('reminders.errorConnect'))
       return
     }
     setGenerating(true)
@@ -269,13 +287,9 @@ export function ReminderRulesCard({
         }
       }
       if (created.length === 0) {
-        setError('Standartiniai priminimai jau sukurti.')
+        setError(t('reminders.alreadyCreated'))
       }
-      setRules((current) =>
-        [...current, ...created].sort(
-          (a, b) => b.minutes_before - a.minutes_before,
-        ),
-      )
+      setRules((current) => sortRules([...current, ...created]))
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason))
     } finally {
@@ -327,7 +341,9 @@ export function ReminderRulesCard({
   async function removeRule(rule: ReminderRule) {
     if (
       !window.confirm(
-        `Pašalinti priminimą „${formatOffset(rule.minutes_before, rule.timing ?? 'before_start')}“?`,
+        t('reminders.removeConfirm', {
+        label: formatOffset(rule.minutes_before, rule.timing ?? 'before_start'),
+      }),
       )
     )
       return
@@ -346,24 +362,22 @@ export function ReminderRulesCard({
         <div className="flex gap-3">
           <Bell className="text-primary mt-0.5 h-5 w-5" />
           <div>
-            <CardTitle>Priminimai</CardTitle>
+            <CardTitle>{t('reminders.title')}</CardTitle>
             <CardDescription className="mt-1">
-              El. pašto, Telegram arba ManyChat žinutės registruotiems
-              dalyviams. Laiškai prieš pradžią eina pagal suplanuotą laiką.{' '}
+              {t('reminders.intro')}{' '}
               {followBroadcast
-                ? 'Laiškas po pradžios išsiunčiamas, kai paleidžiama vaizdo transliacija. Laiškai po vebinaro išsiunčiami, kai transliacija sustabdoma.'
-                : 'Laiškai po pradžios ir po pabaigos naudoja trukmę. Jei trukmės nėra, laiškas po pabaigos skaičiuojamas nuo pradžios.'}{' '}
-              Pranešimų kalba yra auditorijos kalba. Ekrano kalba jos nekeičia.
-              Ranka pataisyti tekstai lieka, o standartiniai perrašomi.{' '}
-              Galite naudoti {'{{name}}'}, {'{{email}}'}, {'{{webinar_title}}'},{' '}
+                ? t('reminders.clockBroadcast')
+                : t('reminders.clockDuration')}{' '}
+              {t('reminders.languageNote')} {t('reminders.placeholders')}{' '}
+              {'{{name}}'}, {'{{email}}'}, {'{{webinar_title}}'},{' '}
               {'{{webinar_link}}'}, {'{{public_webinar_link}}'}, {'{{offer_link}}'}{' '}
-              ir {'{{next_session}}'}.
+              {t('reminders.and')} {'{{next_session}}'}.
             </CardDescription>
           </div>
         </div>
         <div className="flex flex-col gap-3">
           <div className="min-w-40 space-y-2">
-            <Label htmlFor="reminder-language">Pranešimų kalba</Label>
+            <Label htmlFor="reminder-language">{t('reminders.languageLabel')}</Label>
             <Select
               id="reminder-language"
               value={messageLanguageValue}
@@ -387,11 +401,11 @@ export function ReminderRulesCard({
               isLoading={generating}
               onClick={() => void generateStandard()}
             >
-              Sukurti standartinius
+              {t('reminders.createStandard')}
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={() => setAdding(true)}>
               <Plus className="h-4 w-4" />
-              Pridėti priminimą
+              {t('reminders.add')}
             </Button>
           </div>
           )}
@@ -400,15 +414,12 @@ export function ReminderRulesCard({
 
       {!scheduledAt && (
         <p className="mt-4 rounded-md bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
-          Pirmiausia nustatykite webinaro pradžios datą ir išsaugokite
-          pakeitimus. Tuomet sistema galės apskaičiuoti priminimų siuntimo
-          laiką.
+          {t('reminders.needSchedule')}
         </p>
       )}
       {!followBroadcast && !durationMinutes && (
         <p className="mt-4 rounded-md bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
-          Nenurodyta trukmė, todėl laiškai po pabaigos bus skaičiuojami nuo
-          pradžios. Įrašykite trukmę ir išsaugokite vebinarą.
+          {t('reminders.needDuration')}
         </p>
       )}
       {error && (
@@ -421,7 +432,7 @@ export function ReminderRulesCard({
         <div className="mt-5 space-y-4 rounded-lg border p-4">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
-              <Label htmlFor="reminder-channel">Kanalas</Label>
+              <Label htmlFor="reminder-channel">{t('reminders.channel')}</Label>
               <Select
                 id="reminder-channel"
                 value={channel}
@@ -448,19 +459,19 @@ export function ReminderRulesCard({
                   }
                 }}
               >
-                <option value="email">El. paštas</option>
-                <option value="telegram">Telegram</option>
-                <option value="manychat">ManyChat</option>
+                <option value="email">{t('reminders.email')}</option>
+                <option value="telegram">{t('reminders.telegram')}</option>
+                <option value="manychat">{t('reminders.manychat')}</option>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reminder-connection">Siuntimo integracija</Label>
+              <Label htmlFor="reminder-connection">{t('reminders.connection')}</Label>
               <Select
                 id="reminder-connection"
                 value={connectionId}
                 onChange={(event) => setConnectionId(event.target.value)}
               >
-                <option value="">Pasirinkite integraciją</option>
+                <option value="">{t('reminders.chooseConnection')}</option>
                 {availableConnections.map((connection) => (
                   <option key={connection.id} value={connection.id}>
                     {connection.display_name} ({connection.provider})
@@ -469,16 +480,14 @@ export function ReminderRulesCard({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reminder-timing">Kada siųsti</Label>
+              <Label htmlFor="reminder-timing">{t('reminders.when')}</Label>
               <Select
                 id="reminder-timing"
                 value={timing}
                 onChange={(event) => {
-                  const next = event.target.value as
-                    | 'before_start'
-                    | 'after_start'
-                    | 'after_end'
+                  const next = event.target.value as ReminderRule['timing']
                   setTiming(next)
+                  if (next === 'on_registration') setMinutesBefore('0')
                   if (next === 'after_end' && channel === 'email') {
                     setSubject(DEFAULT_AFTER_SUBJECT)
                     setBody(DEFAULT_AFTER_BODY)
@@ -488,18 +497,21 @@ export function ReminderRulesCard({
                   }
                 }}
               >
-                <option value="before_start">Prieš pradžią</option>
-                <option value="after_start">Po pradžios</option>
-                <option value="after_end">Po pabaigos</option>
+                <option value="on_registration">{t('reminders.timingOnRegistration')}</option>
+                <option value="before_start">{t('reminders.timingBefore')}</option>
+                <option value="after_start">{t('reminders.timingAfterStart')}</option>
+                <option value="after_end">{t('reminders.timingAfterEnd')}</option>
               </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="reminder-minutes">
-                {timing === 'after_end'
-                  ? 'Minučių po pabaigos'
+                {timing === 'on_registration'
+                  ? t('reminders.onRegistration')
+                  : timing === 'after_end'
+                  ? t('reminders.minutesAfterEnd')
                   : timing === 'after_start'
-                    ? 'Minučių po pradžios'
-                    : 'Minučių iki pradžios'}
+                    ? t('reminders.minutesAfterStart')
+                    : t('reminders.minutesBefore')}
               </Label>
               <Input
                 id="reminder-minutes"
@@ -511,24 +523,24 @@ export function ReminderRulesCard({
               <p className="text-muted-foreground text-xs">
                 {Number.isFinite(Number(minutesBefore))
                   ? formatOffset(Number(minutesBefore), timing)
-                  : 'Įveskite minutes'}
+                  : t('reminders.enterMinutes')}
               </p>
             </div>
           </div>
           {availableConnections.length === 0 && (
             <p className="rounded-md bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
               {channel === 'email'
-                ? 'Nėra aktyvios Brevo, Resend ar SMTP integracijos. Pirmiausia ją prijunkite puslapyje „Integracijos“.'
+                ? t('reminders.noEmail')
                 : channel === 'telegram'
-                  ? 'Nėra aktyvaus Telegram boto. Pirmiausia prijunkite BotFather tokeną puslapyje „Integracijos“.'
-                  : 'Nėra aktyvios ManyChat integracijos. Pirmiausia įrašykite API raktą ir ManyChat susiejimo nuorodos šabloną puslapyje „Integracijos“. '}
+                  ? t('reminders.noTelegram')
+                  : t('reminders.noManychat')}
             </p>
           )}
           <div className="space-y-2">
             <Label htmlFor="reminder-subject">
               {channel === 'email'
-                ? 'Laiško tema'
-                : 'Pranešimo pavadinimas (vidinis)'}
+                ? t('reminders.subject')
+                : t('reminders.internalTitle')}
             </Label>
             <Input
               id="reminder-subject"
@@ -539,10 +551,10 @@ export function ReminderRulesCard({
           <div className="space-y-2">
             <Label htmlFor="reminder-body">
               {channel === 'email'
-                ? 'Laiško tekstas'
+                ? t('reminders.bodyEmail')
                 : channel === 'telegram'
-                  ? 'Telegram pranešimo tekstas'
-                  : 'ManyChat pranešimo tekstas'}
+                  ? t('reminders.bodyTelegram')
+                  : t('reminders.bodyManychat')}
             </Label>
             <Textarea
               id="reminder-body"
@@ -557,7 +569,7 @@ export function ReminderRulesCard({
               variant="outline"
               onClick={() => setAdding(false)}
             >
-              Atšaukti
+              {t('reminders.cancel')}
             </Button>
             <Button
               type="button"
@@ -570,7 +582,7 @@ export function ReminderRulesCard({
               ) : (
                 <MessageCircle className="h-4 w-4" />
               )}
-              Išsaugoti priminimą
+              {t('reminders.saveReminder')}
             </Button>
           </div>
         </div>
@@ -578,13 +590,11 @@ export function ReminderRulesCard({
 
       {loading ? (
         <p className="text-muted-foreground mt-5 text-sm">
-          Kraunami priminimai…
+          {t('reminders.loading')}
         </p>
       ) : rules.length === 0 && !adding ? (
         <p className="text-muted-foreground mt-5 text-sm">
-          Priminimų dar nėra. Standartiniai laikai: 1 para, 1 valanda ir 15 min.
-          prieš pradžią, 5 min. po pradžios, tada laiškas dalyvavusiems ir
-          nedalyvavusiems.
+          {t('reminders.empty')}
         </p>
       ) : (
         <div className="mt-5 space-y-3">
@@ -601,11 +611,11 @@ export function ReminderRulesCard({
                     {audienceLabel(rule.audience)}
                   </p>
                   <p className="text-muted-foreground mt-1 text-sm">
-                    {rule.subject || 'Be temos'} ·{' '}
+                    {rule.subject || t('reminders.noSubject')} ·{' '}
                     {connections.find(
                       (connection) =>
                         connection.id === rule.integration_connection_id,
-                    )?.display_name || 'Integracija nepasirinkta'}
+                    )?.display_name || t('reminders.chooseConnection')}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -615,13 +625,13 @@ export function ReminderRulesCard({
                       checked={rule.is_enabled}
                       onChange={() => void toggleRule(rule)}
                     />
-                    Įjungtas
+                    {t('reminders.enabled')}
                   </label>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    aria-label="Redaguoti priminimą"
+                    aria-label={t('reminders.edit')}
                     onClick={() => startEdit(rule)}
                   >
                     <Pencil className="h-4 w-4" />
@@ -630,7 +640,7 @@ export function ReminderRulesCard({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    aria-label="Pašalinti priminimą"
+                    aria-label={t('reminders.remove')}
                     onClick={() => void removeRule(rule)}
                   >
                     <Trash2 className="h-4 w-4 text-red-600" />
@@ -640,7 +650,7 @@ export function ReminderRulesCard({
               {editingId === rule.id && (
                 <div className="mt-4 space-y-3">
                   <div className="space-y-2">
-                    <Label htmlFor={`edit-subject-${rule.id}`}>Tema</Label>
+                    <Label htmlFor={`edit-subject-${rule.id}`}>{t('reminders.editSubject')}</Label>
                     <Input
                       id={`edit-subject-${rule.id}`}
                       value={editSubject}
@@ -648,7 +658,7 @@ export function ReminderRulesCard({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`edit-body-${rule.id}`}>Tekstas</Label>
+                    <Label htmlFor={`edit-body-${rule.id}`}>{t('reminders.editBody')}</Label>
                     <Textarea
                       id={`edit-body-${rule.id}`}
                       rows={6}
@@ -663,7 +673,7 @@ export function ReminderRulesCard({
                       isLoading={savingEdit}
                       onClick={() => void saveEdit(rule)}
                     >
-                      Išsaugoti tekstą
+                      {t('reminders.saveText')}
                     </Button>
                     <Button
                       type="button"
@@ -671,7 +681,7 @@ export function ReminderRulesCard({
                       variant="outline"
                       onClick={() => setEditingId(null)}
                     >
-                      Atšaukti
+                      {t('reminders.cancel')}
                     </Button>
                   </div>
                 </div>

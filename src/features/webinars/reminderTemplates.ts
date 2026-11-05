@@ -20,6 +20,31 @@ type Slot = {
 
 const SLOTS: Slot[] = [
   {
+    timing: 'on_registration',
+    minutes: 0,
+    audience: 'all',
+    texts: {
+      lt: {
+        subject: 'Užsiregistravote: {{webinar_title}}',
+        body: 'Sveiki, {{name}},\n\njūs užsiregistravote į „{{webinar_title}}“.\n\nJūsų prisijungimo nuoroda:\n{{webinar_link}}',
+        shortBody:
+          'Sveiki, {{name}}! Jūs užsiregistravote į „{{webinar_title}}“. Prisijungti: {{webinar_link}}',
+      },
+      en: {
+        subject: 'You are registered: {{webinar_title}}',
+        body: 'Hello {{name}},\n\nyou are registered for "{{webinar_title}}".\n\nYour join link:\n{{webinar_link}}',
+        shortBody:
+          'Hello {{name}}! You are registered for "{{webinar_title}}". Join: {{webinar_link}}',
+      },
+      ru: {
+        subject: 'Вы зарегистрированы: {{webinar_title}}',
+        body: 'Здравствуйте, {{name}}!\n\nВы зарегистрировались на «{{webinar_title}}».\n\nВаша ссылка для входа:\n{{webinar_link}}',
+        shortBody:
+          'Здравствуйте, {{name}}! Вы зарегистрировались на «{{webinar_title}}». Войти: {{webinar_link}}',
+      },
+    },
+  },
+  {
     timing: 'before_start',
     minutes: 1440,
     audience: 'all',
