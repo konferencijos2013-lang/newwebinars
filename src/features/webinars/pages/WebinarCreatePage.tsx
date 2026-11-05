@@ -81,7 +81,7 @@ export function WebinarCreatePage() {
     try {
       const generatedSlug = slugify(slug || title)
       if (isReservedLocaleSlug(generatedSlug)) {
-        setError('Adresas „lt“ ir „ru“ rezervuotas kalbai. Pasirinkite kitą.')
+        setError('Šis adresas rezervuotas svetainei. Pasirinkite kitą.')
         setIsSaving(false)
         return
       }

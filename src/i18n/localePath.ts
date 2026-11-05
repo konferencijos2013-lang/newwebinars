@@ -4,6 +4,8 @@ export type Locale = (typeof LOCALES)[number]
 
 const PREFIXED = new Set<string>(['lt', 'ru'])
 
+const RESERVED_SLUGS = new Set<string>(['lt', 'ru', 'guides'])
+
 export function localeFromPath(pathname: string) {
   const [segment, ...rest] = pathname.split('/').filter(Boolean)
   if (segment && PREFIXED.has(segment)) {
@@ -19,7 +21,7 @@ export function currentLocale(): Locale {
 }
 
 export function isReservedLocaleSlug(slug: string) {
-  return PREFIXED.has(slug)
+  return RESERVED_SLUGS.has(slug)
 }
 
 export function localizedPath(path: string, locale: Locale = currentLocale()) {

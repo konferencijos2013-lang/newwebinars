@@ -16,6 +16,7 @@ export function applyPageMeta(page: {
   path: string
   locale: Locale
   index: boolean
+  alternates?: Record<string, string>
 }) {
   const locale = page.locale as SeoLocale
   const canonical = pageUrl(locale, page.path)
@@ -89,12 +90,14 @@ export function applyPageMeta(page: {
       return meta
     },
   )
-  const alternates: [string, string][] = [
-    ['en', pageUrl('en', page.path)],
-    ['lt', pageUrl('lt', page.path)],
-    ['ru', pageUrl('ru', page.path)],
-    ['x-default', pageUrl('en', page.path)],
-  ]
+  const alternates: [string, string][] = page.alternates
+    ? Object.entries(page.alternates)
+    : [
+        ['en', pageUrl('en', page.path)],
+        ['lt', pageUrl('lt', page.path)],
+        ['ru', pageUrl('ru', page.path)],
+        ['x-default', pageUrl('en', page.path)],
+      ]
   for (const [lang, href] of alternates) {
     setContent(
       `link[rel="alternate"][hreflang="${lang}"]`,

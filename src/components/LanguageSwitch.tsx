@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Languages } from 'lucide-react'
 import { localeFromPath, localizedPath, type Locale } from '@/i18n/localePath'
+import { guidePathForLocale } from '@/features/guides/evergreenGuide'
 
 const languages = [
   { code: 'en', label: 'EN' },
@@ -19,8 +20,9 @@ export function LanguageSwitch() {
         onChange={(event) => {
           const next = event.target.value as Locale
           const { pathname } = localeFromPath(window.location.pathname)
+          const guidePath = guidePathForLocale(pathname, next)
           const target = localizedPath(
-            `${pathname}${window.location.search}${window.location.hash}`,
+            `${guidePath ?? pathname}${window.location.search}${window.location.hash}`,
             next,
           )
           window.location.assign(target)

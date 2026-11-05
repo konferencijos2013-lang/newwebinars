@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import type { Plugin } from 'vite'
+import { buildGuideSeoPages, guideLlmsLines } from '../guides/guideSeo.ts'
 import { loadMarketingCopy } from './loadMarketingCopy.ts'
 import {
   buildMarketingPages,
@@ -29,7 +30,7 @@ export function marketingSeoPlugin(): Plugin {
       const shell = readFileSync(shellPath, 'utf8')
       if (!shell.includes('__SEO_TITLE__')) return
       const copies = loadMarketingCopy()
-      const pages = buildMarketingPages(copies)
+      const pages = [...buildMarketingPages(copies), ...buildGuideSeoPages()]
       for (const page of pages) {
         const file = join(process.cwd(), 'dist', outputHtmlPath(page.locale, page.path))
         mkdirSync(dirname(file), { recursive: true })
@@ -37,7 +38,7 @@ export function marketingSeoPlugin(): Plugin {
       }
       const dist = join(process.cwd(), 'dist')
       writeFileSync(join(dist, 'sitemap.xml'), sitemapXml(pages))
-      writeFileSync(join(dist, 'llms.txt'), llmsText(copies.en))
+      writeFileSync(join(dist, 'llms.txt'), `${llmsText(copies.en)}${guideLlmsLines()}`)
       writeFileSync(join(dist, 'robots.txt'), robotsTxt())
     },
   }

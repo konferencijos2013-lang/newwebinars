@@ -3,6 +3,8 @@ import { PublicLayout } from '@/components/layout/PublicLayout'
 import { AppShell } from '@/components/app/AppShell'
 import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute'
 import { LandingPage } from '@/pages/LandingPage'
+import { GuidesPage } from '@/features/guides/GuidesPage'
+import { GuideArticlePage } from '@/features/guides/GuideArticlePage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { CookiePolicyPage } from '@/pages/CookiePolicyPage'
 import { LegalDocumentPage } from '@/pages/LegalDocumentPage'
@@ -85,6 +87,8 @@ export function AppRoutes() {
         {/* Public marketing site */}
         <Route element={<PublicLayout />}>
           <Route index element={<LandingPage />} />
+          <Route path="guides" element={<GuidesPage />} />
+          <Route path="guides/:slug" element={<GuideArticlePage />} />
           <Route path="pricing" element={<PricingPage />} />
           <Route path="partners" element={<PartnersPage />} />
           <Route path="cookie-policy" element={<CookiePolicyPage />} />

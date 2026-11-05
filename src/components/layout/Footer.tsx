@@ -22,6 +22,12 @@ export function Footer() {
         <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm font-medium">
           <Link
             className="text-muted-foreground hover:text-foreground"
+            to="/guides"
+          >
+            {t('common:guides')}
+          </Link>
+          <Link
+            className="text-muted-foreground hover:text-foreground"
             to="/pricing"
           >
             {t('common:pricing')}

@@ -10,6 +10,7 @@ export function Header() {
   const { t } = useTranslation(['common', 'auth', 'landing'])
   const [open, setOpen] = useState(false)
   const links = [
+    { to: '/guides', label: t('common:guides') },
     { to: '/pricing', label: t('common:pricing') },
     { to: '/partners', label: t('common:partners') },
     { to: '/login', label: t('auth:signIn') },
