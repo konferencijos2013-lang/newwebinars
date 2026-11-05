@@ -164,6 +164,7 @@
     "errorOffset": "Pasirinkite siuntimo integraciją ir įveskite laiką minutėmis (0 ar daugiau).",
     "errorConnect": "Pirmiausia prijunkite el. pašto arba Telegram integraciją puslapyje „Integracijos“.",
     "alreadyCreated": "Standartiniai priminimai jau sukurti.",
+    "refreshed": "Standartiniai priminimai perrašyti pagal dabartinį modelį.",
     "removeConfirm": "Pašalinti priminimą „{{label}}“?",
     "enterMinutes": "Įveskite minutes",
     "onRegistration": "Iš karto po registracijos",

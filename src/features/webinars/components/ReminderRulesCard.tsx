@@ -75,6 +75,7 @@ export function ReminderRulesCard({
   const [connections, setConnections] = useState<IntegrationConnection[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
@@ -259,18 +260,31 @@ export function ReminderRulesCard({
     }
     setGenerating(true)
     setError(null)
+    setNotice(null)
     try {
       const created: ReminderRule[] = []
+      const updated: ReminderRule[] = []
       for (const target of targets) {
         for (const reminder of standardReminders(messageLanguageValue)) {
-          const exists = rules.some(
+          const subject = reminder.subject
+          const body =
+            target.channel === 'email' ? reminder.body : reminder.shortBody
+          const existing = rules.find(
             (rule) =>
               rule.channel === target.channel &&
               rule.timing === reminder.timing &&
               rule.minutes_before === reminder.minutes &&
               (rule.audience ?? 'all') === reminder.audience,
           )
-          if (exists) continue
+          if (existing) {
+            if ((existing.subject ?? '') === subject && (existing.body ?? '') === body) {
+              continue
+            }
+            updated.push(
+              await updateReminderRule(existing.id, { subject, body }),
+            )
+            continue
+          }
           created.push(
             await createReminderRule({
               webinarId,
@@ -279,17 +293,18 @@ export function ReminderRulesCard({
               minutesBefore: reminder.minutes,
               timing: reminder.timing,
               audience: reminder.audience,
-              subject: reminder.subject,
-              body:
-                target.channel === 'email' ? reminder.body : reminder.shortBody,
+              subject,
+              body,
             }),
           )
         }
       }
-      if (created.length === 0) {
-        setError(t('reminders.alreadyCreated'))
-      }
-      setRules((current) => sortRules([...current, ...created]))
+      setRules((current) => {
+        const byId = new Map(updated.map((rule) => [rule.id, rule]))
+        const merged = current.map((rule) => byId.get(rule.id) ?? rule)
+        return sortRules([...merged, ...created])
+      })
+      setNotice(t('reminders.refreshed'))
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason))
     } finally {
@@ -420,6 +435,11 @@ export function ReminderRulesCard({
       {!followBroadcast && !durationMinutes && (
         <p className="mt-4 rounded-md bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
           {t('reminders.needDuration')}
+        </p>
+      )}
+      {notice && (
+        <p className="mt-4 rounded-md bg-emerald-500/10 p-3 text-sm text-emerald-800 dark:text-emerald-200">
+          {notice}
         </p>
       )}
       {error && (

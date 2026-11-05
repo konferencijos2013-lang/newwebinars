@@ -164,6 +164,7 @@
     "errorOffset": "Choose a sending integration and enter a time in minutes (0 or more).",
     "errorConnect": "Connect an email or Telegram integration on the Integrations page first.",
     "alreadyCreated": "The standard reminders are already created.",
+    "refreshed": "The standard reminders were rewritten to the current model.",
     "removeConfirm": "Remove the reminder “{{label}}”?",
     "enterMinutes": "Enter minutes",
     "onRegistration": "Right after registration",
