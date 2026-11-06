@@ -297,6 +297,19 @@ export async function fetchChatMessages(webinarId: string) {
   return (data ?? []) as ChatMessage[]
 }
 
+export async function sendHostChatMessage(input: {
+  webinar_id: string
+  message: string
+}) {
+  const { data, error } = await supabase.rpc('send_host_webinar_chat_message', {
+    p_webinar_id: input.webinar_id,
+    p_message: input.message,
+  })
+
+  if (error) throw error
+  return data as ChatMessage
+}
+
 export async function sendChatMessage(input: {
   webinar_id: string
   access_token: string

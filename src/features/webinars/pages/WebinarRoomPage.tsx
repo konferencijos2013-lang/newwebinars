@@ -13,7 +13,6 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
-import { AiAssistant } from '@/features/ai/components/AiAssistant'
 import { useHlsVideo } from '@/features/webinars/hooks/useHlsVideo'
 import { subscribeToStreamStatus } from '@/features/webinars/api/stream'
 import { getYouTubeEmbedUrl } from '@/features/webinars/utils/youtube'
@@ -22,6 +21,7 @@ import {
   fetchRegistrationByToken,
   fetchChatMessages,
   sendChatMessage,
+  sendHostChatMessage,
   fetchChatScripts,
   markJoinedWebinar,
   deleteChatMessage,
@@ -423,7 +423,7 @@ export function WebinarRoomPage() {
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
     setChatError(null)
-    if (!webinar || !newMessage.trim() || !registration) return
+    if (!webinar || !newMessage.trim() || (!registration && !isModerator)) return
     const text = newMessage.trim()
     if (URL_REGEX.test(text)) {
       setChatError(t('linksNotAllowed'))
@@ -431,11 +431,16 @@ export function WebinarRoomPage() {
     }
     let sent: ChatMessage
     try {
-      sent = await sendChatMessage({
-        webinar_id: webinar.id,
-        access_token: registration.access_token,
-        message: text,
-      })
+      sent = registration
+        ? await sendChatMessage({
+            webinar_id: webinar.id,
+            access_token: registration.access_token,
+            message: text,
+          })
+        : await sendHostChatMessage({
+            webinar_id: webinar.id,
+            message: text,
+          })
     } catch (err) {
       setChatError(err instanceof Error ? err.message : t('chatUnavailable'))
       return
@@ -695,14 +700,7 @@ export function WebinarRoomPage() {
             )}
         </div>
 
-        <div className="border-border flex flex-col rounded-lg border">
-          {webinar && (
-            <AiAssistant
-              scope="webinar"
-              scopeId={webinar.id}
-              contextPrompt={`Help me manage the webinar "${webinar.title}".`}
-            />
-          )}
+        <div className="border-border flex h-full min-h-0 flex-col rounded-lg border">
           <div className="flex-1 space-y-3 overflow-y-auto p-3">
             {/* The callbacks invoked below update ref-backed chat caches after moderation. */}
             {/* eslint-disable-next-line react-hooks/refs */}
@@ -786,7 +784,7 @@ export function WebinarRoomPage() {
             ))}
             <div ref={chatEndRef} />
           </div>
-          {registration && (
+          {(registration || isModerator) && (
             <form onSubmit={handleSend} className="border-t p-3">
               {chatError && (
                 <p className="text-destructive mb-2 text-xs">{chatError}</p>
